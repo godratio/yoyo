@@ -1,0 +1,3 @@
+#clang -x c++ -g tokenizer.cpp -Wno-switch -Wno-format-security -Wno-parentheses -Wno-null-dereference -Wno-c++11-compat-deprecated-writable-strings -Wno-unused-value -Wno-int-to-pointer-cast -F/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/System/Library/Frameworks  -I/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/System/Library/Frameworks -framework CoreFoundation  -DOSX -o  tokenizer
+
+clang -x c++ -g -lstdc++ yoyoyo.cpp -Wno-switch -Wno-format-security -Wno-parentheses -Wno-null-dereference -Wno-c++11-compat-deprecated-writable-strings -Wno-unused-value -Wno-int-to-pointer-cast -DOSX -o  yoyoyo
