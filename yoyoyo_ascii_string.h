@@ -147,14 +147,14 @@ static YoyoAString* YoyoAsciiCreateStringRangedChar(char* s, char* e, MemoryAren
 	return result;
 }
 
-APIDEF YoyoAString* YoyoAsciiStringFromCharLength(char* s, u32 end_length, MemoryArena* mem)
+APIDEF YoyoAString* YoyoAsciiStringFromCharLength(char* s, uint32_t end_length, MemoryArena* mem)
 {
 	YoyoAString* result = (YoyoAString*)PushSize(mem, sizeof(YoyoAString));
 
 	char* at = s;
 	void* start_ptr = GetPartitionPointer(*mem);
 	char* string_ptr = 0;//(char*)Memory;
-	u32 iterator = 0;
+	uint32_t iterator = 0;
 	while (iterator < end_length)
 	{
 		string_ptr = (char*)PushSize(mem, 1);
@@ -211,8 +211,8 @@ APIDEF int YoyoAsciiStringCompare(YoyoAString a, YoyoAString b)
 		char* a_ptr = a.string;
 		char* b_ptr = b.string;
 
-		uint_32 max_iterations = (a.length > b.length) ? a.length : b.length;
-		for (u32 index = 0; index < max_iterations; ++index)
+		size_t max_iterations = (a.length > b.length) ? a.length : b.length;
+		for (uint32_t index = 0; index < max_iterations; ++index)
 		{
 			if (*a_ptr != *b_ptr)
 				return false;
@@ -228,8 +228,8 @@ APIDEF int YoyoAsciiStringCompareToChar(YoyoAString a, char* b)
 	char* a_ptr = a.string;
 	char* b_ptr = b;
 
-	u32 max_iterations = a.length;
-	for (u32 index = 0; index < max_iterations; ++index)
+	size_t max_iterations = a.length;
+	for (uint32_t index = 0; index < max_iterations; ++index)
 	{
 		//TODO(Ray):Need to check logic here for string where B is longer than A
 		if (*a_ptr != *b_ptr)
@@ -239,12 +239,12 @@ APIDEF int YoyoAsciiStringCompareToChar(YoyoAString a, char* b)
 	return true;
 }
 
-APIDEF int YoyoAsciiCharCompareToChar(char* a, char* b, u32 max_iterations)
+APIDEF int YoyoAsciiCharCompareToChar(char* a, char* b, uint32_t max_iterations)
 {
 	char* a_ptr = a;
 	char* b_ptr = b;
 
-	for (u32 index = 0; index < max_iterations; ++index)
+	for (uint32_t index = 0; index < max_iterations; ++index)
 	{
 		if (*a_ptr == '\0' || *b_ptr == '\0')break;
 		if (*a_ptr != *b_ptr)
@@ -260,12 +260,12 @@ APIDEF YoyoAString* YoyoAsciiGetFileExtension(YoyoAString* file_name_or_path, Me
 	Assert(file_name_or_path->length > 1)
 		//walk back from end of string till we hit a '.'
 		char* end = file_name_or_path->string + file_name_or_path->length - 1;
-	u32 look_back = 1;
+	uint32_t look_back = 1;
 	if (keep_extension_delimeter)
 	{
 		look_back = 0;
 	}
-	u32 steps_taken = 1;
+	uint32_t steps_taken = 1;
 	while (*(end - look_back) != '.')
 	{
 		--end;
@@ -285,7 +285,7 @@ APIDEF YoyoAString* YoyoAsciiStripExtension(YoyoAString* file_name_or_path, Memo
 	Assert(file_name_or_path->length > 1);
 	//walk back from end of string till we hit a '.'
 	char* end = file_name_or_path->string + file_name_or_path->length - 1;
-	u32 step_count = 1;
+	uint32_t step_count = 1;
 	while (*end != '.')
 	{
 		--end;
@@ -310,16 +310,16 @@ APIDEF YoyoAString* YoyoAsciiStripAndOutputExtension(YoyoAString* file_name_or_p
 	return result;
 }
 
-APIDEF YoyoAString* YoyoAsciiPadRight(YoyoAString* s, char pad_char, u32 pad_amount, MemoryArena* mem)
+APIDEF YoyoAString* YoyoAsciiPadRight(YoyoAString* s, char pad_char, size_t pad_amount, MemoryArena* mem)
 {
 	//TODO(RAY):LENGTH IS WRONG
 	YoyoAString* result = PushStruct(mem, YoyoAString);
-	result->string = (char*)PushSize(mem, s->length + pad_amount);
+	result->string = (char*)PushSize(mem, (size_t)(s->length + pad_amount));
 	result->length = pad_amount + s->length;
 	//    char* At = Result->String;
 	char* source_string = s->string;
 	//    while(*At++)
-	for (u32 string_index = 0; string_index < result->length; ++string_index)
+	for (uint32_t string_index = 0; string_index < result->length; ++string_index)
 	{
 		char* at = result->string + string_index;
 		if (string_index > s->length - 1)
@@ -339,16 +339,16 @@ APIDEF YoyoAString* YoyoAsciiPadRight(YoyoAString* s, char pad_char, u32 pad_amo
 	return result;
 }
 
-APIDEF YoyoAString* YoyoAsciiEnforceMinSize(YoyoAString* s, u32 min_size, MemoryArena* mem)
+APIDEF YoyoAString* YoyoAsciiEnforceMinSize(YoyoAString* s, size_t min_size, MemoryArena* mem)
 {
 	if (s->length < min_size)
 	{
-		int Diff = min_size - s->length;
+		size_t Diff = min_size - s->length;
 		s = YoyoAsciiPadRight(s, ' ', Diff, mem);
 	}
 	else if (s->length > min_size)
 	{
-		u32 count = 0;
+		uint32_t count = 0;
 		char* at = s->string;
 
 		while (*at++)
@@ -373,7 +373,7 @@ APIDEF YoyoAString* YoyoAsciiAppendString(YoyoAString front, YoyoAString back, M
 	void* start_ptr = GetPartitionPointer(*mem);
 	char* string_ptr;
 	char* at = front.string;
-	u32 iterations = 0;
+	uint32_t iterations = 0;
 	while (*at && iterations < front.length)
 	{
 		string_ptr = (char*)PushSize(mem, 1);
@@ -400,11 +400,11 @@ APIDEF YoyoAString* YoyoAsciiAppendString(YoyoAString front, YoyoAString back, M
 #define YoyoAppendCharToStringAndAdvace(front,back,mem) YoyoAppendStringAndAdvance(front,*YoyoAsciiStringFromChar(back,mem),mem)
 APIDEF void YoyoAppendStringAndAdvance(YoyoAString* front, YoyoAString back, MemoryArena* mem)
 {
-	u32 length = 0;
+	uint32_t length = 0;
 	void* start_pointer = GetPartitionPointer(*mem);
 	char* str_ptr;
 	char* at = front->string;
-	u32 iterations = 0;
+	uint32_t iterations = 0;
 
 	while (*at && iterations < front->length)
 	{

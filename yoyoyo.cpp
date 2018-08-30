@@ -6,22 +6,22 @@ int main()
     *s = YoyoAsciiNullTerminate(*s);
     printf("Testing YoyoAscii Allocate null terminate :  %s \n",s->string);    
 
-    uint32_t l = GetLengthChar(s->string);
-    printf("Testing YoyoAscii Char length :  %d \n",l);
+    size_t l = YoyoAsciiGetLengthChar(s->string);
+    printf("Testing YoyoAscii Char length :  %d \n",(int)l);
     
-    uint32_t nl = YoyoAsciiStrLength(s);
-    printf("Testing YoyoAscii string length :  %d \n",nl);
+    size_t nl = YoyoAsciiStringLength(s);
+    printf("Testing YoyoAscii string length :  %d \n",(int)nl);
 
     
-    YoyoAString* csl = YoyoAsciiCreateStringFromLiteral("This is a test create string from literal");
+    YoyoAString* csl = YoyoAsciiStringAllocate("This is a test create string from literal");
     *csl = YoyoAsciiNullTerminate(*csl);
     printf("Testing YoyoAscii Create String from litereal null terminate :  %s \n",csl->string);
 
-    l = GetLengthChar(csl->string);
-    printf("Testing YoyoAscii Char length :  %d \n",l);
+    l = YoyoAsciiGetLengthChar(csl->string);
+    printf("Testing YoyoAscii Char length :  %d \n",(int)l);
     
-    nl = YoyoAsciiStrLength(csl);
-    printf("Testing YoyoAscii string length :  %d \n",nl);
+    nl = YoyoAsciiStringLength(csl);
+    printf("Testing YoyoAscii string length :  %d \n",(int)nl);
     
 
     return 0;
