@@ -64,6 +64,22 @@ APIDEF size_t YoyoAsciiGetLengthChar(char* s)
     return length;
 }
 
+APIDEF size_t YoyoAsciiGetLengthCharSafely(char* s,size_t safe_length)
+{
+    size_t length = 0;
+    char* at = s;
+    while(*at)
+    {
+        length++;
+        at++;
+        if(length > safe_length)
+        {
+            break;
+        }
+    }
+    return length;
+}
+
 //TODO(Ray):Make a way to reclaim the memory from literals created here.
 //TODO(Ray):Allow to have the option to do the length check safely.
 //NOTE(Ray):This function requires you free your own memory once your done.
@@ -87,23 +103,7 @@ static YoyoAString* YoyoAsciiStringAllocate(char* s)
 	result->length = length;
 	return result;
 }
-
-APIDEF size_t YoyoAsciiGetLengthCharSafely(char* s,size_t safe_length)
-{
-    size_t length = 0;
-    char* at = s;
-    while(*at)
-    {
-        length++;
-        at++;
-        if(length > safe_length)
-        {
-            break;
-        }
-    }
-    return length;
-}
-
+ 
 APIDEF YoyoAString YoyoAsciiNullTerminate(YoyoAString s)
 {
     char* null_terminate_point = s.string + s.length;
@@ -191,8 +191,7 @@ static YoyoAString* YoyoAsciiAllocatEmptyString(MemoryArena* mem)
 	return YoyoAsciiStringFromChar("", mem);
 }
 
-
-APIDEF int YoyoAsciiStringCompare(YoyoAString a, YoyoAString b)
+APIDEF bool YoyoAsciiStringCompare(YoyoAString a, YoyoAString b)
 {
 	if (a.null_terminated && b.null_terminated)
 	{
@@ -202,7 +201,6 @@ APIDEF int YoyoAsciiStringCompare(YoyoAString a, YoyoAString b)
 		{
 			if (*a_ptr != *b_ptr)
 				return false;
-
 			a_ptr++; b_ptr++;
 		}
 	}
@@ -223,7 +221,7 @@ APIDEF int YoyoAsciiStringCompare(YoyoAString a, YoyoAString b)
 	return true;
 }
 
-APIDEF int YoyoAsciiStringCompareToChar(YoyoAString a, char* b)
+APIDEF bool YoyoAsciiStringCompareToChar(YoyoAString a, char* b)
 {
 	char* a_ptr = a.string;
 	char* b_ptr = b;
@@ -239,7 +237,7 @@ APIDEF int YoyoAsciiStringCompareToChar(YoyoAString a, char* b)
 	return true;
 }
 
-APIDEF int YoyoAsciiCharCompareToChar(char* a, char* b, uint32_t max_iterations)
+APIDEF bool YoyoAsciiCharCompareToChar(char* a, char* b, uint32_t max_iterations)
 {
 	char* a_ptr = a;
 	char* b_ptr = b;
@@ -253,7 +251,6 @@ APIDEF int YoyoAsciiCharCompareToChar(char* a, char* b, uint32_t max_iterations)
 	}
 	return true;
 }
-
 
 APIDEF YoyoAString* YoyoAsciiGetFileExtension(YoyoAString* file_name_or_path, MemoryArena *string_mem, b32 keep_extension_delimeter = false)
 {
@@ -297,7 +294,6 @@ APIDEF YoyoAString* YoyoAsciiStripExtension(YoyoAString* file_name_or_path, Memo
 	}
 	return YoyoAsciiCreateStringRangedChar(&file_name_or_path->string[0], &end[0], mem);
 }
-
 
 APIDEF YoyoAString* YoyoAsciiStripAndOutputExtension(YoyoAString* file_name_or_path, YoyoAString* ext, MemoryArena *mem, b32 keep_delimeter = false)
 {
