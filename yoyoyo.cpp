@@ -1,5 +1,6 @@
 
 #include "yoyoyo_ascii_string.h"
+#include "yoyo_io.h"
 #include <stdio.h>
 
 int main()
@@ -8,8 +9,17 @@ int main()
     
     YoyoAString* s = YoyoAsciiStringAllocate("This is a test string");
     *s = YoyoAsciiNullTerminate(*s);
-    printf("Testing YoyoAscii Allocate null terminate :  %s \n",s->string);    
 
+
+    YoyoyoPlatformOutput(true,"PlatformOUTPUT TEST :  %s \n",s->string);
+
+    size_t buf_size = 2048;
+    char in_buff[2048];
+    YoyoyoPlatformOutputInputPrompt(in_buff,buf_size,true,"Input:");
+
+    YoyoAString* formatted_string = YoyoyoPlatformFormatString(s_arena,"This is a test formatted string %f \n", 0.001f);
+    YoyoyoPlatformOutput(true,formatted_string->string);
+    
     size_t l = YoyoAsciiGetLengthChar(s->string);
     printf("Testing YoyoAscii Char length :  %d \n",(int)l);
     
