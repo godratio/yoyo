@@ -5,15 +5,16 @@
 #define MAX_FILENAME_LENGTH 50
 #define MAX_FILE_EXTENSION_LENGTH 10
 
+
 struct YoyoAString
 {
-    uint32_t null_teminated;
-    uint32_t length;
+    bool null_teminated;
+    size_t length;
     char* string;  
 };
 
 //NOTE(ray):Assumes string is already null terminated.
-static inline uint32_t YoyoAsciiStrLength(YoyoAString* s)
+static inline size_t YoyoAsciiStrLength(YoyoAString* s)
 {
     uint32_t length = 0;
     char* at = s->string;
@@ -26,15 +27,48 @@ static inline uint32_t YoyoAsciiStrLength(YoyoAString* s)
     return length;
 }
 
-//NOTE(ray):Assumes string is already null terminated.
-static inline uint32_t GetLengthChar(char* s)
+static inline size_t YoyoAsciiStrGetLengthSafely(YoyoAString* s,size_t safety_lenth)
 {
-    uint32_t length = 0;
+    size_t length = 0;
+    char* at = s->string;
+    while(*at)
+    {
+        length++;
+        at++;
+        if(length > safety_lenth)
+        {
+            break;
+        }
+    }
+    s->length = length;
+    return length;
+}
+
+//NOTE(ray):Assumes string is already null terminated.
+static inline size_t GetLengthChar(char* s)
+{
+    size_t length = 0;
     char* at = s;
     while(*at)
     {
         length++;
         at++;
+    }
+    return length;
+}
+
+static inline size_t YoyoAsciiStrGetLengthSafelyChar(char* s,size_t safety_lenth)
+{
+    size_t length = 0;
+    char* at = s;
+    while(*at)
+    {
+        length++;
+        at++;
+        if(length > safety_lenth)
+        {
+            break;
+        }
     }
     return length;
 }
@@ -70,5 +104,47 @@ static YoyoAString* YoyoAsciiStringAllocate(char* s)
     result->length = length;
     return result;
 }
+
+static YoyoAString* YoyoAsciiCreateStringFromLiteral(char* s,MemoryArena* mem)
+{
+    YoyoAString* result = (YoyoAString*)PushSize(mem,sizeof(YoyoAString));
+    result->length = 0;
+    char* at = String;
+    void* start_ptr = GetPartitionPointer(*mem);
+	while (*at)
+    {
+        char * string_ptr = (char*)PushSize(mem,1);
+        *string_ptr = *at;
+        result->length++;
+        at++;
+    }
+    result->string = (char*)start_ptr;
+    return Result;
+}
+
+static YoyoAString* YoyoAsciiCreateStringRangedChar(char* String,char* End, MemoryArena* Memory)
+{
+    string* Result = (string*)PushSize(Memory, sizeof(string));
+    
+    char* At = String;
+    void* StartPointer = GetPartitionPointer(*Memory);
+    char* StringPtr = 0;//(char*)Memory;
+    while (*At != *End)
+    {
+        StringPtr = (char*)PushSize(Memory, 1);
+        *StringPtr = *At;
+        Result->Length++;
+        At++;
+    }
+    Result->String = (char*)StartPointer;
+    return Result;
+}
+
+static YoyoAString* YoyoAsciiAllocatEmptyString(MemoryArena* mem)
+{
+    Assert(mem);
+    return CreateStringFromLiteral("",mem);
+}
+
 
 
