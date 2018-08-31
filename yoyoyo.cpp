@@ -6,8 +6,8 @@
 #include "yoyo_io.h"
 #include "yoyo_file.h"
 #include "yoyoyo_hashtable.h"
+#include "yoyoyo_math.h"
 
-#include <vector>
 #include <stdio.h>
 
 //TODO(Ray):Finish writing tests 
@@ -183,6 +183,14 @@ int main(void)
 	printf("hashtable extracted value is : %d \n", *extracted_value);    
 //End hash examples
 
+//Begin Math Examples
+
+    float3 a = float3(0,0,0);
+    float3 b = float3(1,1,1);
+    float3 c = a + b;
+    
+    YoyoyoPlatformOutput(true, "math : x %f y %f z %f",c.x(),c.y(),c.z());
+//End Math Examples
 
     return 0;
 }
