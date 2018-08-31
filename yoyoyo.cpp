@@ -1,4 +1,5 @@
-
+#include "yoyoyo.h"
+#include "yoyoyo_memory.h"
 #include "yoyoyo_ascii_string.h"
 #include "yoyoyo_ascii_vector.h"
 #include "yoyo_io.h"
@@ -12,7 +13,7 @@ int main(void)
 {
 //YOYO STRINGs Examples
 
-    MemoryArena* s_arena = PlatformAllocatePartition(MegaBytes(100));
+    MemoryArena* s_arena = YoyoPlatformAllocateArena(MegaBytes(100));
     
     YoyoAString* s = YoyoAsciiStringAllocate("This is a test string");
     *s = YoyoAsciiNullTerminate(*s);
@@ -20,7 +21,7 @@ int main(void)
 
     YoyoyoPlatformOutput(true,"PlatformOUTPUT TEST :  %s \n",s->string);
 
-    u32 buf_size = 2048;
+    uint32_t buf_size = 2048;
     char in_buff[2048];
     YoyoyoPlatformOutputInputPrompt(in_buff,buf_size,true,"Input:");
 

@@ -5,7 +5,6 @@
 
 #include <stdint.h>
 #include <stdio.h>
-#include "./api/api_include.h"
 #include <cstdlib>
 
 #ifdef __cplusplus
@@ -116,13 +115,13 @@ APIDEF YoyoAString YoyoAsciiNullTerminate(YoyoAString s)
 //TODO(ray):Make a way to reclaim the memory
 APIDEF YoyoAString* YoyoAsciiStringFromChar(char* s, MemoryArena* mem)
 {
-	YoyoAString* result = (YoyoAString*)PushSize(mem, sizeof(YoyoAString));
+	YoyoAString* result = (YoyoAString*)YoyoPushSize(mem, sizeof(YoyoAString));
 	result->length = 0;
 	char* at = s;
-	void* start_ptr = GetPartitionPointer(*mem);
+	void* start_ptr = YoyoGetArenaPointer(*mem);
 	while (*at)
 	{
-		char * string_ptr = (char*)PushSize(mem, 1);
+		char * string_ptr = (char*)YoyoPushSize(mem, 1);
 		*string_ptr = *at;
 		result->length++;
 		at++;
@@ -133,13 +132,13 @@ APIDEF YoyoAString* YoyoAsciiStringFromChar(char* s, MemoryArena* mem)
 
 static YoyoAString* YoyoAsciiCreateStringRangedChar(char* s, char* e, MemoryArena* mem)
 {
-	YoyoAString* result = (YoyoAString*)PushSize(mem, sizeof(YoyoAString));
+	YoyoAString* result = (YoyoAString*)YoyoPushSize(mem, sizeof(YoyoAString));
 	char* at = s;
-	void* start_ptr = GetPartitionPointer(*mem);
+	void* start_ptr = YoyoGetArenaPointer(*mem);
 	char* string_ptr = 0;//(char*)Memory;
 	while (*at != *e)
 	{
-		string_ptr = (char*)PushSize(mem, 1);
+		string_ptr = (char*)YoyoPushSize(mem, 1);
 		*string_ptr = *at;
 		result->length++;
 		at++;
@@ -150,15 +149,15 @@ static YoyoAString* YoyoAsciiCreateStringRangedChar(char* s, char* e, MemoryAren
 
 APIDEF YoyoAString* YoyoAsciiStringFromCharLength(char* s, uint32_t end_length, MemoryArena* mem)
 {
-	YoyoAString* result = (YoyoAString*)PushSize(mem, sizeof(YoyoAString));
+	YoyoAString* result = (YoyoAString*)YoyoPushSize(mem, sizeof(YoyoAString));
 
 	char* at = s;
-	void* start_ptr = GetPartitionPointer(*mem);
+	void* start_ptr = YoyoGetArenaPointer(*mem);
 	char* string_ptr = 0;//(char*)Memory;
 	uint32_t iterator = 0;
 	while (iterator < end_length)
 	{
-		string_ptr = (char*)PushSize(mem, 1);
+		string_ptr = (char*)YoyoPushSize(mem, 1);
 		*string_ptr = *at;
 		result->length++;
 		at++;
@@ -170,14 +169,14 @@ APIDEF YoyoAString* YoyoAsciiStringFromCharLength(char* s, uint32_t end_length, 
 
 APIDEF YoyoAString* YoyoCreateStringRangedPointer(char* s, char* e, MemoryArena* mem)
 {
-	YoyoAString* result = (YoyoAString*)PushSize(mem, sizeof(YoyoAString));
+	YoyoAString* result = (YoyoAString*)YoyoPushSize(mem, sizeof(YoyoAString));
 
 	char* at = s;
-	void* start_ptr = GetPartitionPointer(*mem);
+	void* start_ptr = YoyoGetArenaPointer(*mem);
 	char* string_ptr = 0;//(char*)Memory;
 	while (at != e)
 	{
-		string_ptr = (char*)PushSize(mem, 1);
+		string_ptr = (char*)YoyoPushSize(mem, 1);
 		*string_ptr = *at;
 		result->length++;
 		at++;
@@ -253,7 +252,7 @@ APIDEF bool YoyoAsciiCharCompareToChar(char* a, char* b, uint32_t max_iterations
 	return true;
 }
 
-APIDEF YoyoAString* YoyoAsciiGetFileExtension(YoyoAString* file_name_or_path, MemoryArena *string_mem, b32 keep_extension_delimeter = false)
+APIDEF YoyoAString* YoyoAsciiGetFileExtension(YoyoAString* file_name_or_path, MemoryArena *string_mem, bool keep_extension_delimeter = false)
 {
 	Assert(file_name_or_path->length > 1)
 		//walk back from end of string till we hit a '.'
@@ -296,11 +295,10 @@ APIDEF YoyoAString* YoyoAsciiStripExtension(YoyoAString* file_name_or_path, Memo
 	return YoyoAsciiCreateStringRangedChar(&file_name_or_path->string[0], &end[0], mem);
 }
 
-APIDEF YoyoAString* YoyoAsciiStripAndOutputExtension(YoyoAString* file_name_or_path, YoyoAString* ext, MemoryArena *mem, b32 keep_delimeter = false)
+APIDEF YoyoAString* YoyoAsciiStripAndOutputExtension(YoyoAString* file_name_or_path, YoyoAString* ext, MemoryArena *mem, bool keep_delimeter = false)
 {
 	Assert(file_name_or_path->length > 1)
-
-		YoyoAString* result = YoyoAsciiStripExtension(file_name_or_path, mem);
+	YoyoAString* result = YoyoAsciiStripExtension(file_name_or_path, mem);
 	YoyoAString* extension_name = YoyoAsciiGetFileExtension(file_name_or_path, mem, keep_delimeter);
 	//string TerminatedExtensionName = NullTerminate(*ExtensionName);
 	*ext = *extension_name;
@@ -310,8 +308,8 @@ APIDEF YoyoAString* YoyoAsciiStripAndOutputExtension(YoyoAString* file_name_or_p
 APIDEF YoyoAString* YoyoAsciiPadRight(YoyoAString* s, char pad_char, size_t pad_amount, MemoryArena* mem)
 {
 	//TODO(RAY):LENGTH IS WRONG
-	YoyoAString* result = PushStruct(mem, YoyoAString);
-	result->string = (char*)PushSize(mem, (size_t)(s->length + pad_amount));
+	YoyoAString* result = YoyoPushStruct(mem, YoyoAString);
+	result->string = (char*)YoyoPushSize(mem, (size_t)(s->length + pad_amount));
 	result->length = pad_amount + s->length;
 	//    char* At = Result->String;
 	char* source_string = s->string;
@@ -366,14 +364,14 @@ APIDEF YoyoAString* YoyoAsciiEnforceMinSize(YoyoAString* s, size_t min_size, Mem
 
 APIDEF YoyoAString* YoyoAsciiAppendString(YoyoAString front, YoyoAString back, MemoryArena* mem)
 {
-	YoyoAString *result = PushStruct(mem, YoyoAString);
-	void* start_ptr = GetPartitionPointer(*mem);
+	YoyoAString *result = YoyoPushStruct(mem, YoyoAString);
+	void* start_ptr = YoyoGetArenaPointer(*mem);
 	char* string_ptr;
 	char* at = front.string;
 	uint32_t iterations = 0;
 	while (*at && iterations < front.length)
 	{
-		string_ptr = (char*)PushSize(mem, 1);
+		string_ptr = (char*)YoyoPushSize(mem, 1);
 		*string_ptr = *at;
 		result->length++;
 		at++;
@@ -383,7 +381,7 @@ APIDEF YoyoAString* YoyoAsciiAppendString(YoyoAString front, YoyoAString back, M
 	iterations = 0;
 	while (*at && iterations < back.length)
 	{
-		string_ptr = (char*)PushSize(mem, 1);
+		string_ptr = (char*)YoyoPushSize(mem, 1);
 		*string_ptr = *at;
 		result->length++;
 		at++;
@@ -398,14 +396,14 @@ APIDEF YoyoAString* YoyoAsciiAppendString(YoyoAString front, YoyoAString back, M
 APIDEF void YoyoAppendStringAndAdvance(YoyoAString* front, YoyoAString back, MemoryArena* mem)
 {
 	uint32_t length = 0;
-	void* start_pointer = GetPartitionPointer(*mem);
+	void* start_pointer = YoyoGetArenaPointer(*mem);
 	char* str_ptr;
 	char* at = front->string;
 	uint32_t iterations = 0;
 
 	while (*at && iterations < front->length)
 	{
-		str_ptr = (char*)PushSize(mem, 1);
+		str_ptr = (char*)YoyoPushSize(mem, 1);
 		*str_ptr = *at;
 		length++;
 		at++;
@@ -416,7 +414,7 @@ APIDEF void YoyoAppendStringAndAdvance(YoyoAString* front, YoyoAString back, Mem
 
 	while (*at && iterations < back.length)
 	{
-		str_ptr = (char*)PushSize(mem, 1);
+		str_ptr = (char*)YoyoPushSize(mem, 1);
 		*str_ptr = *at;
 		length++;
 		at++;
