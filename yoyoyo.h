@@ -8,3 +8,6 @@
 #define MegaBytes(Value) (KiloBytes(Value) * 1024LL)
 #define GigaBytes(Value) (MegaBytes(Value) * 1024LL)
 #define TeraBytes(Value) (GigaBytes(Value) * 1024LL)
+
+
+

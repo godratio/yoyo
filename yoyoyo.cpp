@@ -180,7 +180,7 @@ int main(void)
 
     int* extracted_value = YoyoGetElementByHash(int,&h_t,key);
     
-	printf("hashtable extracted value is : %d \n", *element);    
+	printf("hashtable extracted value is : %d \n", *extracted_value);    
 //End hash examples
 
 
