@@ -16,8 +16,8 @@ struct YoyoVector
 	uint32_t** free_list;
     MemoryArena* mem_arena;
     bool pushable;
-	float resize_ratio = 0.5f;//0.1 10% 1 100% default is 50% or 1/2 resizing
-	bool allow_resize = true;
+	float resize_ratio;//0.1 10% 1 100% default is 50% or 1/2 resizing
+	bool allow_resize;
 };
 
 //BEGIN VECTOR LIFECYCLE
@@ -33,6 +33,8 @@ static YoyoVector YoyoInitVector_(uint32_t start_size, uint32_t unit_size, bool 
     result.total_size = 0;
     result.unit_size = unit_size;
     result.total_count = start_size;
+    result.resize_ratio = 0.5f;
+    result.allow_resize = true;
     
     result.at_index = 0;
     result.start_at = -1;

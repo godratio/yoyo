@@ -1,9 +1,10 @@
 #pragma once
 #include <cstdint>
-
+#include <stddef.h>
 #if WINDOWS
 #include "yoyoyo_mem_win.h";
 #elif OSX
+#include "yoyo_mem_osx.h"
 #elif IOS
 #endif
 
