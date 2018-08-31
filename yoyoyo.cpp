@@ -1,10 +1,17 @@
 
 #include "yoyoyo_ascii_string.h"
+#include "yoyoyo_ascii_vector.h"
 #include "yoyo_io.h"
+#include "yoyo_file.h"
+
+#include <vector>
 #include <stdio.h>
 
-int main()
+//TODO(Ray):Finish writing tests 
+int main(void)
 {
+//YOYO STRINGs Examples
+
     MemoryArena* s_arena = PlatformAllocatePartition(MegaBytes(100));
     
     YoyoAString* s = YoyoAsciiStringAllocate("This is a test string");
@@ -13,7 +20,7 @@ int main()
 
     YoyoyoPlatformOutput(true,"PlatformOUTPUT TEST :  %s \n",s->string);
 
-    size_t buf_size = 2048;
+    u32 buf_size = 2048;
     char in_buff[2048];
     YoyoyoPlatformOutputInputPrompt(in_buff,buf_size,true,"Input:");
 
@@ -116,8 +123,53 @@ int main()
     YoyoAString* stripped_ext = YoyoAsciiStripExtension(fake_path_file, s_arena);
     printf("Stripped Extension result :  %s \n",stripped_ext->string);
 
+//END YOYO STRING EXAMPLES
+   
+//BEGIN YOYO VECTOR EXAMPLES
+    YoyoVector y_vec = YoyoInitVector(5,int,false);
+    int temp_mem = 8;
+    for(int i = 0; i < 10;++i)
+    {
+		YoyoPushBack(&y_vec, i);
+        printf(" %d \n",i);
+    }
 
-    //TODO(Ray):Finish writing tests 
-    
+	int* element;
+	while(element = YoyoIterateVector(&y_vec,int))
+	{
+		printf(" %d \n", *element);
+	}
+	YoyoResetVectorIterator(&y_vec);
+	while (element = YoyoIterateVector(&y_vec, int))
+	{
+		printf(" %d \n", *element);
+	}
+	YoyoResetVectorIterator(&y_vec);
+
+	for(int i = 0;i < 10;++i)
+	{
+		int* e = YoyoGetVectorElement(int, &y_vec, i);
+		printf(" %d \n", *e);
+	}
+	int* ep = YoyoPeekVectorElement(int, &y_vec);
+	printf(" %d \n", *ep);
+
+	int n = 100;
+	YoyoSetVectorElement(&y_vec, 0, (void*)&n);
+
+	while (element = YoyoIterateVector(&y_vec, int))
+	{
+		printf(" %d \n", *element);
+	}
+	YoyoResetVectorIterator(&y_vec);
+
+	//TODO(Ray):Finish vector testing :P
+
+    YoyoyoPlatformOutputInputPrompt(in_buff,buf_size,true,"Waiting:");
+//END YOYO VECTOR EXAMPLES    
+
+
+
+
     return 0;
 }

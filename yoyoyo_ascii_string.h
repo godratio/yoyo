@@ -6,6 +6,7 @@
 #include <stdint.h>
 #include <stdio.h>
 #include "./api/api_include.h"
+#include <cstdlib>
 
 #ifdef __cplusplus
 #define APIDEF extern "C"

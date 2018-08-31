@@ -33,7 +33,7 @@ APIDEF void YoyoyoWaitForInput()
 	fgets(buffer, 2048, stdin);
 }
 
-APIDEF void YoyoyoPlatformOutputInputPrompt(char* Buffer,size_t input_buffer_size,b32 UseToggle,const char* FormatString)
+APIDEF void YoyoyoPlatformOutputInputPrompt(char* Buffer,u32 input_buffer_size,b32 UseToggle,const char* FormatString)
 {
 //check input buffer size
     YoyoyoPlatformOutput(true,FormatString);
