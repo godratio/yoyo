@@ -3,7 +3,7 @@
 #include <stdarg.h>
 #include <stdio.h>
 
-static void OutputToConsole(b32 UseToggle,const char* FormatString,va_list list)
+static void OutputToConsole(bool UseToggle,const char* FormatString,va_list list)
 {
     if (UseToggle)
     {
@@ -23,7 +23,7 @@ APIDEF void YoyoyoPlatformOutput(bool use_toggle,const char* FormatString,...)
     va_list List;
 	va_start(List, FormatString);
 	char TextBuffer[100];
-    PlatformOutputToConsole(use_toggle,FormatString, List);
+    OutputToConsole(use_toggle,FormatString, List);
 	va_end(List);
 }
 
@@ -33,7 +33,7 @@ APIDEF void YoyoyoWaitForInput()
 	fgets(buffer, 2048, stdin);
 }
 
-APIDEF void YoyoyoPlatformOutputInputPrompt(char* Buffer,size_t input_buffer_size,b32 UseToggle,const char* FormatString)
+APIDEF void YoyoyoPlatformOutputInputPrompt(char* Buffer,uint32_t input_buffer_size,bool UseToggle,const char* FormatString)
 {
 //check input buffer size
     YoyoyoPlatformOutput(true,FormatString);
