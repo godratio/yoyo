@@ -1,9 +1,11 @@
 #include "yoyoyo.h"
+
 #include "yoyoyo_memory.h"
 #include "yoyoyo_ascii_string.h"
 #include "yoyoyo_ascii_vector.h"
 #include "yoyo_io.h"
 #include "yoyo_file.h"
+#include "yoyoyo_hashtable.h"
 
 #include <vector>
 #include <stdio.h>
@@ -169,7 +171,17 @@ int main(void)
     YoyoyoPlatformOutputInputPrompt(in_buff,buf_size,true,"Waiting:");
 //END YOYO VECTOR EXAMPLES    
 
+//Begin Hash examples
+    int value = 8;
+    char* key = "eight";
+    
+    YoyoHashTable h_t = YoyoInitHashTable(100);
+    YoyoAddElementToHashTable(&h_t,key,&value);
 
+    int* extracted_value = YoyoGetElementByHash(int,&h_t,key);
+    
+	printf("hashtable extracted value is : %d \n", *element);    
+//End hash examples
 
 
     return 0;
