@@ -121,16 +121,16 @@ struct float4
     VM_INLINE float2 xy() const { return SHUFFLE2(*this, 1, 0); }
     VM_INLINE float2 zw() const { return SHUFFLE2(*this, 3, 2); }
 
-    VM_INLINE float2 xx() const { return SHUFFLE2(*this, 1, 0); }
-    VM_INLINE float2 yz() const { return SHUFFLE2(*this, 3, 2); }
-    VM_INLINE float2 wx() const { return SHUFFLE2(*this, 3, 2); }
-    VM_INLINE float2 xz() const { return SHUFFLE2(*this, 3, 2); }
-    VM_INLINE float2 yx() const { return SHUFFLE2(*this, 3, 2); }
-    VM_INLINE float2 yw() const { return SHUFFLE2(*this, 3, 2); }
-    VM_INLINE float2 zx() const { return SHUFFLE2(*this, 3, 2); }
-    VM_INLINE float2 zz() const { return SHUFFLE2(*this, 3, 2); }
+    VM_INLINE float2 xx() const { return SHUFFLE2(*this, 0, 0); }
+    VM_INLINE float2 yz() const { return SHUFFLE2(*this, 2, 1); }
+    VM_INLINE float2 wx() const { return SHUFFLE2(*this, 3, 0); }
+    VM_INLINE float2 xz() const { return SHUFFLE2(*this, 0, 2); }
+    VM_INLINE float2 yx() const { return SHUFFLE2(*this, 1, 0); }
+    VM_INLINE float2 yw() const { return SHUFFLE2(*this, 1, 3); }
+    VM_INLINE float2 zx() const { return SHUFFLE2(*this, 2, 0); }
+    VM_INLINE float2 zz() const { return SHUFFLE2(*this, 2, 2); }
     VM_INLINE float2 wz() const { return SHUFFLE2(*this, 3, 2); }
-    VM_INLINE float2 wy() const { return SHUFFLE2(*this, 3, 2); }
+    VM_INLINE float2 wy() const { return SHUFFLE2(*this, 3, 1); }
     
     VM_INLINE void store(float *p) const { p[0] = x(); p[1] = y(); p[2] = z(); p[3] = w(); }
     void setX(float x)
