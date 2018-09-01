@@ -7,6 +7,8 @@
 #include "yoyo_file.h"
 #include "yoyoyo_hashtable.h"
 #include "yoyoyo_math.h"
+#define CATCH_CONFIG_RUNNER
+#include "./catch2/single_include/catch2/catch.hpp"
 
 #include <stdio.h>
 
@@ -25,7 +27,7 @@ int main(void)
 
     uint32_t buf_size = 2048;
     char in_buff[2048];
-    YoyoyoPlatformOutputInputPrompt(in_buff,buf_size,true,"Input:");
+    //YoyoyoPlatformOutputInputPrompt(in_buff,buf_size,true,"Input:");
 
     YoyoAString* formatted_string = YoyoyoPlatformFormatString(s_arena,"This is a test formatted string %f \n", 0.001f);
     YoyoyoPlatformOutput(true,formatted_string->string);
@@ -168,7 +170,7 @@ int main(void)
 
 	//TODO(Ray):Finish vector testing :P
 
-    YoyoyoPlatformOutputInputPrompt(in_buff,buf_size,true,"Waiting:");
+    //YoyoyoPlatformOutputInputPrompt(in_buff,buf_size,true,"Waiting:");
 //END YOYO VECTOR EXAMPLES    
 
 //Begin Hash examples
@@ -189,8 +191,68 @@ int main(void)
     float3 b = float3(1,1,1);
     float3 c = a + b;
     
-    YoyoyoPlatformOutput(true, "math : x %f y %f z %f",c.x(),c.y(),c.z());
+    YoyoyoPlatformOutput(true, "math : x %f y %f z %f \n",c.x(),c.y(),c.z());
 //End Math Examples
-
+//Some math tests
+    char* args_c = "";
+    int result = Catch::Session().run();
+    
+//END MATH TESTS
     return 0;
+}
+
+//Note(Ray):Const tested values calculated in mathematica
+TEST_CASE( "Math library tests.", "[MATHLIB]" ) {
+    //add
+    float2 a = float2(0,0);
+    float2 b = float2(1,1);
+    float2 c = a + b;
+    REQUIRE( a.x() == 0 );
+    REQUIRE( a.y() == 0 );
+    REQUIRE( c.x() == 1);
+    REQUIRE( c.y() == 1);
+    
+    //length
+    float l = length(c);
+    REQUIRE(l == Approx(1.41421f).margin(0.000001f));
+    //mul
+    float2 d = float2(0.1f,0.1f);
+    float2 e = d * l;
+    REQUIRE(e.x() == Approx(0.141421f).margin(0.000001f));
+    REQUIRE(e.y() == Approx(0.141421f).margin(0.000001f));
+    //div
+    
+    
+    /*
+    SECTION( "Pushing int increases count total count is the same" ) {
+        int test_int = 100;
+        YoyoPushBack(&v, test_int);
+        
+        REQUIRE( v.total_count == 5 );
+        REQUIRE( v.count >= 1 );
+    }
+    
+    SECTION( "resizing bigger changes size and capacity" ) {
+        v.resize( 10 );
+        
+        REQUIRE( v.size() == 10 );
+        REQUIRE( v.capacity() >= 10 );
+    }
+     */
+}
+
+//TODO(Ray):Vector tests.
+TEST_CASE( "Vector tests always resize unless you explicity set them not too.", "[vector]" ) {
+    
+    YoyoVector v = YoyoInitVector(5, int, false);
+    
+    REQUIRE( v.total_count == 5 );
+    REQUIRE( v.count == 0);
+    SECTION( "Pushing int increases count total count is the same" ) {
+        int test_int = 100;
+        YoyoPushBack(&v, test_int);
+        
+        REQUIRE( v.total_count == 5 );
+        REQUIRE( v.count >= 1 );
+    }
 }
