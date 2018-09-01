@@ -469,7 +469,3 @@ VM_INLINE float lengthSq(float4 v) { return dot(v, v); }
 VM_INLINE float4 normalize(float4 v) { return v * (1.0f / length(v)); }
 VM_INLINE float4 lerp(float4 a, float4 b, float t) { return a + (b-a)*t; }
 
-
-
-
-
