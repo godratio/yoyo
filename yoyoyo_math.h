@@ -162,6 +162,7 @@ struct float4
     //VM_INLINE float3 float3i(int x, int y, int z) { return float3((float)x, (float)y, (float)z); }
 };
 
+
 typedef float2 bool2;
 VM_INLINE float2 operator+ (float2 a, float2 b) { a.m = _mm_add_ps(a.m, b.m); return a; }
 VM_INLINE float2 operator- (float2 a, float2 b) { a.m = _mm_sub_ps(a.m, b.m); return a; }
@@ -301,7 +302,6 @@ VM_INLINE float lengthSq(float3 v) { return dot(v, v); }
 VM_INLINE float3 normalize(float3 v) { return v * (1.0f / length(v)); }
 VM_INLINE float3 lerp(float3 a, float3 b, float t) { return a + (b-a)*t; }
 
-
 VM_INLINE float4 clamp(float4 t, float4 a, float4 b) { return min(max(t, a), b); }
 VM_INLINE float sum(float4 v) { return v.x() + v.y() + v.z(); }
 VM_INLINE float dot(float4 a, float4 b) { return sum(a*b); }
@@ -313,9 +313,22 @@ VM_INLINE float4 lerp(float4 a, float4 b, float t) { return a + (b-a)*t; }
 VM_INLINE float distance(float3 a, float3 b) { return length(b - a); }
 VM_INLINE float power(float a, float p) { return pow(a, p); }
 
-//TODO(Ray):temporary
-typedef float4 quaternion;
+VM_INLINE float sine(float x) { return sinf(x); }
+VM_INLINE float2 sine(float2 x) { return float2(sinf(x.x()), sinf(x.y())); }
+VM_INLINE float3 sine(float3 x) { return float3(sinf(x.x()), sinf(x.y()), sinf(x.z())); }
+VM_INLINE float4 sine(float4 x) { return float4(sinf(x.x()), sinf(x.y()), sinf(x.z()), sinf(x.w())); }
 
+VM_INLINE float cosine(float x) { return cosf(x); }
+VM_INLINE float2 cosine(float2 x) { return float2(cosf(x.x()), cosf(x.y())); }
+VM_INLINE float3 cosine(float3 x) { return float3(cosf(x.x()), cosf(x.y()), cosf(x.z())); }
+VM_INLINE float4 cosine(float4 x) { return float4(cosf(x.x()), cosf(x.y()), cosf(x.z()), cosf(x.w())); }
+
+VM_INLINE void sincos(float x,float* s,float* c) { *s = sin(x); *c = cos(x); }
+VM_INLINE void sincos(float2 x,float2* s,float2* c) { *s = sine(x); *c = cosine(x); }
+VM_INLINE void sincos(float3 x,float3* s,float3* c) { *s = sine(x); *c = cosine(x); }
+VM_INLINE void sincos(float4 x,float4* s,float4* c) { *s = sine(x); *c = cosine(x); }
+
+struct quaternion;
 struct float3x3
 {
     float4 c0;
@@ -332,28 +345,7 @@ struct float3x3
         this->c1 = float4(m01, m11, m21, 0);
         this->c2 = float4(m02, m12, m22, 0);
     }
-    
-    VM_INLINE explicit float3x3(quaternion rotation)
-    {
-        rotation = normalize(rotation);
-
-        float x = rotation.x() * 2.0F;
-        float y = rotation.y() * 2.0F;
-        float z = rotation.z() * 2.0F;
-        float xx = rotation.x() * x;
-        float yy = rotation.y() * y;
-        float zz = rotation.z() * z;
-        float xy = rotation.x() * y;
-        float xz = rotation.x() * z;
-        float yz = rotation.y() * z;
-        float wx = rotation.w() * x;
-        float wy = rotation.w() * y;
-        float wz = rotation.w() * z;
-
-        c0 = float4(1.0f - (yy + zz), xy + wz, xz - wy,0);
-        c1 = float4(xy - wz, 1.0f - (xx + zz), yz + wx,0);
-        c2 = float4(xz + wy, yz - wx, 1.0f - (xx + yy),0);
-    }
+    float3x3(quaternion rotation);
 };
 
 struct float4x4
@@ -382,14 +374,7 @@ struct float4x4
         c2 = (rotation.c2);
         c3 = float4(translation,1.0f);
     }
-    VM_INLINE explicit float4x4(quaternion rotation, float3 translation)
-    {
-        float3x3 rot = float3x3(rotation);
-        c0 = (rot.c0);
-        c1 = (rot.c1);
-        c2 = (rot.c2);
-        c3 = float4(translation, 1.0f);
-    }
+    
 };
 
 /*
@@ -406,7 +391,6 @@ public static readonly float4x4 identity = new float4x4(1.0f, 0.0f, 0.0f, 0.0f, 
 /// <summary>float4x4 zero value.</summary>
 public static readonly float4x4 zero = new float4x4(0.0f, 0.0f, 0.0f, 0.0f,   0.0f, 0.0f, 0.0f, 0.0f,   0.0f, 0.0f, 0.0f, 0.0f,   0.0f, 0.0f, 0.0f, 0.0f);
 */
-
 
 //mul
 VM_INLINE float4x4 operator * (float4x4 lhs, float4x4 rhs) { return float4x4 (lhs.c0 * rhs.c0, lhs.c1 * rhs.c1, lhs.c2 * rhs.c2, lhs.c3 * rhs.c3); }
@@ -437,6 +421,207 @@ VM_INLINE float4x4 operator / (float lhs, float4x4 rhs) { return float4x4 (lhs /
 //dec
 //VM_INLINE float4x4 operator -- (float4x4 val) { return new float4x4 (--val.c0, --val.c1, --val.c2, --val.c3); }
 
+struct quaternion
+{
+    __m128 m;
+    // Constructors.
+    VM_INLINE quaternion() {}
+    VM_INLINE explicit quaternion(const float *p) { m = _mm_set_ps(p[3], p[2], p[1], p[0]); }
+    VM_INLINE explicit quaternion(float x, float y, float z,float w) { m = _mm_set_ps(w, z, y, x); }
+    VM_INLINE explicit quaternion(float4 x) { m = _mm_set_ps(x.w(), x.z(), x.y(), x.x()); }
+    
+    VM_INLINE explicit quaternion(float x) { m = _mm_set_ps(x, x, x, x); }
+    VM_INLINE explicit quaternion(__m128 v) { m = v; }
+    VM_INLINE explicit quaternion(float3 a,float b){m = _mm_set_ps(a.x(),a.y(),a.x(),b);}
+    VM_INLINE explicit quaternion(float2 a,float2 b){m = _mm_set_ps(a.x(),a.y(),b.x(),b.y());}
+
+//The matrix must be orthonormal.
+    VM_INLINE explicit quaternion(float3x3 m)
+    {
+        quaternion value;
+        float4 u = m.c0;
+        float4 v = m.c1;
+        float4 w = m.c2;
+
+        if (u.x() >= 0.0f)
+        {
+            float t = v.y() + w.z();
+            if (t >= 0.0f)
+                this->m = _mm_set_ps(v.z() - w.y(), w.x() - u.z(), u.y() - v.x(), 1.0f + u.x() + t);
+            else
+                this->m = _mm_set_ps(1.0f + u.x() - t,  u.y() + v.x(),  w.x() + u.z(), v.z() - w.y());
+        }
+        else
+        {
+            float t = v.y() - w.z();
+            if (t >= 0.0f)
+                this->m = _mm_set_ps(u.y() + v.x(),  1.0f - u.x() + t,  v.z() + w.y(), w.x() - u.z());
+            else
+                this->m = _mm_set_ps(w.x() + u.z(),  v.z() + w.y(),  1.0f - u.x() - t, u.y() - v.x());
+        }
+        float4 q = normalize(float4(this->m));
+        this->m =  _mm_set_ps(q.x(),q.y(),q.z(),q.w());
+    }
+
+        // Construct unit quaternion from rigid-transformation matrix. The matrix must be orthonormal.
+
+    VM_INLINE quaternion(float4x4 m)
+    {
+        float4 u = m.c0;
+        float4 v = m.c1;
+        float4 w = m.c2;
+
+        if (u.x() >= 0.0f)
+        {
+            float t = v.y() + w.z();
+            if (t >= 0.0f)
+                this->m = _mm_set_ps(v.z() - w.y(), w.x() - u.z(), u.y() - v.x(), 1.0f + u.x() + t);
+            else
+                this->m = _mm_set_ps(1.0f + u.x() - t,  u.y() + v.x(),  w.x() + u.z(), v.z() - w.y());
+        }
+        else
+        {
+            float t = v.y() - w.z();
+            if (t >= 0.0f)
+                this->m = _mm_set_ps(u.y() + v.x(),  1.0f - u.x() + t,  v.z() + w.y(), w.x() - u.z());
+            else
+                this->m = _mm_set_ps(w.x() + u.z(),  v.z() + w.y(),  1.0f - u.x() - t, u.y() - v.x());
+        }
+        float4 q = normalize(float4(this->m));
+        this->m =  _mm_set_ps(q.x(),q.y(),q.z(),q.w());
+    }
+    
+    VM_INLINE float x() const { return _mm_cvtss_f32(m); }
+    VM_INLINE float y() const { return _mm_cvtss_f32(_mm_shuffle_ps(m, m, _MM_SHUFFLE(1, 1, 1, 1))); }
+    VM_INLINE float z() const { return _mm_cvtss_f32(_mm_shuffle_ps(m, m, _MM_SHUFFLE(2, 2, 2, 2))); }
+    VM_INLINE float w() const { return _mm_cvtss_f32(_mm_shuffle_ps(m, m, _MM_SHUFFLE(3, 3, 3, 3))); }
+
+    VM_INLINE float3 xyz() const { return SHUFFLE3(*this, 2, 1, 0); }
+    VM_INLINE float4 yzxw() const { return SHUFFLE4(*this, 1, 2, 0, 3); }
+    VM_INLINE float4 zxyw() const { return SHUFFLE4(*this, 2, 0, 1, 3); }
+    VM_INLINE float2 xy() const { return SHUFFLE2(*this, 1, 0); }
+    VM_INLINE float2 zw() const { return SHUFFLE2(*this, 3, 2); }
+
+    VM_INLINE float2 xx() const { return SHUFFLE2(*this, 0, 0); }
+    VM_INLINE float2 yz() const { return SHUFFLE2(*this, 2, 1); }
+    VM_INLINE float2 wx() const { return SHUFFLE2(*this, 3, 0); }
+    VM_INLINE float2 xz() const { return SHUFFLE2(*this, 0, 2); }
+    VM_INLINE float2 yx() const { return SHUFFLE2(*this, 1, 0); }
+    VM_INLINE float2 yw() const { return SHUFFLE2(*this, 1, 3); }
+    VM_INLINE float2 zx() const { return SHUFFLE2(*this, 2, 0); }
+    VM_INLINE float2 zz() const { return SHUFFLE2(*this, 2, 2); }
+    VM_INLINE float2 wz() const { return SHUFFLE2(*this, 3, 2); }
+    VM_INLINE float2 wy() const { return SHUFFLE2(*this, 3, 1); }
+    
+    VM_INLINE void store(float *p) const { p[0] = x(); p[1] = y(); p[2] = z(); p[3] = w(); }
+    VM_INLINE quaternion static identity(){return quaternion(0,0,0,1);}
+    void setX(float x)
+    {
+        m = _mm_move_ss(m, _mm_set_ss(x));
+    }
+    void setY(float y)
+    {
+        __m128 t = _mm_move_ss(m, _mm_set_ss(y));
+        t = _mm_shuffle_ps(t, t, _MM_SHUFFLE(3, 2, 0, 0));
+        m = _mm_move_ss(t, m);
+    }
+    void setZ(float z)
+    {
+        __m128 t = _mm_move_ss(m, _mm_set_ss(z));
+        t = _mm_shuffle_ps(t, t, _MM_SHUFFLE(3, 0, 1, 0));
+        m = _mm_move_ss(t, m);
+    }
+    void setW(float w)
+    {
+        __m128 t = _mm_move_ss(m, _mm_set_ss(w));
+        t = _mm_shuffle_ps(t, t, _MM_SHUFFLE(0, 2, 1, 0));
+        m = _mm_move_ss(t, m);
+    }
+    //VM_INLINE float operator[] (size_t i) const { return m.m128_f32[i]; };
+    //VM_INLINE float& operator[] (size_t i) { return m.m128_f32[i]; };
+    //VM_INLINE float3 float3i(int x, int y, int z) { return float3((float)x, (float)y, (float)z); }
+};
+
+//TODO(Ray):Some quaternion operators here need to be changed they do not work as regular euclidian math as they
+//are complex numbers (4d)math
+typedef quaternion boolq;
+VM_INLINE quaternion operator+ (quaternion a, quaternion b) { a.m = _mm_add_ps(a.m, b.m); return a; }
+VM_INLINE quaternion operator+ (quaternion a, float b) { a.m = _mm_add_ps(a.m, _mm_set1_ps(b)); return a; }
+VM_INLINE quaternion operator+ (float  a, quaternion b) { b.m = _mm_add_ps( _mm_set1_ps(a),b.m); return b; }
+
+VM_INLINE quaternion operator- (quaternion a, quaternion b) { a.m = _mm_sub_ps(a.m, b.m); return a; }
+VM_INLINE quaternion operator- (quaternion a, float b) { a.m = _mm_sub_ps(a.m, _mm_set1_ps(b)); return a; }
+VM_INLINE quaternion operator- (float  a, quaternion b) { b.m = _mm_sub_ps( _mm_set1_ps(a),b.m); return b; }
+
+VM_INLINE quaternion operator* (quaternion a, quaternion b) { a.m = _mm_mul_ps(a.m, b.m); return a; }
+VM_INLINE quaternion operator* (quaternion a, float b) { a.m = _mm_mul_ps(a.m, _mm_set1_ps(b)); return a; }
+VM_INLINE quaternion operator* (float a, quaternion b) { b.m = _mm_mul_ps(_mm_set1_ps(a), b.m); return b; }
+
+VM_INLINE quaternion operator/ (quaternion a, quaternion b) { a.m = _mm_div_ps(a.m, b.m); return a; }
+VM_INLINE quaternion operator/ (quaternion a, float b) { a.m = _mm_div_ps(a.m, _mm_set1_ps(b)); return a; }
+VM_INLINE quaternion operator/ (float a, quaternion b) { b.m = _mm_div_ps(_mm_set1_ps(a), b.m); return b; }
+
+VM_INLINE quaternion& operator+= (quaternion &a, quaternion b) { a = a + b; return a; }
+VM_INLINE quaternion& operator-= (quaternion &a, quaternion b) { a = a - b; return a; }
+
+VM_INLINE quaternion& operator*= (quaternion &a, quaternion b) { a = a * b; return a; }
+VM_INLINE quaternion& operator*= (quaternion &a, float b) { a = a * b; return a; }
+
+VM_INLINE quaternion& operator/= (quaternion &a, quaternion b) { a = a / b; return a; }
+VM_INLINE quaternion& operator/= (quaternion &a, float b) { a = a / b; return a; }
+
+VM_INLINE boolq operator==(quaternion a, quaternion b) { a.m = _mm_cmpeq_ps(a.m, b.m); return a; }
+VM_INLINE boolq operator!=(quaternion a, quaternion b) { a.m = _mm_cmpneq_ps(a.m, b.m); return a; }
+VM_INLINE boolq operator< (quaternion a, quaternion b) { a.m = _mm_cmplt_ps(a.m, b.m); return a; }
+VM_INLINE boolq operator> (quaternion a, quaternion b) { a.m = _mm_cmpgt_ps(a.m, b.m); return a; }
+VM_INLINE boolq operator<=(quaternion a, quaternion b) { a.m = _mm_cmple_ps(a.m, b.m); return a; }
+VM_INLINE boolq operator>=(quaternion a, quaternion b) { a.m = _mm_cmpge_ps(a.m, b.m); return a; }
+VM_INLINE quaternion min(quaternion a, quaternion b) { a.m = _mm_min_ps(a.m, b.m); return a; }
+VM_INLINE quaternion max(quaternion a, quaternion b) { a.m = _mm_max_ps(a.m, b.m); return a; }
+VM_INLINE quaternion operator- (quaternion a) { return quaternion(_mm_setzero_ps()) - a; }
+//VM_INLINE quaternion abs(quaternion v) { v.m = _mm_andnot_ps(vsignbits, v.m); return v; }
+// Returns a 3-bit code where bit0..bit2 is X..Z
+VM_INLINE unsigned mask(quaternion v) { return _mm_movemask_ps(v.m) & 7; }
+// Once we have a comparison, we can branch based on its results:
+VM_INLINE bool any(boolq v) { return mask(v) != 0; }
+VM_INLINE bool all(boolq v) { return mask(v) == 7; }
+
+VM_INLINE quaternion clamp(quaternion t, quaternion a, quaternion b) { return min(max(t, a), b); }
+VM_INLINE float sum(quaternion v) { return v.x() + v.y() + v.z(); }
+VM_INLINE float dot(quaternion a, quaternion b) { return sum(a*b); }
+VM_INLINE float length(quaternion v) { return sqrtf(dot(v, v)); }
+VM_INLINE float lengthSq(quaternion v) { return dot(v, v); }
+VM_INLINE quaternion normalize(quaternion v) { return v * (1.0f / length(v)); }
+VM_INLINE quaternion lerp(quaternion a, quaternion b, float t) { return a + (b-a)*t; }
+VM_INLINE quaternion axis_angle(float3 axis, float angle)
+{
+    float sina, cosa;
+    sincos(0.5f * angle,&sina,&cosa);
+    return quaternion(float4(normalize(axis) * sina, cosa));
+}
+
+VM_INLINE float3x3::float3x3(quaternion rotation)
+{
+    rotation = normalize(rotation);
+    
+    float x = rotation.x() * 2.0F;
+    float y = rotation.y() * 2.0F;
+    float z = rotation.z() * 2.0F;
+    float xx = rotation.x() * x;
+    float yy = rotation.y() * y;
+    float zz = rotation.z() * z;
+    float xy = rotation.x() * y;
+    float xz = rotation.x() * z;
+    float yz = rotation.y() * z;
+    float wx = rotation.w() * x;
+    float wy = rotation.w() * y;
+    float wz = rotation.w() * z;
+    
+    c0 = float4(1.0f - (yy + zz), xy + wz, xz - wy,0);
+    c1 = float4(xy - wz, 1.0f - (xx + zz), yz + wx,0);
+    c2 = float4(xz + wy, yz - wx, 1.0f - (xx + yy),0);
+}
+
 VM_INLINE float4x4 scale(float s)
 {
     return float4x4(s,    0.0f, 0.0f, 0.0f,
@@ -444,7 +629,6 @@ VM_INLINE float4x4 scale(float s)
                     0.0f, 0.0f, s,    0.0f,
                     0.0f, 0.0f, 0.0f, 1.0f);
 }
-
 
 VM_INLINE float4x4 scale(float x, float y, float z)
 {
