@@ -108,7 +108,9 @@ struct float4
     VM_INLINE explicit float4(float x, float y, float z,float w) { m = _mm_set_ps(w, z, y, x); }
     VM_INLINE explicit float4(float x) { m = _mm_set_ps(x, x, x, x); }
     VM_INLINE explicit float4(__m128 v) { m = v; }
+    VM_INLINE explicit float4(float3 a,float b){m = _mm_set_ps(a.x(),a.y(),a.x(),b);}
     VM_INLINE explicit float4(float2 a,float2 b){m = _mm_set_ps(a.x(),a.y(),b.x(),b.y());}
+
 
     VM_INLINE float x() const { return _mm_cvtss_f32(m); }
     VM_INLINE float y() const { return _mm_cvtss_f32(_mm_shuffle_ps(m, m, _MM_SHUFFLE(1, 1, 1, 1))); }
@@ -160,44 +162,6 @@ struct float4
     //VM_INLINE float3 float3i(int x, int y, int z) { return float3((float)x, (float)y, (float)z); }
 };
 
-struct float4x4
-{
-    float4 c0;
-    float4 c1;
-    float4 c2;
-    float4 c3;
-    VM_INLINE float4x4() {}
-    VM_INLINE explicit float4x4(float4 c0, float4 c1, float4 c2,float4 c3) { this->c0 = c0;this->c1 = c1;this->c2 = c2;this->c3 = c3; }
-    VM_INLINE explicit float4x4(float m00, float m01, float m02, float m03,
-                                float m10, float m11, float m12, float m13,
-                                float m20, float m21, float m22, float m23,
-                                float m30, float m31, float m32, float m33)
-        { 
-            this->c0 = float4(m00, m10, m20, m30);
-            this->c1 = float4(m01, m11, m21, m31);
-            this->c2 = float4(m02, m12, m22, m32);
-            this->c3 = float4(m03, m13, m23, m33);
-        }
-    
-
-};
-
-/*
-YoyoAString YoyoFloat4x4ToString()
-        {
-            return string.Format("float4x4({0}f, {1}f, {2}f, {3}f,  {4}f, {5}f, {6}f, {7}f,  {8}f, {9}f, {10}f, {11}f,  {12}f, {13}f, {14}f, {15}f)", c0.x, c1.x, c2.x, c3.x, c0.y, c1.y, c2.y, c3.y, c0.z, c1.z, c2.z, c3.z, c0.w, c1.w, c2.w, c3.w);
-        }
-*/
-
-/*
-/// <summary>float4x4 identity transform.</summary>
-public static readonly float4x4 identity = new float4x4(1.0f, 0.0f, 0.0f, 0.0f,   0.0f, 1.0f, 0.0f, 0.0f,   0.0f, 0.0f, 1.0f, 0.0f,   0.0f, 0.0f, 0.0f, 1.0f);
-
-/// <summary>float4x4 zero value.</summary>
-public static readonly float4x4 zero = new float4x4(0.0f, 0.0f, 0.0f, 0.0f,   0.0f, 0.0f, 0.0f, 0.0f,   0.0f, 0.0f, 0.0f, 0.0f,   0.0f, 0.0f, 0.0f, 0.0f);
-*/
-
-
 typedef float2 bool2;
 VM_INLINE float2 operator+ (float2 a, float2 b) { a.m = _mm_add_ps(a.m, b.m); return a; }
 VM_INLINE float2 operator- (float2 a, float2 b) { a.m = _mm_sub_ps(a.m, b.m); return a; }
@@ -228,7 +192,6 @@ VM_INLINE unsigned mask(float2 v) { return _mm_movemask_ps(v.m) & 7; }
 // Once we have a comparison, we can branch based on its results:
 VM_INLINE bool any(bool2 v) { return mask(v) != 0; }
 VM_INLINE bool all(bool2 v) { return mask(v) == 7; }
-
 
 typedef float3 bool3;
 VM_INLINE float3 operator+ (float3 a, float3 b) { a.m = _mm_add_ps(a.m, b.m); return a; }
@@ -321,6 +284,129 @@ VM_INLINE unsigned mask(float4 v) { return _mm_movemask_ps(v.m) & 7; }
 VM_INLINE bool any(bool4 v) { return mask(v) != 0; }
 VM_INLINE bool all(bool4 v) { return mask(v) == 7; }
 
+//hlsl funcs
+VM_INLINE float2 clamp(float2 t, float2 a, float2 b) { return min(max(t, a), b); }
+VM_INLINE float sum(float2 v) { return v.x() + v.y();}
+VM_INLINE float dot(float2 a, float2 b) { return sum(a*b); }
+VM_INLINE float length(float2 v) { return sqrtf(dot(v, v)); }
+VM_INLINE float lengthSq(float2 v) { return dot(v, v); }
+VM_INLINE float2 normalize(float2 v) { return v * (1.0f / length(v)); }
+VM_INLINE float2 lerp(float2 a, float2 b, float t) { return a + (b-a)*t; }
+
+VM_INLINE float3 clamp(float3 t, float3 a, float3 b) { return min(max(t, a), b); }
+VM_INLINE float sum(float3 v) { return v.x() + v.y() + v.z(); }
+VM_INLINE float dot(float3 a, float3 b) { return sum(a*b); }
+VM_INLINE float length(float3 v) { return sqrtf(dot(v, v)); }
+VM_INLINE float lengthSq(float3 v) { return dot(v, v); }
+VM_INLINE float3 normalize(float3 v) { return v * (1.0f / length(v)); }
+VM_INLINE float3 lerp(float3 a, float3 b, float t) { return a + (b-a)*t; }
+
+
+VM_INLINE float4 clamp(float4 t, float4 a, float4 b) { return min(max(t, a), b); }
+VM_INLINE float sum(float4 v) { return v.x() + v.y() + v.z(); }
+VM_INLINE float dot(float4 a, float4 b) { return sum(a*b); }
+VM_INLINE float length(float4 v) { return sqrtf(dot(v, v)); }
+VM_INLINE float lengthSq(float4 v) { return dot(v, v); }
+VM_INLINE float4 normalize(float4 v) { return v * (1.0f / length(v)); }
+VM_INLINE float4 lerp(float4 a, float4 b, float t) { return a + (b-a)*t; }
+
+VM_INLINE float distance(float3 a, float3 b) { return length(b - a); }
+VM_INLINE float power(float a, float p) { return pow(a, p); }
+
+//TODO(Ray):temporary
+typedef float4 quaternion;
+
+struct float3x3
+{
+    float4 c0;
+    float4 c1;
+    float4 c2;
+    VM_INLINE float3x3() {}
+    VM_INLINE explicit float3x3(float a, float b, float c) { this->c0.setX(a);this->c1.setY(b);this->c2.setZ(c);}
+    VM_INLINE explicit float3x3(float3 c0, float3 c1, float3 c2) { this->c0 = float4(c0,0);this->c1 = float4(c1,0);this->c2 = float4(c2,0);}
+    VM_INLINE explicit float3x3(float m00, float m01, float m02, 
+                                float m10, float m11, float m12, 
+                                float m20, float m21, float m22)
+    {
+        this->c0 = float4(m00, m10, m20, 0);
+        this->c1 = float4(m01, m11, m21, 0);
+        this->c2 = float4(m02, m12, m22, 0);
+    }
+    
+    VM_INLINE explicit float3x3(quaternion rotation)
+    {
+        rotation = normalize(rotation);
+
+        float x = rotation.x() * 2.0F;
+        float y = rotation.y() * 2.0F;
+        float z = rotation.z() * 2.0F;
+        float xx = rotation.x() * x;
+        float yy = rotation.y() * y;
+        float zz = rotation.z() * z;
+        float xy = rotation.x() * y;
+        float xz = rotation.x() * z;
+        float yz = rotation.y() * z;
+        float wx = rotation.w() * x;
+        float wy = rotation.w() * y;
+        float wz = rotation.w() * z;
+
+        c0 = float4(1.0f - (yy + zz), xy + wz, xz - wy,0);
+        c1 = float4(xy - wz, 1.0f - (xx + zz), yz + wx,0);
+        c2 = float4(xz + wy, yz - wx, 1.0f - (xx + yy),0);
+    }
+};
+
+struct float4x4
+{
+    float4 c0;
+    float4 c1;
+    float4 c2;
+    float4 c3;
+    VM_INLINE float4x4() {}
+    VM_INLINE explicit float4x4(float a, float b, float c,float d) { this->c0.setX(a);this->c1.setY(b);this->c2.setZ(c);this->c3.setW(d);}
+    VM_INLINE explicit float4x4(float4 c0, float4 c1, float4 c2,float4 c3) { this->c0 = c0;this->c1 = c1;this->c2 = c2;this->c3 = c3; }
+    VM_INLINE explicit float4x4(float m00, float m01, float m02, float m03,
+                                float m10, float m11, float m12, float m13,
+                                float m20, float m21, float m22, float m23,
+                                float m30, float m31, float m32, float m33)
+    { 
+        this->c0 = float4(m00, m10, m20, m30);
+        this->c1 = float4(m01, m11, m21, m31);
+        this->c2 = float4(m02, m12, m22, m32);
+        this->c3 = float4(m03, m13, m23, m33);
+    }
+    VM_INLINE explicit float4x4(float3x3 rotation, float3 translation)
+    {
+        c0 = (rotation.c0);
+        c1 = (rotation.c1);
+        c2 = (rotation.c2);
+        c3 = float4(translation,1.0f);
+    }
+    VM_INLINE explicit float4x4(quaternion rotation, float3 translation)
+    {
+        float3x3 rot = float3x3(rotation);
+        c0 = (rot.c0);
+        c1 = (rot.c1);
+        c2 = (rot.c2);
+        c3 = float4(translation, 1.0f);
+    }
+};
+
+/*
+YoyoAString YoyoFloat4x4ToString()
+        {
+            return string.Format("float4x4({0}f, {1}f, {2}f, {3}f,  {4}f, {5}f, {6}f, {7}f,  {8}f, {9}f, {10}f, {11}f,  {12}f, {13}f, {14}f, {15}f)", c0.x, c1.x, c2.x, c3.x, c0.y, c1.y, c2.y, c3.y, c0.z, c1.z, c2.z, c3.z, c0.w, c1.w, c2.w, c3.w);
+        }
+*/
+
+/*
+/// <summary>float4x4 identity transform.</summary>
+public static readonly float4x4 identity = new float4x4(1.0f, 0.0f, 0.0f, 0.0f,   0.0f, 1.0f, 0.0f, 0.0f,   0.0f, 0.0f, 1.0f, 0.0f,   0.0f, 0.0f, 0.0f, 1.0f);
+
+/// <summary>float4x4 zero value.</summary>
+public static readonly float4x4 zero = new float4x4(0.0f, 0.0f, 0.0f, 0.0f,   0.0f, 0.0f, 0.0f, 0.0f,   0.0f, 0.0f, 0.0f, 0.0f,   0.0f, 0.0f, 0.0f, 0.0f);
+*/
+
 
 //mul
 VM_INLINE float4x4 operator * (float4x4 lhs, float4x4 rhs) { return float4x4 (lhs.c0 * rhs.c0, lhs.c1 * rhs.c1, lhs.c2 * rhs.c2, lhs.c3 * rhs.c3); }
@@ -342,7 +428,6 @@ VM_INLINE float4x4 operator / (float4x4 lhs, float4x4 rhs) { return float4x4 (lh
 VM_INLINE float4x4 operator / (float4x4 lhs, float rhs) { return float4x4 (lhs.c0 / rhs, lhs.c1 / rhs, lhs.c2 / rhs, lhs.c3 / rhs); }
 VM_INLINE float4x4 operator / (float lhs, float4x4 rhs) { return float4x4 (lhs / rhs.c0, lhs / rhs.c1, lhs / rhs.c2, lhs / rhs.c3); }
 
-
 //mod
 //VM_INLINE float4x4 operator % (float4x4 lhs, float4x4 rhs) { return new float4x4 (lhs.c0 % rhs.c0, lhs.c1 % rhs.c1, lhs.c2 % rhs.c2, lhs.c3 % rhs.c3); }
 //VM_INLINE float4x4 operator % (float4x4 lhs, float rhs) { return new float4x4 (lhs.c0 % rhs, lhs.c1 % rhs, lhs.c2 % rhs, lhs.c3 % rhs); }
@@ -351,6 +436,72 @@ VM_INLINE float4x4 operator / (float lhs, float4x4 rhs) { return float4x4 (lhs /
 //VM_INLINE float4x4 operator ++ (float4x4 val) { return new float4x4 (++val.c0, ++val.c1, ++val.c2, ++val.c3); }
 //dec
 //VM_INLINE float4x4 operator -- (float4x4 val) { return new float4x4 (--val.c0, --val.c1, --val.c2, --val.c3); }
+
+VM_INLINE float4x4 scale(float s)
+{
+    return float4x4(s,    0.0f, 0.0f, 0.0f,
+                    0.0f, s,    0.0f, 0.0f,
+                    0.0f, 0.0f, s,    0.0f,
+                    0.0f, 0.0f, 0.0f, 1.0f);
+}
+
+
+VM_INLINE float4x4 scale(float x, float y, float z)
+{
+    return float4x4(x,    0.0f, 0.0f, 0.0f,
+                    0.0f, y,    0.0f, 0.0f,
+                    0.0f, 0.0f, z,    0.0f,
+                    0.0f, 0.0f, 0.0f, 1.0f);
+}
+
+VM_INLINE float4x4 scale(float3 scales)
+{
+    return scale(scales.x(), scales.y(), scales.z());
+}
+
+VM_INLINE float4x4 translate(float3 vector)
+{
+    return float4x4(float4(1.0f, 0.0f, 0.0f, 0.0f),
+                    float4(0.0f, 1.0f, 0.0f, 0.0f),
+                    float4(0.0f, 0.0f, 1.0f, 0.0f),
+                    float4(vector.x(), vector.y(), vector.z(), 1.0f));
+}
+
+VM_INLINE float3x3 look_rotation(float3 forward, float3 up)
+{
+    const float epsilon = 0.000001F;
+    float3 z = forward;
+    // compute u0
+    float mag = length(z);
+    if (mag < epsilon)
+        return float3x3(1,1,1);
+    z /= mag;
+
+    float3 x = cross(up, z);
+    mag = length(x);
+    if (mag < epsilon)
+        return float3x3(1,1,1);
+    x /= mag;
+
+    float3 y = cross(z, x);
+    float yLength = length(y);
+    if (yLength < 0.9F || yLength > 1.1F)
+        return float3x3(1,1,1);
+    
+    return float3x3(x, y, z);
+}
+
+VM_INLINE float4x4 look_at(float3 eye, float3 target, float3 up)
+{
+    float3x3 rot = look_rotation(target - eye, up);
+
+    float4x4 matrix;
+    matrix.c0 = rot.c0;
+    matrix.c1 = rot.c1;
+    matrix.c2 = rot.c2;
+    matrix.c3 = float4(eye, 1.0F);
+    return matrix;
+}
 
 VM_INLINE float3 rotate(float4x4 a, float3 b)
 {
@@ -443,29 +594,3 @@ VM_INLINE float4x4 inverse(float4x4 m)
 
     return res;
 }
-
-//hlsl funcs
-VM_INLINE float2 clamp(float2 t, float2 a, float2 b) { return min(max(t, a), b); }
-VM_INLINE float sum(float2 v) { return v.x() + v.y();}
-VM_INLINE float dot(float2 a, float2 b) { return sum(a*b); }
-VM_INLINE float length(float2 v) { return sqrtf(dot(v, v)); }
-VM_INLINE float lengthSq(float2 v) { return dot(v, v); }
-VM_INLINE float2 normalize(float2 v) { return v * (1.0f / length(v)); }
-VM_INLINE float2 lerp(float2 a, float2 b, float t) { return a + (b-a)*t; }
-
-VM_INLINE float3 clamp(float3 t, float3 a, float3 b) { return min(max(t, a), b); }
-VM_INLINE float sum(float3 v) { return v.x() + v.y() + v.z(); }
-VM_INLINE float dot(float3 a, float3 b) { return sum(a*b); }
-VM_INLINE float length(float3 v) { return sqrtf(dot(v, v)); }
-VM_INLINE float lengthSq(float3 v) { return dot(v, v); }
-VM_INLINE float3 normalize(float3 v) { return v * (1.0f / length(v)); }
-VM_INLINE float3 lerp(float3 a, float3 b, float t) { return a + (b-a)*t; }
-
-VM_INLINE float4 clamp(float4 t, float4 a, float4 b) { return min(max(t, a), b); }
-VM_INLINE float sum(float4 v) { return v.x() + v.y() + v.z(); }
-VM_INLINE float dot(float4 a, float4 b) { return sum(a*b); }
-VM_INLINE float length(float4 v) { return sqrtf(dot(v, v)); }
-VM_INLINE float lengthSq(float4 v) { return dot(v, v); }
-VM_INLINE float4 normalize(float4 v) { return v * (1.0f / length(v)); }
-VM_INLINE float4 lerp(float4 a, float4 b, float t) { return a + (b-a)*t; }
-

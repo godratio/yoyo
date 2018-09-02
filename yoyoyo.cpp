@@ -223,7 +223,6 @@ TEST_CASE( "Operators", "[MATHLIB]" ) {
 
     SECTION( "scalar *" )
     {
-        //scaler mul
         float2 d = float2(0.1f,0.1f);
         float2 e = d * 10;
         REQUIRE(e.x() == Approx(1.0f).margin(0.000001f));
@@ -232,7 +231,6 @@ TEST_CASE( "Operators", "[MATHLIB]" ) {
 
     SECTION( "*" )
     {
-        //mul
         f =  b * c;
         REQUIRE(f.x() == Approx(1.0f).margin(0.000001f));
         REQUIRE(f.y() == Approx(1.0f).margin(0.000001f));
@@ -240,7 +238,6 @@ TEST_CASE( "Operators", "[MATHLIB]" ) {
 
     SECTION( "/" )
     {
-        //div
         a = float2(1,1);
         b = float2(5,5);
         f = a / b;
@@ -250,7 +247,6 @@ TEST_CASE( "Operators", "[MATHLIB]" ) {
 
     SECTION( "-" )
     {
-        //sub
         a = float2(10,10);
         b = float2(1,1);
         f = a - b;
@@ -260,7 +256,6 @@ TEST_CASE( "Operators", "[MATHLIB]" ) {
 
     SECTION( "*=" )
     {
-//*=
         a = float2(4,1);
         b = float2(1,4);
         a *= b;
@@ -270,7 +265,6 @@ TEST_CASE( "Operators", "[MATHLIB]" ) {
 
     SECTION( "/=" )
     {
-///=
         a = float2(1,1);
         b = float2(3,1);
         a /= b;
@@ -286,7 +280,6 @@ TEST_CASE( "HLSL Functions", "[MATHLIB]" )
     
     SECTION( "length" )
     {
-        //length
         float2 aa = float2(0,0);
         float2 bb = float2(1,1);
         float2 c = aa + bb;
@@ -301,7 +294,6 @@ TEST_CASE( "HLSL Functions", "[MATHLIB]" )
         REQUIRE(a.y() == Approx(1.0f).margin(0.000001f));
     }
 
-
     SECTION( "max" )
     {
         a = float2(1,1);
@@ -309,7 +301,6 @@ TEST_CASE( "HLSL Functions", "[MATHLIB]" )
         a = max(a,b);
         REQUIRE(a.x() == Approx(100.0f).margin(0.000001f));
         REQUIRE(a.y() == Approx(1.0f).margin(0.000001f));
-            
     }
 
     SECTION( "clamp" )
@@ -361,17 +352,163 @@ TEST_CASE( "HLSL Functions", "[MATHLIB]" )
         REQUIRE(a.x() == Approx(50.5f).margin(0.000001f));
         REQUIRE(a.y() == Approx(1.0f).margin(0.000001f));        
     }
+
+    SECTION( "movelh")
+    {
+        float4 a = float4(1,1,0,0);
+        float4 b = float4(2,2,3,3);
+        a = movelh(a,b);
+        REQUIRE(a.x() == Approx(1.0f).margin(0.000001f));
+        REQUIRE(a.y() == Approx(1.0f).margin(0.000001f));
+        REQUIRE(a.z() == Approx(2.0f).margin(0.000001f));
+        REQUIRE(a.w() == Approx(2.0f).margin(0.000001f));
+    }
+
+    SECTION( "movehl")
+    {
+        float4 a = float4(1,1,0,0);
+        float4 b = float4(2,2,3,3);
+        a = movehl(a,b);
+        REQUIRE(a.x() == Approx(0.0f).margin(0.000001f));
+        REQUIRE(a.y() == Approx(0.0f).margin(0.000001f));
+        REQUIRE(a.z() == Approx(3.0f).margin(0.000001f));
+        REQUIRE(a.w() == Approx(3.0f).margin(0.000001f));
+    }
+
 }
+
 TEST_CASE( "Matrices", "[MATHLIB]" )
 {
-    float4 r1 = float4(1,0,0,0);
-    float4 r2 = float4(0,1,0,0);
-    float4 r3 = float4(0,0,1,0);
-    float4 r4 = float4(0,0,0,1);
-    SECTION( "m" )
+    float4 c0 = float4(1,0,0,0);
+    float4 c1 = float4(0,1,0,0);
+    float4 c2 = float4(0,0,1,0);
+    float4 c3 = float4(0,0,0,1);
+    float4x4 a = float4x4(c0,c1,c2,c3);
+
+    SECTION( "identity 4x4" )
     {
+        REQUIRE(a.c0.x() == Approx(1.0f).margin(0.000001f));
+        REQUIRE(a.c1.y() == Approx(1.0f).margin(0.000001f));
+        REQUIRE(a.c2.z() == Approx(1.0f).margin(0.000001f));
+        REQUIRE(a.c3.w() == Approx(1.0f).margin(0.000001f));
+        //TODO(Ray):check all other cells are zero
     }
+
+    SECTION( "transpose 4x4" )
+    {
+        a = transpose(a);
+        REQUIRE(a.c0.x() == Approx(1.0f).margin(0.000001f));
+        REQUIRE(a.c1.y() == Approx(1.0f).margin(0.000001f));
+        REQUIRE(a.c2.z() == Approx(1.0f).margin(0.000001f));
+        REQUIRE(a.c3.w() == Approx(1.0f).margin(0.000001f));
+        //TODO(Ray):check all other cells are zero
+    }
+
+    SECTION( "translate 4x4")
+    {
+        a = translate(float3(0.1f,0.5f,1000.0f));
+        REQUIRE(a.c3.x() == Approx(0.1f).margin(0.000001f));
+        REQUIRE(a.c3.y() == Approx(0.5f).margin(0.000001f));
+        REQUIRE(a.c3.z() == Approx(1000.0f).margin(0.000001f));
+        REQUIRE(a.c3.w() == Approx(1.0f).margin(0.000001f));
+    }
+
+    SECTION( "scale scalar 4x4")
+    {
+        a = scale(1.0f);
+        REQUIRE(a.c0.x() == Approx(1.0f).margin(0.000001f));
+        REQUIRE(a.c1.y() == Approx(1.0f).margin(0.000001f));
+        REQUIRE(a.c2.z() == Approx(1.0f).margin(0.000001f));
+        REQUIRE(a.c3.w() == Approx(1.0f).margin(0.000001f));
+    }
+
+    SECTION( "scale float3 direct 4x4")
+    {
+        a = scale(1.0f,1.0f,1.0f);
+        REQUIRE(a.c0.x() == Approx(1.0f).margin(0.000001f));
+        REQUIRE(a.c1.y() == Approx(1.0f).margin(0.000001f));
+        REQUIRE(a.c2.z() == Approx(1.0f).margin(0.000001f));
+        REQUIRE(a.c3.w() == Approx(1.0f).margin(0.000001f));
+    }
+
+    SECTION( "scale float3 4x4")
+    {
+        a = scale(float3(1.0f,1.0f,1.0f));
+        REQUIRE(a.c0.x() == Approx(1.0f).margin(0.000001f));
+        REQUIRE(a.c1.y() == Approx(1.0f).margin(0.000001f));
+        REQUIRE(a.c2.z() == Approx(1.0f).margin(0.000001f));
+        REQUIRE(a.c3.w() == Approx(1.0f).margin(0.000001f));
+    }
+
+    SECTION( "look_rotation 3x3")
+    {
+        float3 f = float3(0.0f,0.0f,1.0f);
+        float3 u = float3(0.0f,1.0f,0.0f);
+                          
+        float3x3 a = look_rotation(f,u);
+        REQUIRE(a.c0.x() == Approx(1.0f).margin(0.000001f));
+        REQUIRE(a.c1.y() == Approx(1.0f).margin(0.000001f));
+        REQUIRE(a.c2.z() == Approx(1.0f).margin(0.000001f));
+        
+    }
+
+    SECTION( "look_at 4x4")
+    {
+        float3 e = float3(0.0f,0.0f,1.0f);
+        float3 t = float3(0.0f,1.0f,0.0f);
+        float3 u = float3(0.0f,1.0f,0.0f);
+        
+        a = look_at(e,t,u);
+        REQUIRE(a.c0.x() == Approx(1.0f).margin(0.000001f));
+        REQUIRE(a.c1.y() == Approx(1.0f).margin(0.000001f));
+        REQUIRE(a.c2.z() == Approx(1.0f).margin(0.000001f));
+        REQUIRE(a.c3.w() == Approx(1.0f).margin(0.000001f));
+    }
+
+    SECTION( "rotate 4x4")
+    {
+        float4x4 b = float4x4(1,1,1,1);
+        float3 a = float3(0,0,1);
+        a = rotate(b,a);
+        REQUIRE(a.x() == Approx(1.0f).margin(0.000001f));
+        REQUIRE(a.y() == Approx(1.0f).margin(0.000001f));
+        REQUIRE(a.z() == Approx(1.0f).margin(0.000001f));
+    }
+
+    SECTION( "transform 4x4")
+    {
+        float4x4 b = float4x4(1,1,1,1);
+        float3 a = float3(0,0,1);
+        a = transform(b,a);
+        REQUIRE(a.x() == Approx(1.0f).margin(0.000001f));
+        REQUIRE(a.y() == Approx(1.0f).margin(0.000001f));
+        REQUIRE(a.z() == Approx(1.0f).margin(0.000001f));
+    }
+
+    SECTION( "inverse 4x4 ")
+    {
+        float4x4 a = float4x4(1,1,1,1);
+        a = inverse(a);
+        REQUIRE(a.c0.x() == Approx(1.0f).margin(0.000001f));
+        REQUIRE(a.c1.y() == Approx(1.0f).margin(0.000001f));
+        REQUIRE(a.c2.z() == Approx(1.0f).margin(0.000001f));
+        REQUIRE(a.c3.w() == Approx(1.0f).margin(0.000001f));
+    }
+
+    
+/*
+    SECTION( "rotate")
+    {
+        REQUIRE(a.c0.x() == Approx(1.0f).margin(0.000001f));
+        REQUIRE(a.c1.y() == Approx(1.0f).margin(0.000001f));
+        REQUIRE(a.c2.z() == Approx(1.0f).margin(0.000001f));
+        REQUIRE(a.c3.w() == Approx(1.0f).margin(0.000001f));
+        //TODO(Ray):check all other cells are zero
+    }
+*/
+    
 }
+
 //inverse
     
     
