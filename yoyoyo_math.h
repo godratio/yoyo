@@ -118,6 +118,14 @@ struct float4
     VM_INLINE float w() const { return _mm_cvtss_f32(_mm_shuffle_ps(m, m, _MM_SHUFFLE(3, 3, 3, 3))); }
 
     VM_INLINE float3 xyz() const { return SHUFFLE3(*this, 2, 1, 0); }
+    VM_INLINE float4 xyzw() const { return SHUFFLE4(*this, 3, 2, 1, 0); }
+    VM_INLINE float4 yzxz() const { return SHUFFLE4(*this, 2, 0, 2, 1); }
+    VM_INLINE float4 zxyz() const { return SHUFFLE4(*this, 2, 1, 0, 2); }
+    VM_INLINE float4 zxyy() const { return SHUFFLE4(*this, 1, 1, 0, 2); }
+    VM_INLINE float4 yzxy() const { return SHUFFLE4(*this, 1, 2, 0, 1); }
+    VM_INLINE float4 wwwx() const { return SHUFFLE4(*this, 0, 3, 3, 3); }
+    VM_INLINE float4 xyzx() const { return SHUFFLE4(*this, 0, 2, 1, 0); }
+    VM_INLINE float4 wwww() const { return SHUFFLE4(*this, 3, 3, 3, 3); }
     VM_INLINE float4 yzxw() const { return SHUFFLE4(*this, 1, 2, 0, 3); }
     VM_INLINE float4 zxyw() const { return SHUFFLE4(*this, 2, 0, 1, 3); }
     VM_INLINE float2 xy() const { return SHUFFLE2(*this, 1, 0); }
@@ -328,6 +336,16 @@ VM_INLINE void sincos(float2 x,float2* s,float2* c) { *s = sine(x); *c = cosine(
 VM_INLINE void sincos(float3 x,float3* s,float3* c) { *s = sine(x); *c = cosine(x); }
 VM_INLINE void sincos(float4 x,float4* s,float4* c) { *s = sine(x); *c = cosine(x); }
 
+VM_INLINE float sqroot(float a) { return 1.0f / sqrt(a); }
+VM_INLINE float2 sqroot(float2 a) { return float2(sqrt(a.x()),sqrt(a.y())); }
+VM_INLINE float3 sqroot(float3 a) { return float3(sqrt(a.x()),sqrt(a.y()),sqrt(a.z())); }
+VM_INLINE float4 sqroot(float4 a) { return float4(sqrt(a.x()),sqrt(a.y()),sqrt(a.z()),sqrt(a.w())); }
+
+VM_INLINE float  rsqrt(float a)  { return 1.0f / sqrt(a); }
+VM_INLINE float2 rsqrt(float2 a) { return 1.0f / sqroot(a); }
+VM_INLINE float3 rsqrt(float3 a) { return 1.0f / sqroot(a); }
+VM_INLINE float4 rsqrt(float4 a) { return 1.0f / sqroot(a); }
+
 struct quaternion;
 struct float3x3
 {
@@ -497,6 +515,14 @@ struct quaternion
     VM_INLINE float w() const { return _mm_cvtss_f32(_mm_shuffle_ps(m, m, _MM_SHUFFLE(3, 3, 3, 3))); }
 
     VM_INLINE float3 xyz() const { return SHUFFLE3(*this, 2, 1, 0); }
+    VM_INLINE float4 xyzw() const { return SHUFFLE4(*this, 3, 2, 1, 0); }
+    VM_INLINE float4 yzxz() const { return SHUFFLE4(*this, 2, 0, 2, 1); }
+    VM_INLINE float4 zxyz() const { return SHUFFLE4(*this, 2, 1, 0, 2); }
+    VM_INLINE float4 zxyy() const { return SHUFFLE4(*this, 1, 1, 0, 2); }
+    VM_INLINE float4 yzxy() const { return SHUFFLE4(*this, 1, 2, 0, 1); }
+    VM_INLINE float4 wwwx() const { return SHUFFLE4(*this, 0, 3, 3, 3); }
+    VM_INLINE float4 xyzx() const { return SHUFFLE4(*this, 0, 2, 1, 0); }
+    VM_INLINE float4 wwww() const { return SHUFFLE4(*this, 3, 3, 3, 3); }
     VM_INLINE float4 yzxw() const { return SHUFFLE4(*this, 1, 2, 0, 3); }
     VM_INLINE float4 zxyw() const { return SHUFFLE4(*this, 2, 0, 1, 3); }
     VM_INLINE float2 xy() const { return SHUFFLE2(*this, 1, 0); }
@@ -545,59 +571,137 @@ struct quaternion
 //TODO(Ray):Some quaternion operators here need to be changed they do not work as regular euclidian math as they
 //are complex numbers (4d)math
 typedef quaternion boolq;
-VM_INLINE quaternion operator+ (quaternion a, quaternion b) { a.m = _mm_add_ps(a.m, b.m); return a; }
-VM_INLINE quaternion operator+ (quaternion a, float b) { a.m = _mm_add_ps(a.m, _mm_set1_ps(b)); return a; }
-VM_INLINE quaternion operator+ (float  a, quaternion b) { b.m = _mm_add_ps( _mm_set1_ps(a),b.m); return b; }
 
-VM_INLINE quaternion operator- (quaternion a, quaternion b) { a.m = _mm_sub_ps(a.m, b.m); return a; }
-VM_INLINE quaternion operator- (quaternion a, float b) { a.m = _mm_sub_ps(a.m, _mm_set1_ps(b)); return a; }
-VM_INLINE quaternion operator- (float  a, quaternion b) { b.m = _mm_sub_ps( _mm_set1_ps(a),b.m); return b; }
 
-VM_INLINE quaternion operator* (quaternion a, quaternion b) { a.m = _mm_mul_ps(a.m, b.m); return a; }
-VM_INLINE quaternion operator* (quaternion a, float b) { a.m = _mm_mul_ps(a.m, _mm_set1_ps(b)); return a; }
-VM_INLINE quaternion operator* (float a, quaternion b) { b.m = _mm_mul_ps(_mm_set1_ps(a), b.m); return b; }
+VM_INLINE quaternion mul(quaternion a, quaternion b)
+{
+    return quaternion(a.wwww() * b.xyzw() + (a.xyzx() * b.wwwx() + a.yzxy() * b.zxyy()) * float4(1.0f, 1.0f, 1.0f, -1.0f) - a.zxyz() * b.yzxz());
+}
+VM_INLINE quaternion operator* (quaternion a, quaternion b) { a = mul(a,b); return a; }
+VM_INLINE quaternion& operator*= (quaternion &a, quaternion b) {a = a * b; return a; }
 
-VM_INLINE quaternion operator/ (quaternion a, quaternion b) { a.m = _mm_div_ps(a.m, b.m); return a; }
-VM_INLINE quaternion operator/ (quaternion a, float b) { a.m = _mm_div_ps(a.m, _mm_set1_ps(b)); return a; }
-VM_INLINE quaternion operator/ (float a, quaternion b) { b.m = _mm_div_ps(_mm_set1_ps(a), b.m); return b; }
-
-VM_INLINE quaternion& operator+= (quaternion &a, quaternion b) { a = a + b; return a; }
-VM_INLINE quaternion& operator-= (quaternion &a, quaternion b) { a = a - b; return a; }
-
-VM_INLINE quaternion& operator*= (quaternion &a, quaternion b) { a = a * b; return a; }
-VM_INLINE quaternion& operator*= (quaternion &a, float b) { a = a * b; return a; }
-
-VM_INLINE quaternion& operator/= (quaternion &a, quaternion b) { a = a / b; return a; }
-VM_INLINE quaternion& operator/= (quaternion &a, float b) { a = a / b; return a; }
-
-VM_INLINE boolq operator==(quaternion a, quaternion b) { a.m = _mm_cmpeq_ps(a.m, b.m); return a; }
-VM_INLINE boolq operator!=(quaternion a, quaternion b) { a.m = _mm_cmpneq_ps(a.m, b.m); return a; }
-VM_INLINE boolq operator< (quaternion a, quaternion b) { a.m = _mm_cmplt_ps(a.m, b.m); return a; }
-VM_INLINE boolq operator> (quaternion a, quaternion b) { a.m = _mm_cmpgt_ps(a.m, b.m); return a; }
-VM_INLINE boolq operator<=(quaternion a, quaternion b) { a.m = _mm_cmple_ps(a.m, b.m); return a; }
-VM_INLINE boolq operator>=(quaternion a, quaternion b) { a.m = _mm_cmpge_ps(a.m, b.m); return a; }
-VM_INLINE quaternion min(quaternion a, quaternion b) { a.m = _mm_min_ps(a.m, b.m); return a; }
-VM_INLINE quaternion max(quaternion a, quaternion b) { a.m = _mm_max_ps(a.m, b.m); return a; }
-VM_INLINE quaternion operator- (quaternion a) { return quaternion(_mm_setzero_ps()) - a; }
 //VM_INLINE quaternion abs(quaternion v) { v.m = _mm_andnot_ps(vsignbits, v.m); return v; }
 // Returns a 3-bit code where bit0..bit2 is X..Z
 VM_INLINE unsigned mask(quaternion v) { return _mm_movemask_ps(v.m) & 7; }
 // Once we have a comparison, we can branch based on its results:
 VM_INLINE bool any(boolq v) { return mask(v) != 0; }
 VM_INLINE bool all(boolq v) { return mask(v) == 7; }
+//TODO(Rays):Quaternion normalize needs more rigor.
+VM_INLINE quaternion normalize(quaternion v) { return quaternion(v.xyzw() * (1.0f / length(v.xyzw()))); }
+VM_INLINE float dot(quaternion a, quaternion b){return dot(a.xyzw(), b.xyzw());}
+VM_INLINE float length(quaternion q){return sqrt(dot(q.xyzw(), q.xyzw()));}
+VM_INLINE float lengthsq(quaternion q){return dot(q.xyzw(), q.xyzw());}
+VM_INLINE quaternion conjugate(quaternion q)
+{
+    return quaternion(q.xyzw() * float4(-1.0f, -1.0f, -1.0f, 1.0f));
+}
 
-VM_INLINE quaternion clamp(quaternion t, quaternion a, quaternion b) { return min(max(t, a), b); }
-VM_INLINE float sum(quaternion v) { return v.x() + v.y() + v.z(); }
-VM_INLINE float dot(quaternion a, quaternion b) { return sum(a*b); }
-VM_INLINE float length(quaternion v) { return sqrtf(dot(v, v)); }
-VM_INLINE float lengthSq(quaternion v) { return dot(v, v); }
-VM_INLINE quaternion normalize(quaternion v) { return v * (1.0f / length(v)); }
-VM_INLINE quaternion lerp(quaternion a, quaternion b, float t) { return a + (b-a)*t; }
+VM_INLINE float3 rotate(quaternion q, float3 dir)
+{
+    float3 t = 2 * cross(q.xyz(), dir);
+    return dir + q.w() * t + cross(q.xyz(), t);
+}
+
+VM_INLINE quaternion nlerp(quaternion q1, quaternion q2, float t)
+{
+    float dt = dot(q1, q2);
+    if(dt < 0.0f)
+    {
+        q2 = quaternion(-q2.xyzw());
+    }
+
+    return normalize(quaternion(lerp(q1.xyzw(), q2.xyzw(), t)));
+}
+
+VM_INLINE quaternion inverse(quaternion q)
+{
+    return conjugate(normalize(q));
+}
+
+VM_INLINE quaternion slerp(quaternion q1, quaternion q2, float t)
+{
+    float dt = dot(q1, q2);
+    if (dt < 0.0f)
+    {
+        dt = -dt;
+        q2 = quaternion(-q2.xyzw());
+    }
+
+    if (dt < 0.9995f)
+    {
+        float angle = acos(dt);
+        float s = rsqrt(1.0f - dt * dt);    // 1.0f / sin(angle)
+        float w1 = sine(angle * (1.0f - t)) * s;
+        float w2 = sine(angle * t) * s;
+        return quaternion(q1.xyzw() * w1 + q2.xyzw() * w2);
+    }
+    else
+    {
+        // if the angle is small, use linear interpolation
+        return nlerp(q1, q2, t);
+    }
+}
+
 VM_INLINE quaternion axis_angle(float3 axis, float angle)
 {
     float sina, cosa;
     sincos(0.5f * angle,&sina,&cosa);
     return quaternion(float4(normalize(axis) * sina, cosa));
+}
+
+VM_INLINE quaternion look_rotation_quaternion(float3 forward, float3 up)
+{
+    float3 vector = normalize(forward);//normalizeSafe(direction);
+    float3 vector2 = cross(up, vector);
+    float3 vector3 = cross(vector, vector2);
+    float m00 = vector2.x();
+    float m01 = vector2.y();
+    float m02 = vector2.z();
+    float m10 = vector3.x();
+    float m11 = vector3.y();
+    float m12 = vector3.z();
+    float m20 = vector.x();
+    float m21 = vector.y();
+    float m22 = vector.z();
+    float num8 = (m00 + m11) + m22;
+    float4 q;
+    if (num8 > 0.0)
+    {
+        float num = sqrt(num8 + 1.0f);
+        q.setW(num * 0.5f);
+        num = 0.5f / num;
+        q.setX((m12 - m21) * num);
+        q.setY((m20 - m02) * num);
+        q.setZ((m01 - m10) * num);
+        return quaternion(q);
+    }
+    if ((m00 >= m11) && (m00 >= m22))
+    {
+        float num7 = sqrt(((1.0f + m00) - m11) - m22);
+        float num4 = 0.5f / num7;
+        q.setX(0.5f * num7);
+        q.setY((m01 + m10) * num4);
+        q.setZ((m02 + m20) * num4);
+        q.setW((m12 - m21) * num4);
+        return quaternion(q);
+    }
+    if (m11 > m22)
+    {
+        float num6 = sqrt(((1.0f + m11) - m00) - m22);
+        float num3 = 0.5f / num6;
+        q.setX((m10 + m01) * num3);
+        q.setY(0.5f * num6);
+        q.setZ((m21 + m12) * num3);
+        q.setW((m20 - m02) * num3);
+        return quaternion(q);
+    }
+    float num5 = sqrt(((1.0f + m22) - m00) - m11);
+    float num2 = 0.5f / num5;
+    q.setX((m20 + m02) * num2);
+    q.setY((m21 + m12) * num2);
+    q.setZ(0.5f * num5);
+    q.setW((m01 - m10) * num2);
+    return quaternion(q);
 }
 
 VM_INLINE float3x3::float3x3(quaternion rotation)
