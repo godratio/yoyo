@@ -202,25 +202,177 @@ int main(void)
 }
 
 //Note(Ray):Const tested values calculated in mathematica
-TEST_CASE( "Math library tests.", "[MATHLIB]" ) {
+//NOTE(ray):Each section is a loop and the values are reinited for each section.
+//confusing if you didnt know that but hand to write it this way.
+TEST_CASE( "Operators", "[MATHLIB]" ) {
     //add
     float2 a = float2(0,0);
     float2 b = float2(1,1);
-    float2 c = a + b;
-    REQUIRE( a.x() == 0 );
-    REQUIRE( a.y() == 0 );
-    REQUIRE( c.x() == 1);
-    REQUIRE( c.y() == 1);
+    float2 c = float2(1,1);
+    float2 f = float2(0,0);
+    SECTION( "+" )
+    {
+        c = a + b;
+        REQUIRE( a.x() == 0);
+        REQUIRE( a.y() == 0);
+        REQUIRE( b.x() == 1);
+        REQUIRE( b.y() == 1);
+        REQUIRE( c.x() == 1);
+        REQUIRE( c.y() == 1);
+    }    
+
+    SECTION( "scalar *" )
+    {
+        //scaler mul
+        float2 d = float2(0.1f,0.1f);
+        float2 e = d * 10;
+        REQUIRE(e.x() == Approx(1.0f).margin(0.000001f));
+        REQUIRE(e.y() == Approx(1.0f).margin(0.000001f));
+    }    
+
+    SECTION( "*" )
+    {
+        //mul
+        f =  b * c;
+        REQUIRE(f.x() == Approx(1.0f).margin(0.000001f));
+        REQUIRE(f.y() == Approx(1.0f).margin(0.000001f));
+    }    
+
+    SECTION( "/" )
+    {
+        //div
+        a = float2(1,1);
+        b = float2(5,5);
+        f = a / b;
+        REQUIRE(f.x() == Approx(0.2f).margin(0.000001f));
+        REQUIRE(f.y() == Approx(0.2f).margin(0.000001f));        
+    }
+
+    SECTION( "-" )
+    {
+        //sub
+        a = float2(10,10);
+        b = float2(1,1);
+        f = a - b;
+        REQUIRE(f.x() == Approx(9.0f).margin(0.000001f));
+        REQUIRE(f.y() == Approx(9.0f).margin(0.000001f));        
+    }
+
+    SECTION( "*=" )
+    {
+//*=
+        a = float2(4,1);
+        b = float2(1,4);
+        a *= b;
+        REQUIRE(a.x() == Approx(4.0f).margin(0.000001f));
+        REQUIRE(a.y() == Approx(4.0f).margin(0.000001f));        
+    }
+
+    SECTION( "/=" )
+    {
+///=
+        a = float2(1,1);
+        b = float2(3,1);
+        a /= b;
+        REQUIRE(a.x() == Approx(0.33333f).margin(0.000001f));
+        REQUIRE(a.y() == Approx(1.0f).margin(0.000001f));
+    }
+}
+
+TEST_CASE( "HLSL Functions", "[MATHLIB]" )
+{
+    float2 a = float2(1,1);
+    float2 b = float2(100,1);
     
-    //length
-    float l = length(c);
-    REQUIRE(l == Approx(1.41421f).margin(0.000001f));
-    //mul
-    float2 d = float2(0.1f,0.1f);
-    float2 e = d * l;
-    REQUIRE(e.x() == Approx(0.141421f).margin(0.000001f));
-    REQUIRE(e.y() == Approx(0.141421f).margin(0.000001f));
-    //div
+    SECTION( "length" )
+    {
+        //length
+        float2 aa = float2(0,0);
+        float2 bb = float2(1,1);
+        float2 c = aa + bb;
+        float l = length(c);
+        REQUIRE(l == Approx(1.41421f).margin(0.000001f));
+    }
+    
+    SECTION( "min" )
+    {
+        a = min(a,b);
+        REQUIRE(a.x() == Approx(1.0f).margin(0.000001f));
+        REQUIRE(a.y() == Approx(1.0f).margin(0.000001f));
+    }
+
+
+    SECTION( "max" )
+    {
+        a = float2(1,1);
+        b = float2(100,1);
+        a = max(a,b);
+        REQUIRE(a.x() == Approx(100.0f).margin(0.000001f));
+        REQUIRE(a.y() == Approx(1.0f).margin(0.000001f));
+            
+    }
+
+    SECTION( "clamp" )
+    {
+        a = float2(1,1);
+        b = float2(100,1);
+        float2 g = float2(1,1);
+        a = clamp(g,a,b);
+        REQUIRE(a.x() == Approx(1.0f).margin(0.000001f));
+        REQUIRE(a.y() == Approx(1.0f).margin(0.000001f));
+    }
+
+    SECTION( "sum" )
+    {
+        a = float2(1,1);
+        float h = sum(a);
+        REQUIRE(h == Approx(2.0f).margin(0.000001f));
+    }
+
+    SECTION( "dot" )
+    {
+        a = float2(1,1);
+        b = float2(100,1);
+        float i = dot(a,b);
+        REQUIRE(i == Approx(101.0f).margin(0.000001f));
+    }
+
+    SECTION( "lengthSq" )
+    {
+        a = float2(1,1);
+        float j = lengthSq(a);
+        REQUIRE(j == Approx(2.0f).margin(0.000001f));
+    }
+
+    SECTION( "normalize" )
+    {
+        a = float2(1,1);
+        a = normalize(a);
+        REQUIRE(a.x() == Approx(0.707107f).margin(0.000001f));
+        REQUIRE(a.y() == Approx(0.707107f).margin(0.000001f));
+    }
+
+    SECTION( "lerp" )
+    {
+        a = float2(1,1);
+        b = float2(100,1);
+        float k = 0.5f;
+        a = lerp(a,b,k);
+        REQUIRE(a.x() == Approx(50.5f).margin(0.000001f));
+        REQUIRE(a.y() == Approx(1.0f).margin(0.000001f));        
+    }
+}
+TEST_CASE( "Matrices", "[MATHLIB]" )
+{
+    float4 r1 = float4(1,0,0,0);
+    float4 r2 = float4(0,1,0,0);
+    float4 r3 = float4(0,0,1,0);
+    float4 r4 = float4(0,0,0,1);
+    SECTION( "m" )
+    {
+    }
+}
+//inverse
     
     
     /*
@@ -239,7 +391,7 @@ TEST_CASE( "Math library tests.", "[MATHLIB]" ) {
         REQUIRE( v.capacity() >= 10 );
     }
      */
-}
+
 
 //TODO(Ray):Vector tests.
 TEST_CASE( "Vector tests always resize unless you explicity set them not too.", "[vector]" ) {
