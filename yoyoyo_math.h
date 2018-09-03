@@ -29,6 +29,11 @@
 #define U32MAX      ((u32)-1)
 #define FLT_MAX     3.402823466e+38F
 #define FLT_MIN     -FLT_MAX
+#define POSITIVE_INFINITY  INFINITY;
+#define POSITIVE_INFINITY2  float2(INFINITY,INFINITY);
+#define POSITIVE_INFINITY3  float3(INFINITY,INFINITY,INFINITY);
+#define POSITIVE_INFINITY4  float4(INFINITY,INFINITY,INFINITY,INFINITY);
+
 
 // Shuffle helpers.
 // Examples: SHUFFLE3(v, 0,1,2) leaves the vector unchanged.
@@ -43,6 +48,7 @@ struct float2
     // Constructors.
     VM_INLINE float2() {}
     VM_INLINE explicit float2(const float *p) { m = _mm_set_ps(p[1], p[1], p[1], p[0]); }
+    VM_INLINE explicit float2(float x) { m = _mm_set_ps(x, x, x, x); }
     VM_INLINE explicit float2(float x, float y) { m = _mm_set_ps(y, y, y, x); }
     VM_INLINE explicit float2(__m128 v) { m = v; }
     VM_INLINE float x() const { return _mm_cvtss_f32(m); }
@@ -70,6 +76,7 @@ struct float3
     // Constructors.
     VM_INLINE float3() {}
     VM_INLINE explicit float3(const float *p) { m = _mm_set_ps(p[2], p[2], p[1], p[0]); }
+    VM_INLINE explicit float3(float x) { m = _mm_set_ps(x, x, x, x); }
     VM_INLINE explicit float3(float x, float y, float z) { m = _mm_set_ps(z, z, y, x); }
     VM_INLINE explicit float3(__m128 v) { m = v; }
     VM_INLINE float x() const { return _mm_cvtss_f32(m); }
@@ -170,7 +177,6 @@ struct float4
     //VM_INLINE float3 float3i(int x, int y, int z) { return float3((float)x, (float)y, (float)z); }
 };
 
-
 typedef float2 bool2;
 VM_INLINE float2 operator+ (float2 a, float2 b) { a.m = _mm_add_ps(a.m, b.m); return a; }
 VM_INLINE float2 operator- (float2 a, float2 b) { a.m = _mm_sub_ps(a.m, b.m); return a; }
@@ -250,6 +256,8 @@ VM_INLINE float3 cross(float3 a, float3 b) {
     return (a.zxy()*b - a*b.zxy()).zxy();
 }
 
+
+
 typedef float4 bool4;
 
 VM_INLINE float4 operator+ (float4 a, float4 b) { a.m = _mm_add_ps(a.m, b.m); return a; }
@@ -293,7 +301,65 @@ VM_INLINE unsigned mask(float4 v) { return _mm_movemask_ps(v.m) & 7; }
 VM_INLINE bool any(bool4 v) { return mask(v) != 0; }
 VM_INLINE bool all(bool4 v) { return mask(v) == 7; }
 
+//HLSL INT TYPES
+typedef uint32_t uint;
+struct uint2
+{
+    uint x;
+    uint y;
+    VM_INLINE explicit uint2(float2 a){this->x = (uint)a.x();this->y = (uint)a.y();}
+    VM_INLINE explicit uint2(float a,float b){this->x = (uint)a;this->y = (uint)b;}
+};
+
+struct uint3
+{
+    uint x;
+    uint y;
+    uint z;
+    VM_INLINE explicit uint3(float3 a){this->x = (uint)a.x();this->y = (uint)a.y();this->z = (uint)a.z();}
+    VM_INLINE explicit uint3(float a,float b,float c){this->x = (uint)a;this->y = (uint)b;this->z = (uint)c;}
+};
+
+struct uint4
+{
+    uint x;
+    uint y;
+    uint z;
+    uint w;
+    VM_INLINE explicit uint4(float4 a){this->x = (uint)a.x();this->y = (uint)a.y();this->z = (uint)a.z();this->w = (uint)a.w();}
+    VM_INLINE explicit uint4(float a,float b,float c,float d){this->x = (uint)a;this->y = (uint)b;this->z = (uint)c;this->w = (uint)d;}
+};
+
+VM_INLINE uint2 operator & (uint2 lhs, uint2 rhs) { return uint2 (lhs.x & rhs.x, lhs.y & rhs.y); }
+VM_INLINE uint2 operator & (uint2 lhs, uint rhs)  { return uint2 (lhs.x & rhs, lhs.y & rhs); }
+VM_INLINE uint2 operator & (uint lhs, uint2 rhs)  { return uint2 (lhs & rhs.x, lhs & rhs.y); }
+
+VM_INLINE uint3 operator & (uint3 lhs, uint3 rhs) { return uint3 (lhs.x & rhs.x, lhs.y & rhs.y,lhs.z & rhs.z); }
+VM_INLINE uint3 operator & (uint3 lhs, uint rhs)  { return uint3 (lhs.x & rhs, lhs.y & rhs,lhs.z & rhs); }
+VM_INLINE uint3 operator & (uint lhs, uint3 rhs)  { return uint3 (lhs & rhs.x, lhs & rhs.y,lhs & rhs.z); }
+
+VM_INLINE uint4 operator & (uint4 lhs, uint4 rhs) { return uint4 (lhs.x & rhs.x, lhs.y & rhs.y,lhs.z & rhs.z,lhs.w & rhs.w); }
+VM_INLINE uint4 operator & (uint4 lhs, uint rhs)  { return uint4 (lhs.x & rhs, lhs.y & rhs,lhs.z & rhs,lhs.w & rhs); }
+VM_INLINE uint4 operator & (uint lhs, uint4 rhs)  { return uint4 (lhs & rhs.x, lhs & rhs.y,lhs & rhs.z,lhs & rhs.w); }
+
+VM_INLINE bool2 operator > (uint2 lhs, uint2 rhs) { return bool2 (lhs.x > rhs.x, lhs.y > rhs.y); }
+VM_INLINE bool2 operator > (uint2 lhs, uint rhs)  { return bool2 (lhs.x > rhs, lhs.y > rhs); }
+VM_INLINE bool2 operator > (uint lhs, uint2 rhs)  { return bool2 (lhs > rhs.x, lhs > rhs.y); }
+
+VM_INLINE bool3 operator > (uint3 lhs, uint3 rhs) { return bool3 (lhs.x > rhs.x, lhs.y > rhs.y,lhs.z > rhs.z); }
+VM_INLINE bool3 operator > (uint3 lhs, uint rhs)  { return bool3 (lhs.x > rhs, lhs.y > rhs,lhs.z > rhs); }
+VM_INLINE bool3 operator > (uint lhs, uint3 rhs)  { return bool3 (lhs > rhs.x, lhs > rhs.y,lhs > rhs.z); }
+
+VM_INLINE bool4 operator > (uint4 lhs, uint4 rhs) { return bool4 (lhs.x > rhs.x, lhs.y > rhs.y,lhs.z > rhs.z,lhs.w > rhs.w); }
+VM_INLINE bool4 operator > (uint4 lhs, uint rhs)  { return bool4 (lhs.x > rhs, lhs.y > rhs,lhs.z > rhs, lhs.w > rhs); }
+VM_INLINE bool4 operator > (uint lhs, uint4 rhs)  { return bool4 (lhs > rhs.x, lhs > rhs.y,lhs > rhs.z,lhs > rhs.w); }
+
+
 //hlsl funcs
+VM_INLINE float lerp(float a, float b, float t) { return a + (b-a)*t; }
+//NOTE(Ray):using fmin here reevaluate ...
+VM_INLINE float clamp(float x, float a, float b) { return fmax(a, fmin(b, x)); }
+
 VM_INLINE float2 clamp(float2 t, float2 a, float2 b) { return min(max(t, a), b); }
 VM_INLINE float sum(float2 v) { return v.x() + v.y();}
 VM_INLINE float dot(float2 a, float2 b) { return sum(a*b); }
@@ -346,6 +412,57 @@ VM_INLINE float2 rsqrt(float2 a) { return 1.0f / sqroot(a); }
 VM_INLINE float3 rsqrt(float3 a) { return 1.0f / sqroot(a); }
 VM_INLINE float4 rsqrt(float4 a) { return 1.0f / sqroot(a); }
 
+VM_INLINE float  abso(float x){return abs(x);};
+VM_INLINE float2 abso(float2 x){return float2(abs(x.x()),abs(x.y()));}
+VM_INLINE float3 abso(float3 x){return float3(abs(x.x()),abs(x.y()),abs(x.z()));}
+VM_INLINE float4 abso(float4 x){return float4(abs(x.x()),abs(x.y()),abs(x.z()),abs(x.w()));}
+
+//NOTE(Ray):Are these really useful.  Shoul return bool answer for each component.
+VM_INLINE bool isfinite(float x)   { return abso(x) < POSITIVE_INFINITY; }
+VM_INLINE bool2 isfinite(float2 x) { return abso(x) < POSITIVE_INFINITY2; }
+VM_INLINE bool3 isfinite(float3 x) { return abso(x) < POSITIVE_INFINITY3; }
+VM_INLINE bool4 isfinite(float4 x) { return abso(x) < POSITIVE_INFINITY4; }
+
+VM_INLINE bool isinf(float x)   { return abso(x) == POSITIVE_INFINITY; }
+VM_INLINE bool2 isinf(float2 x) { return abso(x) == POSITIVE_INFINITY2; }
+VM_INLINE bool3 isinf(float3 x) { return abso(x) == POSITIVE_INFINITY3; }
+VM_INLINE bool4 isinf(float4 x) { return abso(x) == POSITIVE_INFINITY4; }
+
+VM_INLINE uint asuint(float x) { return (uint)x; }
+VM_INLINE uint2 asuint(float2 x) { return uint2((uint)x.x(), (uint)x.y()); }
+VM_INLINE uint3 asuint(float3 x) { return uint3((uint)x.x(), (uint)x.y(), (uint)x.z()); }
+VM_INLINE uint4 asuint(float4 x) { return uint4((uint)x.x(), (uint)x.y(), (uint)x.z(), (uint)x.w()); }
+
+VM_INLINE bool isnan(float x) { return (asuint(x) & 0x7FFFFFFF) > 0x7F800000; }
+VM_INLINE bool2 isnan(float2 x) { return (asuint(x) & 0x7FFFFFFF) > 0x7F800000; }
+VM_INLINE bool3 isnan(float3 x) { return (asuint(x) & 0x7FFFFFFF) > 0x7F800000; }
+VM_INLINE bool4 isnan(float4 x) { return (asuint(x) & 0x7FFFFFFF) > 0x7F800000; }
+
+VM_INLINE float2 lerp(float2 x, float2 y, float2 s) { return x + s * (y - x); }
+VM_INLINE float3 lerp(float3 x, float3 y, float3 s) { return x + s * (y - x); }
+VM_INLINE float4 lerp(float4 x, float4 y, float4 s) { return x + s * (y - x); }
+
+VM_INLINE float unlerp(float a, float b, float x) { return (x - a) / (b - a); }
+VM_INLINE float2 unlerp(float2 a, float2 b, float2 x) { return (x - a) / (b - a); }
+VM_INLINE float3 unlerp(float3 a, float3 b, float3 x) { return (x - a) / (b - a); }
+VM_INLINE float4 unlerp(float4 a, float4 b, float4 x) { return (x - a) / (b - a); }
+
+VM_INLINE float  remap(float a,  float b,  float c,  float d,  float x)  { return lerp(c, d, unlerp(a, b, x)); }
+VM_INLINE float2 remap(float2 a, float2 b, float2 c, float2 d, float2 x) { return lerp(c, d, unlerp(a, b, x)); }
+VM_INLINE float3 remap(float3 a, float3 b, float3 c, float3 d, float3 x) { return lerp(c, d, unlerp(a, b, x)); }
+VM_INLINE float4 remap(float4 a, float4 b, float4 c, float4 d, float4 x) { return lerp(c, d, unlerp(a, b, x)); }
+
+VM_INLINE float  mad(float a, float b, float c) { return a * b + c; }
+VM_INLINE float2 mad(float2 a, float2 b, float2 c) { return a * b + c; }
+VM_INLINE float3 mad(float3 a, float3 b, float3 c) { return a * b + c; }
+VM_INLINE float4 mad(float4 a, float4 b, float4 c) { return a * b + c; }
+
+VM_INLINE float  saturate(float x)  { return clamp(x, 0.0f, 1.0f); }
+VM_INLINE float2 saturate(float2 x) { return clamp(x, float2(0.0f), float2(1.0f)); }
+VM_INLINE float3 saturate(float3 x) { return clamp(x, float3(0.0f), float3(1.0f)); }
+VM_INLINE float4 saturate(float4 x) { return clamp(x, float4(0.0f), float4(1.0f)); }
+
+
 struct quaternion;
 struct float3x3
 {
@@ -365,6 +482,7 @@ struct float3x3
     }
     float3x3(quaternion rotation);
 };
+
 
 struct float4x4
 {
