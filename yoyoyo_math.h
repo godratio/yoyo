@@ -118,7 +118,6 @@ struct float4
     VM_INLINE explicit float4(float3 a,float b){m = _mm_set_ps(a.x(),a.y(),a.x(),b);}
     VM_INLINE explicit float4(float2 a,float2 b){m = _mm_set_ps(a.x(),a.y(),b.x(),b.y());}
 
-
     VM_INLINE float x() const { return _mm_cvtss_f32(m); }
     VM_INLINE float y() const { return _mm_cvtss_f32(_mm_shuffle_ps(m, m, _MM_SHUFFLE(1, 1, 1, 1))); }
     VM_INLINE float z() const { return _mm_cvtss_f32(_mm_shuffle_ps(m, m, _MM_SHUFFLE(2, 2, 2, 2))); }
@@ -137,7 +136,6 @@ struct float4
     VM_INLINE float4 zxyw() const { return SHUFFLE4(*this, 2, 0, 1, 3); }
     VM_INLINE float2 xy() const { return SHUFFLE2(*this, 1, 0); }
     VM_INLINE float2 zw() const { return SHUFFLE2(*this, 3, 2); }
-
     VM_INLINE float2 xx() const { return SHUFFLE2(*this, 0, 0); }
     VM_INLINE float2 yz() const { return SHUFFLE2(*this, 2, 1); }
     VM_INLINE float2 wx() const { return SHUFFLE2(*this, 3, 0); }
@@ -198,8 +196,6 @@ VM_INLINE bool2 operator< (float2 a, float2 b) { a.m = _mm_cmplt_ps(a.m, b.m); r
 VM_INLINE bool2 operator> (float2 a, float2 b) { a.m = _mm_cmpgt_ps(a.m, b.m); return a; }
 VM_INLINE bool2 operator<=(float2 a, float2 b) { a.m = _mm_cmple_ps(a.m, b.m); return a; }
 VM_INLINE bool2 operator>=(float2 a, float2 b) { a.m = _mm_cmpge_ps(a.m, b.m); return a; }
-VM_INLINE float2 min(float2 a, float2 b) { a.m = _mm_min_ps(a.m, b.m); return a; }
-VM_INLINE float2 max(float2 a, float2 b) { a.m = _mm_max_ps(a.m, b.m); return a; }
 VM_INLINE float2 operator- (float2 a) { return float2(_mm_setzero_ps()) - a; }
 //VM_INLINE float2 abs(float2 v) { v.m = _mm_andnot_ps(vsignbits, v.m); return v; }
 // Returns a 3-bit code where bit0..bit2 is X..Z
@@ -229,8 +225,6 @@ VM_INLINE bool3 operator< (float3 a, float3 b) { a.m = _mm_cmplt_ps(a.m, b.m); r
 VM_INLINE bool3 operator> (float3 a, float3 b) { a.m = _mm_cmpgt_ps(a.m, b.m); return a; }
 VM_INLINE bool3 operator<=(float3 a, float3 b) { a.m = _mm_cmple_ps(a.m, b.m); return a; }
 VM_INLINE bool3 operator>=(float3 a, float3 b) { a.m = _mm_cmpge_ps(a.m, b.m); return a; }
-VM_INLINE float3 min(float3 a, float3 b) { a.m = _mm_min_ps(a.m, b.m); return a; }
-VM_INLINE float3 max(float3 a, float3 b) { a.m = _mm_max_ps(a.m, b.m); return a; }
 VM_INLINE float3 operator- (float3 a) { return float3(_mm_setzero_ps()) - a; }
 //VM_INLINE float3 abs(float3 v) { v.m = _mm_andnot_ps(vsignbits, v.m); return v; }
 // Returns a 3-bit code where bit0..bit2 is X..Z
@@ -239,22 +233,6 @@ VM_INLINE unsigned mask(float3 v) { return _mm_movemask_ps(v.m) & 7; }
 VM_INLINE bool any(bool3 v) { return mask(v) != 0; }
 VM_INLINE bool all(bool3 v) { return mask(v) == 7; }
 
-VM_INLINE float hmin(float3 v) {
-    v = min(v, SHUFFLE3(v, 1, 0, 2));
-    return min(v, SHUFFLE3(v, 2, 0, 1)).x();
-}
-
-VM_INLINE float hmax(float3 v) {
-    v = max(v, SHUFFLE3(v, 1, 0, 2));
-    return max(v, SHUFFLE3(v, 2, 0, 1)).x();
-}
-VM_INLINE float3 cross(float3 a, float3 b) {
-    // x  <-  a.y*b.z - a.z*b.y
-    // y  <-  a.z*b.x - a.x*b.z
-    // z  <-  a.x*b.y - a.y*b.x
-    // We can save a shuffle by grouping it in this wacky order:
-    return (a.zxy()*b - a*b.zxy()).zxy();
-}
 
 
 
@@ -291,8 +269,6 @@ VM_INLINE bool4 operator< (float4 a, float4 b) { a.m = _mm_cmplt_ps(a.m, b.m); r
 VM_INLINE bool4 operator> (float4 a, float4 b) { a.m = _mm_cmpgt_ps(a.m, b.m); return a; }
 VM_INLINE bool4 operator<=(float4 a, float4 b) { a.m = _mm_cmple_ps(a.m, b.m); return a; }
 VM_INLINE bool4 operator>=(float4 a, float4 b) { a.m = _mm_cmpge_ps(a.m, b.m); return a; }
-VM_INLINE float4 min(float4 a, float4 b) { a.m = _mm_min_ps(a.m, b.m); return a; }
-VM_INLINE float4 max(float4 a, float4 b) { a.m = _mm_max_ps(a.m, b.m); return a; }
 VM_INLINE float4 operator- (float4 a) { return float4(_mm_setzero_ps()) - a; }
 //VM_INLINE float4 abs(float4 v) { v.m = _mm_andnot_ps(vsignbits, v.m); return v; }
 // Returns a 3-bit code where bit0..bit2 is X..Z
@@ -354,13 +330,38 @@ VM_INLINE bool4 operator > (uint4 lhs, uint4 rhs) { return bool4 (lhs.x > rhs.x,
 VM_INLINE bool4 operator > (uint4 lhs, uint rhs)  { return bool4 (lhs.x > rhs, lhs.y > rhs,lhs.z > rhs, lhs.w > rhs); }
 VM_INLINE bool4 operator > (uint lhs, uint4 rhs)  { return bool4 (lhs > rhs.x, lhs > rhs.y,lhs > rhs.z,lhs > rhs.w); }
 
-
 //hlsl funcs
+VM_INLINE float2 minimum(float2 a, float2 b) { a.m = _mm_min_ps(a.m, b.m); return a; }
+VM_INLINE float2 maximum(float2 a, float2 b) { a.m = _mm_max_ps(a.m, b.m); return a; }
+
+VM_INLINE float3 minimum(float3 a, float3 b) { a.m = _mm_min_ps(a.m, b.m); return a; }
+VM_INLINE float3 maximum(float3 a, float3 b) { a.m = _mm_max_ps(a.m, b.m); return a; }
+
+VM_INLINE float hmin(float3 v) {
+    v = minimum(v, SHUFFLE3(v, 1, 0, 2));
+    return minimum(v, SHUFFLE3(v, 2, 0, 1)).x();
+}
+
+VM_INLINE float hmax(float3 v) {
+    v = maximum(v, SHUFFLE3(v, 1, 0, 2));
+    return maximum(v, SHUFFLE3(v, 2, 0, 1)).x();
+}
+VM_INLINE float3 cross(float3 a, float3 b) {
+    // x  <-  a.y*b.z - a.z*b.y
+    // y  <-  a.z*b.x - a.x*b.z
+    // z  <-  a.x*b.y - a.y*b.x
+    // We can save a shuffle by grouping it in this wacky order:
+    return (a.zxy()*b - a*b.zxy()).zxy();
+}
+
+VM_INLINE float4 minimum(float4 a, float4 b) { a.m = _mm_min_ps(a.m, b.m); return a; }
+VM_INLINE float4 maximum(float4 a, float4 b) { a.m = _mm_max_ps(a.m, b.m); return a; }
+
 VM_INLINE float lerp(float a, float b, float t) { return a + (b-a)*t; }
 //NOTE(Ray):using fmin here reevaluate ...
 VM_INLINE float clamp(float x, float a, float b) { return fmax(a, fmin(b, x)); }
 
-VM_INLINE float2 clamp(float2 t, float2 a, float2 b) { return min(max(t, a), b); }
+VM_INLINE float2 clamp(float2 t, float2 a, float2 b) { return minimum(maximum(t, a), b); }
 VM_INLINE float sum(float2 v) { return v.x() + v.y();}
 VM_INLINE float dot(float2 a, float2 b) { return sum(a*b); }
 VM_INLINE float length(float2 v) { return sqrtf(dot(v, v)); }
@@ -368,7 +369,7 @@ VM_INLINE float lengthSq(float2 v) { return dot(v, v); }
 VM_INLINE float2 normalize(float2 v) { return v * (1.0f / length(v)); }
 VM_INLINE float2 lerp(float2 a, float2 b, float t) { return a + (b-a)*t; }
 
-VM_INLINE float3 clamp(float3 t, float3 a, float3 b) { return min(max(t, a), b); }
+VM_INLINE float3 clamp(float3 t, float3 a, float3 b) { return minimum(maximum(t, a), b); }
 VM_INLINE float sum(float3 v) { return v.x() + v.y() + v.z(); }
 VM_INLINE float dot(float3 a, float3 b) { return sum(a*b); }
 VM_INLINE float length(float3 v) { return sqrtf(dot(v, v)); }
@@ -376,7 +377,7 @@ VM_INLINE float lengthSq(float3 v) { return dot(v, v); }
 VM_INLINE float3 normalize(float3 v) { return v * (1.0f / length(v)); }
 VM_INLINE float3 lerp(float3 a, float3 b, float t) { return a + (b-a)*t; }
 
-VM_INLINE float4 clamp(float4 t, float4 a, float4 b) { return min(max(t, a), b); }
+VM_INLINE float4 clamp(float4 t, float4 a, float4 b) { return minimum(maximum(t, a), b); }
 VM_INLINE float sum(float4 v) { return v.x() + v.y() + v.z(); }
 VM_INLINE float dot(float4 a, float4 b) { return sum(a*b); }
 VM_INLINE float length(float4 v) { return sqrtf(dot(v, v)); }
@@ -462,6 +463,10 @@ VM_INLINE float2 saturate(float2 x) { return clamp(x, float2(0.0f), float2(1.0f)
 VM_INLINE float3 saturate(float3 x) { return clamp(x, float3(0.0f), float3(1.0f)); }
 VM_INLINE float4 saturate(float4 x) { return clamp(x, float4(0.0f), float4(1.0f)); }
 
+VM_INLINE float  tangent(float x)  { return (float)tan(x); }
+VM_INLINE float2 tangent(float2 x) { return float2(tangent(x.x()), tangent(x.y())); }
+VM_INLINE float3 tangent(float3 x) { return float3(tangent(x.x()), tangent(x.y()), tangent(x.z())); }
+VM_INLINE float4 tangent(float4 x) { return float4(tangent(x.x()), tangent(x.y()), tangent(x.z()), tangent(x.w())); }
 
 struct quaternion;
 struct float3x3

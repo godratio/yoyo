@@ -198,6 +198,7 @@ int main(void)
     int result = Catch::Session().run();
     
 //END MATH TESTS
+    YoyoyoPlatformOutputInputPrompt(in_buff,buf_size,true,"test finished enter to exit:..");
     return 0;
 }
 
@@ -289,7 +290,7 @@ TEST_CASE( "HLSL Functions", "[MATHLIB]" )
     
     SECTION( "min" )
     {
-        a = min(a,b);
+        a = minimum(a,b);
         REQUIRE(a.x() == Approx(1.0f).margin(0.000001f));
         REQUIRE(a.y() == Approx(1.0f).margin(0.000001f));
     }
@@ -298,7 +299,7 @@ TEST_CASE( "HLSL Functions", "[MATHLIB]" )
     {
         a = float2(1,1);
         b = float2(100,1);
-        a = max(a,b);
+        a = maximum(a,b);
         REQUIRE(a.x() == Approx(100.0f).margin(0.000001f));
         REQUIRE(a.y() == Approx(1.0f).margin(0.000001f));
     }
