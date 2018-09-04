@@ -1,6 +1,5 @@
-//TODO(Ray):Build tests almost all of this is untested
 #pragma once
-
+//TODO(Ray):almost all of this is untested
 #include <stdint.h>
 #include <math.h>
 #include <xmmintrin.h>
@@ -15,7 +14,7 @@
 #define M_PI        3.14159265358979323846f
 #define M_TAO       6.28318530717f
 
-#define DEG2RAD   M_PI/180
+#define DEG2RAD   M_PI/(float)180
 #define RAD2DEG   180 / M_PI
 
 #define DEGREE_TO_RADIAN(a) a * DEG2RAD
@@ -698,6 +697,7 @@ struct float4x4
         c2 = (rotation.c2);
         c3 = float4(translation,1.0f);
     }
+    float4x4(quaternion rotation,float3 translation);
 };
 
 /*
@@ -734,6 +734,30 @@ VM_INLINE float4x4 operator - (float lhs, float4x4 rhs) { return  float4x4 (lhs 
 VM_INLINE float4x4 operator / (float4x4 lhs, float4x4 rhs) { return float4x4 (lhs.c0 / rhs.c0, lhs.c1 / rhs.c1, lhs.c2 / rhs.c2, lhs.c3 / rhs.c3); }
 VM_INLINE float4x4 operator / (float4x4 lhs, float rhs) { return float4x4 (lhs.c0 / rhs, lhs.c1 / rhs, lhs.c2 / rhs, lhs.c3 / rhs); }
 VM_INLINE float4x4 operator / (float lhs, float4x4 rhs) { return float4x4 (lhs / rhs.c0, lhs / rhs.c1, lhs / rhs.c2, lhs / rhs.c3); }
+
+VM_INLINE float4 mul(float4 a, float4x4 b)
+{
+    return float4(
+        a.x() * b.c0.x() + a.y() * b.c0.y() + a.z() * b.c0.z() + a.w() * b.c0.w(),
+        a.x() * b.c1.x() + a.y() * b.c1.y() + a.z() * b.c1.z() + a.w() * b.c1.w(),
+        a.x() * b.c2.x() + a.y() * b.c2.y() + a.z() * b.c2.z() + a.w() * b.c2.w(),
+        a.x() * b.c3.x() + a.y() * b.c3.y() + a.z() * b.c3.z() + a.w() * b.c3.w());
+}
+
+VM_INLINE float4 operator*(float4 a, float4x4 b)
+{
+    return mul(a,b);
+}
+
+VM_INLINE float4 mul(float4x4 a, float4 b)
+{
+    return a.c0 * b.x() + a.c1 * b.y() + a.c2 * b.z() + a.c3 * b.w();
+}
+
+VM_INLINE float4 operator*(float4x4 a, float4 b)
+{
+    return mul(a,b);
+}
 
 //mod
 //VM_INLINE float4x4 operator % (float4x4 lhs, float4x4 rhs) { return new float4x4 (lhs.c0 % rhs.c0, lhs.c1 % rhs.c1, lhs.c2 % rhs.c2, lhs.c3 % rhs.c3); }
@@ -1031,6 +1055,16 @@ VM_INLINE float3x3::float3x3(quaternion rotation)
     c2 = float4(xz + wy, yz - wx, 1.0f - (xx + yy),0);
 }
 
+
+VM_INLINE float4x4::float4x4(quaternion rotation,float3 translation)
+{
+    float3x3 rot = float3x3(rotation);
+    c0 = float4(rot.c0.xyz(),0.0f);
+    c1 = float4(rot.c1.xyz(),0.0f);
+    c2 = float4(rot.c2.xyz(),0.0f);
+    c3 = float4(translation,1.0f);
+}
+
 VM_INLINE float4x4 scale(float s)
 {
     return float4x4(s,    0.0f, 0.0f, 0.0f,
@@ -1187,3 +1221,153 @@ VM_INLINE float4x4 inverse(float4x4 m)
 
     return res;
 }
+
+
+float4x4 init_pers_proj_matrix(float2 buffer_dim, float fov_y = 68.0f, float2 far_near = float2(0.5f, 1000.0f))
+{
+    float near_clip_plane = far_near.x();//0.5f;
+    float far_clip_plane = far_near.y();//1000.0f;
+	float tangent = tanf((fov_y / 2) * DEG2RAD); // tangent of half fovY
+	float aspect_ratio = buffer_dim.x() / buffer_dim.y();
+	float z_depth_range = far_clip_plane - near_clip_plane;
+
+    //NOTE(Ray):safe ratios were in old math lib consider migrating themto new lib
+    /*
+	float a = SafeRatio1(1.0f, tangent * aspect_ratio);
+	float b = SafeRatio1(1.0f, tangent);
+	float Z = -SafeRatio1(far_clip_plane + near_clip_plane, z_depth_range);
+	float z2 = -SafeRatio1(2.0f * far_clip_plane * near_clip_plane, z_depth_range);
+    */
+    float a = 1.0f / (tangent * aspect_ratio);
+    float b = 1.0f / tangent;
+    float z = -((far_clip_plane + near_clip_plane) / z_depth_range);
+    float z2 = -((2.0f * far_clip_plane * near_clip_plane) / z_depth_range);
+	float4x4 result = float4x4(a, b, z,0);
+
+    result.c2.setW(-1);
+	result.c3.setX(0);
+	result.c3.setY(0);
+	result.c3.setZ(z2);
+	return result;
+}
+
+float4x4 init_ortho_proj_matrix(float2 size, float near_clip_plane = 0.1f, float far_clip_plane = 1000.0f)
+{
+	float r = size.x();
+	float l = -r;
+	float t = size.y();
+	float b = -t;
+	float zero = 2.0f / (r - l);//SafeRatio1(2.0f, r - l);
+	float five = 2.0f / (t - b);//SafeRatio1(2.0f, t - b);
+	float ten = -2.0f / (far_clip_plane - near_clip_plane);//SafeRatio1(-2.0f, far_clip_plane - near_clip_plane);
+
+	float4x4 result = float4x4(zero, five, ten,1);
+
+	result.c3.setX(-((r + l)  / (r - l)));
+	result.c3.setY(-((t + b)  / (t - b)));
+	result.c3.setZ( 0 );
+	return result;
+}
+
+float4x4 init_screen_space_matrix(float2 buffer_dim)
+{
+	float2 ab = 2.0f / buffer_dim;
+	float4x4 result = float4x4(ab.x(), ab.y(), 1,1);
+	result.c3.setX(-1);
+	result.c3.setY(-1);
+	return result;
+}
+
+float4x4 set_matrix(float3 p,quaternion r,float3 s)
+{
+	float4x4 rotation = float4x4(r,p);
+	float4x4 scale_matrix = scale(s);
+//	scale_matrix.zero *= s.x;
+//	scale_matrix.five *= ot->s.y;
+//	scale_matrix.ten *= ot->s.z;
+	return scale_matrix * rotation;;
+}
+
+VM_INLINE float3 world_local_p(float4x4 m,float3 a)
+{
+    return (inverse(m) * float4(a,1)).xyz();
+}
+
+VM_INLINE float3 local_world_p(float4x4 m,float3 a)
+{
+    return (m * float4(a,1)).xyz();
+}
+
+VM_INLINE float3 mul(quaternion q, float3 dir)
+{
+	float3 qv = q.xyz();
+	float3 t = 2 * cross(dir,qv);
+	return dir + q.w() * t + cross(t,qv);
+}
+
+VM_INLINE float3 forward(quaternion q)
+{
+	return mul(q, float3(0, 0, 1));
+}
+
+VM_INLINE float3 up(quaternion q)
+{
+	return mul(q, float3(0, 1, 0));
+}
+
+VM_INLINE float3 right(quaternion q)
+{
+	return mul(q, float3(1, 0, 0));
+}
+
+float4x4 set_camera_view(float3 p, float3 d, float3 u)
+{
+	float3 cam_right = normalize(cross(u, d));
+	float3 cam_up = normalize(cross(d, cam_right));
+	d = normalize(d);
+
+	return float4x4(cam_right.x(),     cam_up.x(),     d.x(),     0,
+                    cam_right.y(),     cam_up.y(),     d.y(),     0,
+                    cam_right.z(),     cam_up.z(),     d.z(),     0,
+                    -dot(cam_right, p),-dot(cam_up, p),-dot(d, p),1);
+}
+
+float3 screen_to_world_point(float4x4 projection_matrix,float4x4 cam_matrix,float2 buffer_dim, float2 screen_xy, float z_depth)
+{
+	float4x4 pc_mat = cam_matrix * projection_matrix;
+	float4x4 inv_pc_mat = transpose(inverse(pc_mat));
+	float4 p = float4(
+        2.0f * screen_xy.x() / buffer_dim.x() - 1.0f,
+        2.0f * screen_xy.y() / buffer_dim.y() - 1.0f,
+        z_depth,
+        1.0f);
+
+	float4 w_div = inv_pc_mat * p;
+	float w = 1.0f / w_div.w();
+    return w_div.xyz() * w;
+}
+
+float2 world_to_screen_point(float4x4 projection_matrix,float4x4 camera_matrix,float2 buffer_dim, float3 p)
+{
+	float4 input_p = float4(p,1.0f);
+
+    float aspect_ratio = buffer_dim.x() / buffer_dim.y();
+
+	float4x4 view_projection_matrix = projection_matrix * camera_matrix;
+
+	float4 clip = view_projection_matrix * input_p;
+	//w divide value should be z of output.
+	clip.setW(clip.z());
+
+	float3 NDC = float3(
+        (clip.x() / clip.w() + 1) * aspect_ratio,
+    	(clip.y() / clip.w() + 1) * aspect_ratio,
+        clip.z() / clip.w());
+
+	float2 Result = float2( NDC.x() * buffer_dim.x() / NDC.z(),
+                           NDC.y() * buffer_dim.y() / NDC.z());
+//	Result.x = NDC.x * buffer_dim.x / NDC.z;
+//	Result.y = NDC.y * buffer_dim.y / NDC.z;
+	return Result;
+}
+
