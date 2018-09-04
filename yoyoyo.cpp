@@ -25,7 +25,6 @@ int main(void)
     YoyoAString* s = YoyoAsciiStringAllocate("This is a test string");
     *s = YoyoAsciiNullTerminate(*s);
 
-
     YoyoyoPlatformOutput(true,"PlatformOUTPUT TEST :  %s \n",s->string);
 
     uint32_t buf_size = 2048;
