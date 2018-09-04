@@ -52,7 +52,16 @@ struct float2
 
     VM_INLINE float x() const { return _mm_cvtss_f32(m); }
     VM_INLINE float y() const { return _mm_cvtss_f32(_mm_shuffle_ps(m, m, _MM_SHUFFLE(1, 1, 1, 1))); }
-    VM_INLINE float2 yx() const { return SHUFFLE2(*this, 1, 0); }
+
+	VM_INLINE float u() const { return _mm_cvtss_f32(m); }
+	VM_INLINE float v() const { return _mm_cvtss_f32(_mm_shuffle_ps(m, m, _MM_SHUFFLE(1, 1, 1, 1))); }
+
+	VM_INLINE float2 yx() const { return SHUFFLE2(*this, 1, 0); }
+    VM_INLINE float2 xy() const { return SHUFFLE2(*this, 0, 1); }
+
+	VM_INLINE float2 vu() const { return SHUFFLE2(*this, 1, 0); }
+	VM_INLINE float2 uv() const { return SHUFFLE2(*this, 0, 1); }
+
     VM_INLINE void store(float *p) const { p[0] = x(); p[1] = y(); }
 
     void setX(float x)
@@ -83,8 +92,10 @@ struct float3
     VM_INLINE float x() const { return _mm_cvtss_f32(m); }
     VM_INLINE float y() const { return _mm_cvtss_f32(_mm_shuffle_ps(m, m, _MM_SHUFFLE(1, 1, 1, 1))); }
     VM_INLINE float z() const { return _mm_cvtss_f32(_mm_shuffle_ps(m, m, _MM_SHUFFLE(2, 2, 2, 2))); }
+	VM_INLINE float2 xy() const { return SHUFFLE2(*this,1, 0); }
     VM_INLINE float3 yzx() const { return SHUFFLE3(*this, 1, 2, 0); }
     VM_INLINE float3 zxy() const { return SHUFFLE3(*this, 2, 0, 1); }
+	VM_INLINE float4 xyxy() const { return SHUFFLE4(*this,1,0,1, 0); }
     VM_INLINE void store(float *p) const { p[0] = x(); p[1] = y(); p[2] = z(); }
 
     void setX(float x)
@@ -125,6 +136,16 @@ struct float4
     VM_INLINE float z() const { return _mm_cvtss_f32(_mm_shuffle_ps(m, m, _MM_SHUFFLE(2, 2, 2, 2))); }
     VM_INLINE float w() const { return _mm_cvtss_f32(_mm_shuffle_ps(m, m, _MM_SHUFFLE(3, 3, 3, 3))); }
 
+	VM_INLINE float r() const { return _mm_cvtss_f32(m); }
+	VM_INLINE float g() const { return _mm_cvtss_f32(_mm_shuffle_ps(m, m, _MM_SHUFFLE(1, 1, 1, 1))); }
+	VM_INLINE float b() const { return _mm_cvtss_f32(_mm_shuffle_ps(m, m, _MM_SHUFFLE(2, 2, 2, 2))); }
+	VM_INLINE float a() const { return _mm_cvtss_f32(_mm_shuffle_ps(m, m, _MM_SHUFFLE(3, 3, 3, 3))); }
+
+	VM_INLINE float left() const { return _mm_cvtss_f32(m); }
+	VM_INLINE float right() const { return _mm_cvtss_f32(_mm_shuffle_ps(m, m, _MM_SHUFFLE(1, 1, 1, 1))); }
+	VM_INLINE float top() const { return _mm_cvtss_f32(_mm_shuffle_ps(m, m, _MM_SHUFFLE(2, 2, 2, 2))); }
+	VM_INLINE float bottom() const { return _mm_cvtss_f32(_mm_shuffle_ps(m, m, _MM_SHUFFLE(3, 3, 3, 3))); }
+
     VM_INLINE float3 xyz() const { return SHUFFLE3(*this, 2, 1, 0); }
     VM_INLINE float4 xyzw() const { return SHUFFLE4(*this, 3, 2, 1, 0); }
     VM_INLINE float4 yzxz() const { return SHUFFLE4(*this, 2, 0, 2, 1); }
@@ -136,6 +157,7 @@ struct float4
     VM_INLINE float4 wwww() const { return SHUFFLE4(*this, 3, 3, 3, 3); }
     VM_INLINE float4 yzxw() const { return SHUFFLE4(*this, 1, 2, 0, 3); }
     VM_INLINE float4 zxyw() const { return SHUFFLE4(*this, 2, 0, 1, 3); }
+	VM_INLINE float4 xyxy() const { return SHUFFLE4(*this, 1, 0, 1, 0); }
     VM_INLINE float2 xy() const { return SHUFFLE2(*this, 1, 0); }
     VM_INLINE float2 zw() const { return SHUFFLE2(*this, 3, 2); }
     VM_INLINE float2 xx() const { return SHUFFLE2(*this, 0, 0); }
@@ -1296,6 +1318,11 @@ VM_INLINE float3 world_local_p(float4x4 m,float3 a)
 VM_INLINE float3 local_world_p(float4x4 m,float3 a)
 {
     return (m * float4(a,1)).xyz();
+}
+
+VM_INLINE float mul(float2 x)
+{
+	return x.x() * x.y();
 }
 
 VM_INLINE float3 mul(quaternion q, float3 dir)
