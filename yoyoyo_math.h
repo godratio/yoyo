@@ -15,7 +15,7 @@
 #define M_TAO       6.28318530717f
 
 #define DEG2RAD   M_PI/(float)180
-#define RAD2DEG   180 / M_PI
+#define RAD2DEG   (float)180 / M_PI
 
 #define DEGREE_TO_RADIAN(a) a * DEG2RAD
 #define RADIAN_TO_ANGLE(a)  a * RAD2DEG
@@ -27,7 +27,7 @@
 #define INT_MAX     2147483647
 #define U32MAX      ((u32)-1)
 #define FLT_MAX     3.402823466e+38F
-#define FLT_MIN     -FLT_MAX
+//#define FLT_MIN     -FLT_MAX
 #define POSITIVE_INFINITY  INFINITY;
 #define POSITIVE_INFINITY2  float2(INFINITY,INFINITY);
 #define POSITIVE_INFINITY3  float3(INFINITY,INFINITY,INFINITY);
@@ -39,6 +39,7 @@
 #define SHUFFLE2(V, X,Y) float2(_mm_shuffle_ps((V).m, (V).m, _MM_SHUFFLE(Y,Y,Y,X)))
 #define SHUFFLE3(V, X,Y,Z) float3(_mm_shuffle_ps((V).m, (V).m, _MM_SHUFFLE(Z,Z,Y,X)))
 #define SHUFFLE4(V, X,Y,Z,W) float4(_mm_shuffle_ps((V).m, (V).m, _MM_SHUFFLE(W,Z,Y,X)))
+struct float4;
 
 struct float2
 {
@@ -61,9 +62,12 @@ struct float2
 
 	VM_INLINE float2 vu() const { return SHUFFLE2(*this, 1, 0); }
 	VM_INLINE float2 uv() const { return SHUFFLE2(*this, 0, 1); }
-
+	float4 xyxy() const;
+    //NOTE(Ray):Use these as lil as possible
+    VM_INLINE float operator[] (size_t i) const { return m.m128_f32[i]; };
+	VM_INLINE float& operator[] (size_t i) { return m.m128_f32[i]; };
     VM_INLINE void store(float *p) const { p[0] = x(); p[1] = y(); }
-
+	VM_INLINE float* to_array() { float result[2] = { x(),y()}; return result; }
     void setX(float x)
     {
         m = _mm_move_ss(m, _mm_set_ss(x));
@@ -77,8 +81,8 @@ struct float2
     //VM_INLINE float operator[] (size_t i) const { return m.m128_f32[i]; };
     //VM_INLINE float& operator[] (size_t i) { return m.m128_f32[i]; };
     //VM_INLINE float3 float3i(int x, int y, int z) { return float3((float)x, (float)y, (float)z); }
+	
 };
-
 struct float3
 {
     __m128 m;
@@ -86,6 +90,7 @@ struct float3
     VM_INLINE float3() {}
     VM_INLINE explicit float3(const float *p) { m = _mm_set_ps(p[2], p[2], p[1], p[0]); }
     VM_INLINE explicit float3(float x) { m = _mm_set_ps(x, x, x, x); }
+	VM_INLINE explicit float3(float2 xy, float z) { m = _mm_set_ps(z, z, xy.y(), xy.x()); }
     VM_INLINE explicit float3(float x, float y, float z) { m = _mm_set_ps(z, z, y, x); }
     VM_INLINE explicit float3(__m128 v) { m = v; }
 
@@ -95,8 +100,13 @@ struct float3
 	VM_INLINE float2 xy() const { return SHUFFLE2(*this,1, 0); }
     VM_INLINE float3 yzx() const { return SHUFFLE3(*this, 1, 2, 0); }
     VM_INLINE float3 zxy() const { return SHUFFLE3(*this, 2, 0, 1); }
-	VM_INLINE float4 xyxy() const { return SHUFFLE4(*this,1,0,1, 0); }
+
+    //NOTE(Ray):Use these as lil as possible
+    VM_INLINE float operator[] (size_t i) const { return m.m128_f32[i]; };
+	VM_INLINE float& operator[] (size_t i) { return m.m128_f32[i]; };
+	VM_INLINE float* to_array() { return m.m128_f32; }
     VM_INLINE void store(float *p) const { p[0] = x(); p[1] = y(); p[2] = z(); }
+	float4 xyxy() const;
 
     void setX(float x)
     {
@@ -170,8 +180,13 @@ struct float4
     VM_INLINE float2 zz() const { return SHUFFLE2(*this, 2, 2); }
     VM_INLINE float2 wz() const { return SHUFFLE2(*this, 3, 2); }
     VM_INLINE float2 wy() const { return SHUFFLE2(*this, 3, 1); }
-    
-    VM_INLINE void store(float *p) const { p[0] = x(); p[1] = y(); p[2] = z(); p[3] = w(); }
+
+	//NOTE(Ray):Should avoid using these whenever possible
+	VM_INLINE float operator[] (size_t i) const { return m.m128_f32[i]; };
+	VM_INLINE float& operator[] (size_t i) { return m.m128_f32[i]; };
+	VM_INLINE void store(float *p) const { p[0] = x(); p[1] = y(); p[2] = z(); p[3] = w(); }
+	VM_INLINE float* to_array() { return m.m128_f32; }
+
     void setX(float x)
     {
         m = _mm_move_ss(m, _mm_set_ss(x));
@@ -194,12 +209,10 @@ struct float4
         t = _mm_shuffle_ps(t, t, _MM_SHUFFLE(0, 2, 1, 0));
         m = _mm_move_ss(t, m);
     }
-    //VM_INLINE float operator[] (size_t i) const { return m.m128_f32[i]; };
-    //VM_INLINE float& operator[] (size_t i) { return m.m128_f32[i]; };
-    //VM_INLINE float3 float3i(int x, int y, int z) { return float3((float)x, (float)y, (float)z); }
 };
 
-
+VM_INLINE float4 float2::xyxy() const { return SHUFFLE4(*this, 1, 0, 1, 0); }
+VM_INLINE float4 float3::xyxy() const { return SHUFFLE4(*this,1,0,1, 0); }
 
 typedef float2 bool2;
 VM_INLINE float2 operator+ (float2 a, float2 b) { a.m = _mm_add_ps(a.m, b.m); return a; }
@@ -304,14 +317,15 @@ VM_INLINE bool4 operator> (float4 a, float4 b) { a.m = _mm_cmpgt_ps(a.m, b.m); r
 VM_INLINE bool4 operator<=(float4 a, float4 b) { a.m = _mm_cmple_ps(a.m, b.m); return a; }
 VM_INLINE bool4 operator>=(float4 a, float4 b) { a.m = _mm_cmpge_ps(a.m, b.m); return a; }
 VM_INLINE float4 operator- (float4 a) { return float4(_mm_setzero_ps()) - a; }
-//VM_INLINE float4 abs(float4 v) { v.m = _mm_andnot_ps(vsignbits, v.m); return v; }
-// Returns a 3-bit code where bit0..bit2 is X..Z
 VM_INLINE unsigned mask(float4 v) { return _mm_movemask_ps(v.m) & 7; }
-// Once we have a comparison, we can branch based on its results:
 VM_INLINE bool any(bool4 v) { return mask(v) != 0; }
 VM_INLINE bool all(bool4 v) { return mask(v) == 7; }
 
-
+//TODO(Ray):To slow later rework this using simd masking and comparisions perhaps will be faster maybe not
+VM_INLINE float safe_ratio_zero(float a, float b) { if (a == 0.0f || b == 0.0f) { return 0.0f; } else { return a / b; } }
+VM_INLINE float2 safe_ratio2_zero(float2 a, float2 b) { a.setX(safe_ratio_zero(a.x(), b.x())); a.setY(safe_ratio_zero(a.y(), b.y())); return a; }
+VM_INLINE float3 safe_ratio3_zero(float3 a, float3 b) { float2 thea = safe_ratio2_zero(a.xy(), b.xy()); float theab = safe_ratio_zero(a.z(), b.z()); return float3(thea, theab); }
+VM_INLINE float4 safe_ratio4_zero(float4 a, float4 b) { float3 thea = safe_ratio3_zero(a.xyz(), b.xyz()); float w = safe_ratio_zero(a.w(), b.w()); return float4(thea, w); }
 
 //HLSL INT TYPES
 typedef uint32_t uint;
@@ -719,7 +733,11 @@ struct float4x4
         c2 = (rotation.c2);
         c3 = float4(translation,1.0f);
     }
-    float4x4(quaternion rotation,float3 translation);
+
+	VM_INLINE static float4x4 float4x4::identity() { return float4x4(1.0f, 0.0f, 0.0f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f, 0.0f, 0.0f, 1.0f); };
+	VM_INLINE static float4x4 float4x4::zero() { return float4x4(0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f); }
+
+	float4x4(quaternion rotation,float3 translation);
 };
 
 /*
@@ -727,14 +745,6 @@ YoyoAString YoyoFloat4x4ToString()
         {
             return string.Format("float4x4({0}f, {1}f, {2}f, {3}f,  {4}f, {5}f, {6}f, {7}f,  {8}f, {9}f, {10}f, {11}f,  {12}f, {13}f, {14}f, {15}f)", c0.x, c1.x, c2.x, c3.x, c0.y, c1.y, c2.y, c3.y, c0.z, c1.z, c2.z, c3.z, c0.w, c1.w, c2.w, c3.w);
         }
-*/
-
-/*
-/// <summary>float4x4 identity transform.</summary>
-public static readonly float4x4 identity =  float4x4(1.0f, 0.0f, 0.0f, 0.0f,   0.0f, 1.0f, 0.0f, 0.0f,   0.0f, 0.0f, 1.0f, 0.0f,   0.0f, 0.0f, 0.0f, 1.0f);
-
-/// <summary>float4x4 zero value.</summary>
-public static readonly float4x4 zero =  float4x4(0.0f, 0.0f, 0.0f, 0.0f,   0.0f, 0.0f, 0.0f, 0.0f,   0.0f, 0.0f, 0.0f, 0.0f,   0.0f, 0.0f, 0.0f, 0.0f);
 */
 
 //mul
@@ -757,7 +767,17 @@ VM_INLINE float4x4 operator / (float4x4 lhs, float4x4 rhs) { return float4x4 (lh
 VM_INLINE float4x4 operator / (float4x4 lhs, float rhs) { return float4x4 (lhs.c0 / rhs, lhs.c1 / rhs, lhs.c2 / rhs, lhs.c3 / rhs); }
 VM_INLINE float4x4 operator / (float lhs, float4x4 rhs) { return float4x4 (lhs / rhs.c0, lhs / rhs.c1, lhs / rhs.c2, lhs / rhs.c3); }
 
-VM_INLINE float4 mul(float4 a, float4x4 b)
+VM_INLINE float4x4 mul(float4x4 a, float4x4 b)
+{
+	return float4x4(
+		a.c0.xyzw() * b.c0.x() + a.c1.xyzw() * b.c0.y() + a.c2.xyzw() * b.c0.z() + a.c3.xyzw() * b.c0.w(),
+		a.c0.xyzw() * b.c1.x() + a.c1.xyzw() * b.c1.y() + a.c2.xyzw() * b.c1.z() + a.c3.xyzw() * b.c1.w(),
+		a.c0.xyzw() * b.c2.x() + a.c1.xyzw() * b.c2.y() + a.c2.xyzw() * b.c2.z() + a.c3.xyzw() * b.c2.w(),
+		a.c0.xyzw() * b.c3.x() + a.c1.xyzw() * b.c3.y() + a.c2.xyzw() * b.c3.z() + a.c3.xyzw() * b.c3.w());
+}
+
+//NOTE(Ray):hlsl is reversed but this is the format I like it in for now
+VM_INLINE float4 mul(float4x4 b,float4 a)
 {
     return float4(
         a.x() * b.c0.x() + a.y() * b.c0.y() + a.z() * b.c0.z() + a.w() * b.c0.w(),
@@ -766,17 +786,17 @@ VM_INLINE float4 mul(float4 a, float4x4 b)
         a.x() * b.c3.x() + a.y() * b.c3.y() + a.z() * b.c3.z() + a.w() * b.c3.w());
 }
 
-VM_INLINE float4 operator*(float4 a, float4x4 b)
+VM_INLINE float4 operator*(float4x4 b,float4 a)
 {
-    return mul(a,b);
+    return mul(b,a);
 }
 
-VM_INLINE float4 mul(float4x4 a, float4 b)
+VM_INLINE float4 mul(float4 b,float4x4 a)
 {
     return a.c0 * b.x() + a.c1 * b.y() + a.c2 * b.z() + a.c3 * b.w();
 }
 
-VM_INLINE float4 operator*(float4x4 a, float4 b)
+VM_INLINE float4 operator*(float4 b, float4x4 a)
 {
     return mul(a,b);
 }
@@ -889,7 +909,10 @@ struct quaternion
     VM_INLINE float2 zz() const { return SHUFFLE2(*this, 2, 2); }
     VM_INLINE float2 wz() const { return SHUFFLE2(*this, 3, 2); }
     VM_INLINE float2 wy() const { return SHUFFLE2(*this, 3, 1); }
-    
+	
+	//TODO(Ray):Try not to use these as much as possible.
+	VM_INLINE float operator[] (size_t i) const { return m.m128_f32[i]; };
+	VM_INLINE float& operator[] (size_t i) { return m.m128_f32[i]; };
     VM_INLINE void store(float *p) const { p[0] = x(); p[1] = y(); p[2] = z(); p[3] = w(); }
     VM_INLINE quaternion static identity(){return quaternion(0,0,0,1);}
     void setX(float x)
@@ -914,8 +937,8 @@ struct quaternion
         t = _mm_shuffle_ps(t, t, _MM_SHUFFLE(0, 2, 1, 0));
         m = _mm_move_ss(t, m);
     }
-    //VM_INLINE float operator[] (size_t i) const { return m.m128_f32[i]; };
-    //VM_INLINE float& operator[] (size_t i) { return m.m128_f32[i]; };
+	static quaternion look_rotation(float3 forward, float3 up);
+	
     //VM_INLINE float3 float3i(int x, int y, int z) { return float3((float)x, (float)y, (float)z); }
 };
 
@@ -1000,7 +1023,7 @@ VM_INLINE quaternion axis_angle(float3 axis, float angle)
     return quaternion(float4(normalize(axis) * sina, cosa));
 }
 
-VM_INLINE quaternion look_rotation_quaternion(float3 forward, float3 up)
+quaternion quaternion::look_rotation(float3 forward, float3 up)
 {
     float3 vector = normalize(forward);//normalizeSafe(direction);
     float3 vector2 = cross(up, vector);
@@ -1081,9 +1104,9 @@ VM_INLINE float3x3::float3x3(quaternion rotation)
 VM_INLINE float4x4::float4x4(quaternion rotation,float3 translation)
 {
     float3x3 rot = float3x3(rotation);
-    c0 = float4(rot.c0.xyz(),0.0f);
-    c1 = float4(rot.c1.xyz(),0.0f);
-    c2 = float4(rot.c2.xyz(),0.0f);
+	c0 = rot.c0;// .xyz(), 0.0f);
+	c1 = rot.c1;// .xyz(), 0.0f);
+	c2 = rot.c2;// .xyz(), 0.0f);
     c3 = float4(translation,1.0f);
 }
 
@@ -1224,9 +1247,8 @@ VM_INLINE float4x4 inverse(float4x4 m)
     // Horizontal sum of denominator. Free sign flip of z and w compensates for missing flip in inner terms.
     denom = denom + float4(denom.yx(),denom.wz());//shuffle(denom, denom, ShuffleComponent.LeftY, ShuffleComponent.LeftX, ShuffleComponent.RightW, ShuffleComponent.RightZ);   // x+y        x+y            z+w            z+w
     denom = denom - float4(denom.zz(),denom.xx());//shuffle(denom, denom, ShuffleComponent.LeftZ, ShuffleComponent.LeftZ, ShuffleComponent.RightX, ShuffleComponent.RightX);   // x+y-z-w  x+y-z-w        z+w-x-y        z+w-x-y
-
-    float4 rcp_denom_ppnn = float4(1.0f) / denom;
-    float4x4 res;
+    float4 rcp_denom_ppnn = safe_ratio4_zero(float4(1.0f),denom);
+	float4x4 res;
     res.c0 = minors0 * rcp_denom_ppnn;
 
     float4 inner30 = float4(inner30_01.xz(),inner30_01.zx());//shuffle(inner30_01, inner30_01, ShuffleComponent.LeftX, ShuffleComponent.LeftZ, ShuffleComponent.RightZ, ShuffleComponent.RightX);
@@ -1243,7 +1265,6 @@ VM_INLINE float4x4 inverse(float4x4 m)
 
     return res;
 }
-
 
 float4x4 init_pers_proj_matrix(float2 buffer_dim, float fov_y = 68.0f, float2 far_near = float2(0.5f, 1000.0f))
 {
@@ -1304,10 +1325,7 @@ float4x4 set_matrix(float3 p,quaternion r,float3 s)
 {
 	float4x4 rotation = float4x4(r,p);
 	float4x4 scale_matrix = scale(s);
-//	scale_matrix.zero *= s.x;
-//	scale_matrix.five *= ot->s.y;
-//	scale_matrix.ten *= ot->s.z;
-	return scale_matrix * rotation;;
+	return mul(rotation,scale_matrix);;
 }
 
 VM_INLINE float3 world_local_p(float4x4 m,float3 a)
@@ -1345,6 +1363,11 @@ VM_INLINE float3 up(quaternion q)
 VM_INLINE float3 right(quaternion q)
 {
 	return mul(q, float3(1, 0, 0));
+}
+
+VM_INLINE float3 project_on_plane(float3 v, float3 plane_normal)
+{
+	return v - dot(v, plane_normal) * plane_normal;
 }
 
 float4x4 set_camera_view(float3 p, float3 d, float3 u)
