@@ -7,6 +7,9 @@
 #include "yoyo_file.h"
 #include "yoyoyo_hashtable.h"
 #include "yoyoyo_math.h"
+
+#include "yoyoyo_math_ext.h"
+
 #define CATCH_CONFIG_RUNNER
 #include "./catch2/single_include/catch2/catch.hpp"
 
@@ -21,7 +24,6 @@ int main(void)
     
     YoyoAString* s = YoyoAsciiStringAllocate("This is a test string");
     *s = YoyoAsciiNullTerminate(*s);
-
 
     YoyoyoPlatformOutput(true,"PlatformOUTPUT TEST :  %s \n",s->string);
 
