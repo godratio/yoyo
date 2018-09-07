@@ -78,6 +78,7 @@ struct float2
         t = _mm_shuffle_ps(t, t, _MM_SHUFFLE(3, 2, 0, 0));
         m = _mm_move_ss(t, m);
     }
+	static uint size() { return sizeof(f32) * 2; }
     //VM_INLINE float operator[] (size_t i) const { return m.m128_f32[i]; };
     //VM_INLINE float& operator[] (size_t i) { return m.m128_f32[i]; };
     //VM_INLINE float3 float3i(int x, int y, int z) { return float3((float)x, (float)y, (float)z); }
@@ -124,6 +125,7 @@ struct float3
         t = _mm_shuffle_ps(t, t, _MM_SHUFFLE(3, 0, 1, 0));
         m = _mm_move_ss(t, m);
     }
+	static uint size() { return sizeof(f32) * 3; }
     //VM_INLINE float operator[] (size_t i) const { return m.m128_f32[i]; };
     //VM_INLINE float& operator[] (size_t i) { return m.m128_f32[i]; };
     //VM_INLINE float3 float3i(int x, int y, int z) { return float3((float)x, (float)y, (float)z); }
@@ -138,8 +140,8 @@ struct float4
     VM_INLINE explicit float4(float x, float y, float z,float w) { m = _mm_set_ps(w, z, y, x); }
     VM_INLINE explicit float4(float x) { m = _mm_set_ps(x, x, x, x); }
     VM_INLINE explicit float4(__m128 v) { m = v; }
-    VM_INLINE explicit float4(float3 a,float b){m = _mm_set_ps(a.x(),a.y(),a.x(),b);}
-    VM_INLINE explicit float4(float2 a,float2 b){m = _mm_set_ps(a.x(),a.y(),b.x(),b.y());}
+    VM_INLINE explicit float4(float3 a,float b){m = _mm_set_ps(b,a.z(),a.y(),a.x());}
+    VM_INLINE explicit float4(float2 a,float2 b){m = _mm_set_ps(b.y(),b.x(),a.y(),a.x());}
 
     VM_INLINE float x() const { return _mm_cvtss_f32(m); }
     VM_INLINE float y() const { return _mm_cvtss_f32(_mm_shuffle_ps(m, m, _MM_SHUFFLE(1, 1, 1, 1))); }
@@ -209,6 +211,7 @@ struct float4
         t = _mm_shuffle_ps(t, t, _MM_SHUFFLE(0, 2, 1, 0));
         m = _mm_move_ss(t, m);
     }
+	static uint size() { return sizeof(f32) * 4; }
 };
 
 VM_INLINE float4 float2::xyxy() const { return SHUFFLE4(*this, 1, 0, 1, 0); }
@@ -714,7 +717,13 @@ struct float4x4
     float4 c2;
     float4 c3;
     VM_INLINE float4x4() {}
-    VM_INLINE explicit float4x4(float a, float b, float c,float d) { this->c0.setX(a);this->c1.setY(b);this->c2.setZ(c);this->c3.setW(d);}
+	VM_INLINE explicit float4x4(float a, float b, float c, float d)
+    {
+        this->c0 = float4(0.0f); this->c0.setX(a); 
+        this->c1 = float4(0.0f); this->c1.setY(b);
+		this->c2 = float4(0.0f); this->c2.setZ(c); 
+		this->c3 = float4(0.0f); this->c3.setW(d);
+    }
     VM_INLINE explicit float4x4(float4 c0, float4 c1, float4 c2,float4 c3) { this->c0 = c0;this->c1 = c1;this->c2 = c2;this->c3 = c3; }
     VM_INLINE explicit float4x4(float m00, float m01, float m02, float m03,
                                 float m10, float m11, float m12, float m13,
@@ -777,7 +786,7 @@ VM_INLINE float4x4 mul(float4x4 a, float4x4 b)
 }
 
 //NOTE(Ray):hlsl is reversed but this is the format I like it in for now
-VM_INLINE float4 mul(float4x4 b,float4 a)
+VM_INLINE float4 mul(float4 a,float4x4 b)
 {
     return float4(
         a.x() * b.c0.x() + a.y() * b.c0.y() + a.z() * b.c0.z() + a.w() * b.c0.w(),
@@ -786,17 +795,17 @@ VM_INLINE float4 mul(float4x4 b,float4 a)
         a.x() * b.c3.x() + a.y() * b.c3.y() + a.z() * b.c3.z() + a.w() * b.c3.w());
 }
 
-VM_INLINE float4 operator*(float4x4 b,float4 a)
+VM_INLINE float4 operator*(float4 a, float4x4 b)
 {
-    return mul(b,a);
+    return mul(a,b);
 }
 
-VM_INLINE float4 mul(float4 b,float4x4 a)
+VM_INLINE float4 mul(float4x4 a, float4 b)
 {
     return a.c0 * b.x() + a.c1 * b.y() + a.c2 * b.z() + a.c3 * b.w();
 }
 
-VM_INLINE float4 operator*(float4 b, float4x4 a)
+VM_INLINE float4 operator*(float4x4 a,float4 b)
 {
     return mul(a,b);
 }
@@ -1325,10 +1334,10 @@ float4x4 set_matrix(float3 p,quaternion r,float3 s)
 {
 	float4x4 rotation = float4x4(r,p);
 	float4x4 scale_matrix = scale(s);
-	return mul(rotation,scale_matrix);;
+	return float4x4::identity();// rotation;//mul(scale_matrix, rotation);
 }
 
-VM_INLINE float3 world_local_p(float4x4 m,float3 a)
+float3 world_local_p(float4x4 m,float3 a)
 {
     return (inverse(m) * float4(a,1)).xyz();
 }
@@ -1375,11 +1384,16 @@ float4x4 set_camera_view(float3 p, float3 d, float3 u)
 	float3 cam_right = normalize(cross(u, d));
 	float3 cam_up = normalize(cross(d, cam_right));
 	d = normalize(d);
-
+    /*
 	return float4x4(cam_right.x(),     cam_up.x(),     d.x(),     0,
                     cam_right.y(),     cam_up.y(),     d.y(),     0,
                     cam_right.z(),     cam_up.z(),     d.z(),     0,
                     -dot(cam_right, p),-dot(cam_up, p),-dot(d, p),1);
+                    */
+	return float4x4(cam_right.x(), cam_right.y(), cam_right.z(), -dot(cam_right, p),
+		            cam_up.x(), cam_up.y(), cam_up.z(), -dot(cam_up, p),
+		            d.x(), d.y(), d.z(), -dot(d, p),
+		            0 , 0,0, 1);
 }
 
 float3 screen_to_world_point(float4x4 projection_matrix,float4x4 cam_matrix,float2 buffer_dim, float2 screen_xy, float z_depth)
