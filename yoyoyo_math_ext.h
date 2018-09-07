@@ -14,46 +14,103 @@ struct ObjectTransform
 };
 
 //NOTE(Ray):These are convienent methods for those using yoyoyo data formats for abstractions
-float4x4 YoyoSetTransformMatrix(ObjectTransform* ot)
+float4x4 V_CALL YoyoSetTransformMatrix(ObjectTransform* ot)
 {
 	ot->m = set_matrix(ot->p,ot->r,ot->s);
 	return ot->m;
 }
 
-float3 YoyoWorldPToLocalP(ObjectTransform* ot,float3 a)
+float3 V_CALL YoyoWorldPToLocalP(ObjectTransform* ot,float3 a)
 {
 	return world_local_p(YoyoSetTransformMatrix(ot),a);
 }
 
-float3 YoyoLocalToWorldP(ObjectTransform* ot,float3 a)
+float3 V_CALL YoyoLocalToWorldP(ObjectTransform* ot,float3 a)
 {
 	return local_world_p(YoyoSetTransformMatrix(ot),a);
 }
 
-void YoyoUpdateLocalaxis(ObjectTransform* ot)
+void V_CALL YoyoUpdateLocalaxis(ObjectTransform* ot)
 {
 	ot->up = up(ot->r);
 	ot->right = right(ot->r);
 	ot->forward = forward(ot->r);
 }
 
-void YoyoUpdateMatrix(ObjectTransform* ot)
+void V_CALL YoyoUpdateMatrix(ObjectTransform* ot)
 {
 	ot->m = YoyoSetTransformMatrix(ot);
 }
 
-void YoyoUpdateObjectTransform(ObjectTransform* ot)
+void V_CALL YoyoUpdateObjectTransform(ObjectTransform* ot)
 {
 	YoyoUpdateLocalaxis(ot);
 	YoyoUpdateMatrix(ot);
 }
 
-float4x4 YoyoSetCameraView(ObjectTransform* ot)
+float4x4 V_CALL YoyoSetCameraView(ObjectTransform* ot)
 {
     YoyoUpdateObjectTransform(ot);
     return set_camera_view(ot->p,ot->forward,ot->up);
 }
 
+float3 V_CALL YoyoTranslateDir(float4x4 a, float3 b)
+{
+	return (float4(b, 0) * a).xyz();
+}
+float3 V_CALL YoyoTranslateP(float4x4 a, float3 b)
+{
+	return (float4(b, 1) * a).xyz();
+}
+
+//Physics
+b32 V_CALL YoyoIntersectSegmentTriangle(float3 p, float3 q, float3 a, float3 b, float3 c, float3 np,
+	f32* u, f32* v, f32* w, f32* t, float3* hit_point, float3* calc_n)
+{
+	float3 ab = b - a;
+	float3 ac = c - a;
+	float3 qp = p - q;
+
+	// Compute triangle normal. Can be precalculated or cached if
+	// intersecting multiple segments against the same triangle
+	float3 n = cross(ac, ab);
+	*calc_n = normalize(n);
+	//    n = AbsoluteValue(n);
+	//    v3 n = nt;
+	// Compute denominator d. If d <= 0, segment is parallel to or points
+	// away from triangle, so exit early
+	f32 d = dot(qp, n);
+	if (d <= 0.0f) return 0;
+
+	// Compute intersection t value of pq with plane of triangle. A ray
+	// intersects if 0 <= t. Segment intersects if 0 <= t <= 1. Delay
+	// dividing by d until intersection has been found to pierce triangle
+	float3 ap = p - a;
+	*t = dot(ap, n);
+	if (*t < 0.0f) return 0;
+	//NOTE(Ray):For segment; exclude this code line for a ray test
+	if (*t > d) return 0;
+
+	// Compute barycentric coordinate components and test if within bounds
+	float3 e = cross(ap, qp);
+	*v = dot(ac, e);
+	if (*v < 0.0f || *v > d) return 0;
+	*w = -dot(ab, e);
+	if (*w < 0.0f || *v + *w > d) return 0;
+
+	// Segment/ray intersects triangle. Perform delayed division and
+	// compute the last barycentric coordinate component
+	float ood = 1.0f / d;
+	*t *= ood;
+	*v *= ood;
+	*w *= ood;
+	*u = 1.0f - *v - *w;
+
+	*hit_point = float3((*u * a.x() + *v * b.x() + *w * c.x()),
+		                (*u * a.y() + *v * b.y() + *w * c.y()),
+		                (*u * a.z() + *v * b.z() + *w * c.z()));
+	return 1;
+}
 /*
 float3 YoyoScreenToWorldPoint(RenderCommandList* list, float2 buffer_dim, float2 screen_xy, float z_depth)
 {
