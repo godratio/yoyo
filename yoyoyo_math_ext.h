@@ -1,6 +1,11 @@
 #pragma once
 #include "yoyoyo_math.h"
 
+float4x4 float4x4Serialize(float4x4 m)
+{
+	return float4x4(float4(m.c0.m), float4(m.c1.m), float4(m.c2.m), float4(m.c3.m));
+}
+
 //NOTE(Ray):If these become a perf bottle neck look to seperate these out.
 struct ObjectTransform
 {
@@ -12,6 +17,19 @@ struct ObjectTransform
     float3 up;
     float3 right;
 };
+
+ObjectTransform ObjectTransformSerialize(ObjectTransform* ot)
+{
+	ObjectTransform new_ot = {};
+	new_ot.p = float3(ot->p.m);
+	new_ot.r = quaternion(ot->r.m);
+	new_ot.s = float3(ot->s.m);
+	new_ot.m = float4x4Serialize(ot->m);// float4x4(float4(ot->m.c0.m), float4(ot->m.c1.m), float4(ot->m.c2.m), float4(ot->m.c3.m));
+	new_ot.forward = float3(ot->forward.m);
+	new_ot.right = float3(ot->right.m);
+	new_ot.up = float3(ot->up.m);
+	return new_ot;
+}
 
 //NOTE(Ray):These are convienent methods for those using yoyoyo data formats for abstractions
 float4x4 V_CALL YoyoSetTransformMatrix(ObjectTransform* ot)
@@ -111,6 +129,9 @@ b32 V_CALL YoyoIntersectSegmentTriangle(float3 p, float3 q, float3 a, float3 b, 
 		                (*u * a.z() + *v * b.z() + *w * c.z()));
 	return 1;
 }
+
+//Serialization of float3 with bitsery.
+
 /*
 float3 YoyoScreenToWorldPoint(RenderCommandList* list, float2 buffer_dim, float2 screen_xy, float z_depth)
 {

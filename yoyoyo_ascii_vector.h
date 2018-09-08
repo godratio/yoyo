@@ -1,5 +1,5 @@
 #pragma once
-
+#include "yoyoyo_memory.h"
 #include <stdint.h>
 #include <cstring>
 

@@ -41,15 +41,27 @@
 #define SHUFFLE3(V, X,Y,Z) float3(_mm_shuffle_ps((V).m, (V).m, _MM_SHUFFLE(Z,Z,Y,X)))
 #define SHUFFLE4(V, X,Y,Z,W) float4(_mm_shuffle_ps((V).m, (V).m, _MM_SHUFFLE(W,Z,Y,X)))
 
+//Shuffle without dereferencing the this pointer
+#define SHUFFLE2m(m, X,Y) float2(_mm_shuffle_ps(m, m, _MM_SHUFFLE(Y,Y,Y,X)))
+#define SHUFFLE3m(m, X,Y,Z) float3(_mm_shuffle_ps(m, m, _MM_SHUFFLE(Z,Z,Y,X)))
+#define SHUFFLE4m(m, X,Y,Z,W) float4(_mm_shuffle_ps(m, (m, _MM_SHUFFLE(W,Z,Y,X)))
 //NOTE(Ray):Used only for making pointers to memory that correlates to one of our math types.
-struct float2data
+union float2data
 {
-	float x, y;
+	struct
+	{
+		float x, y;
+	};
+	f32 indexed[2] = {};
 };
 
-struct float3data
+union float3data
 {
-	float x, y, z;
+	struct
+	{
+		float x, y, z;
+	};
+	f32 indexed[3] = {};
 };
 
 struct float4data
@@ -100,7 +112,6 @@ struct float2
     //VM_INLINE float operator[] (size_t i) const { return m.m128_f32[i]; };
     //VM_INLINE float& operator[] (size_t i) { return m.m128_f32[i]; };
     //VM_INLINE float3 float3i(int x, int y, int z) { return float3((float)x, (float)y, (float)z); }
-	
 };
 
 struct float3
