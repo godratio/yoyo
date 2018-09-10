@@ -37,6 +37,8 @@
 // Shuffle helpers.
 // Examples: SHUFFLE3(v, 0,1,2) leaves the vector unchanged.
 //           SHUFFLE3(v, 0,0,0) splats the X coord out.
+#define SHUFFLEN(V, X,Y) floatn(_mm_shuffle_ps((V).m, (V).m, _MM_SHUFFLE(Y,Y,Y,X)))
+
 #define SHUFFLE2(V, X,Y) float2(_mm_shuffle_ps((V).m, (V).m, _MM_SHUFFLE(Y,Y,Y,X)))
 #define SHUFFLE3(V, X,Y,Z) float3(_mm_shuffle_ps((V).m, (V).m, _MM_SHUFFLE(Z,Z,Y,X)))
 #define SHUFFLE4(V, X,Y,Z,W) float4(_mm_shuffle_ps((V).m, (V).m, _MM_SHUFFLE(W,Z,Y,X)))
@@ -73,6 +75,19 @@ struct float4data
 struct float4;
 struct float2
 {
+    struct floatn r;
+    r.m = x;
+    return r;
+}
+VM_INLINE struct floatn __vectorcall floatn(float x)
+{
+    struct floatn r;
+    r.m = _mm_set_ps(x,x,x,x);
+    return r;
+}
+
+struct  float2
+{
     __m128 m;
     // Constructors.
     VM_INLINE float2() {}
@@ -94,11 +109,16 @@ struct float2
 	VM_INLINE float2 V_CALL uv() const { return SHUFFLE2(*this, 0, 1); }
 	float4 V_CALL xyxy() const;
     //NOTE(Ray):Use these as lil as possible
-    VM_INLINE float V_CALL operator[] (size_t i) const { return m.m128_f32[i]; };
-	VM_INLINE float& V_CALL operator[] (size_t i) { return m.m128_f32[i]; };
-    VM_INLINE void V_CALL store(float *p) const { p[0] = x(); p[1] = y(); }
-	VM_INLINE float* V_CALL to_array() { float result[2] = { x(),y()}; return result; }
-    void V_CALL setX(float x)
+#if WINDOWS
+    VM_INLINE float operator[] (size_t i) const { return m.m128_f32[i]; };
+	VM_INLINE float& operator[] (size_t i) { return m.m128_f32[i]; };
+#elif OSX || IOS
+    VM_INLINE float operator[] (size_t i) const { return m[i]; };
+   // VM_INLINE float& operator[] (size_t i) { return m[i]; };
+#endif
+    VM_INLINE void store(float *p) const { p[0] = x(); p[1] = y(); }
+	VM_INLINE float* to_array() { float result[2] = { x(),y()}; return result; }
+    void setX(float x)
     {
         m = _mm_move_ss(m, _mm_set_ss(x));
     }
@@ -372,6 +392,11 @@ VM_INLINE float2 V_CALL safe_ratio2_zero(float2 a, float2 b) { a.setX(safe_ratio
 VM_INLINE float3 V_CALL safe_ratio3_zero(float3 a, float3 b) { float2 thea = safe_ratio2_zero(a.xy(), b.xy()); float theab = safe_ratio_zero(a.z(), b.z()); return float3(thea, theab); }
 VM_INLINE float4 V_CALL safe_ratio4_zero(float4 a, float4 b) { float3 thea = safe_ratio3_zero(a.xyz(), b.xyz()); float w = safe_ratio_zero(a.w(), b.w()); return float4(thea, w); }
 
+//TODO(Ray):To slow later rework this using simd masking and comparisions perhaps will be faster maybe not
+VM_INLINE float safe_ratio_one(float a, float b) { if (a == 0.0f || b == 0.0f) { return 1.0f; } else { return a / b; } }
+VM_INLINE float2 safe_ratio2_one(float2 a, float2 b) { a.setX(safe_ratio_one(a.x(), b.x())); a.setY(safe_ratio_one(a.y(), b.y())); return a; }
+VM_INLINE float3 safe_ratio3_one(float3 a, float3 b) { float2 thea = safe_ratio2_one(a.xy(), b.xy()); float theab = safe_ratio_one(a.z(), b.z()); return float3(thea, theab); }
+VM_INLINE float4 safe_ratio4_one(float4 a, float4 b) { float3 thea = safe_ratio3_one(a.xyz(), b.xyz()); float w = safe_ratio_one(a.w(), b.w()); return float4(thea, w); }
 //HLSL INT TYPES
 typedef uint32_t uint;
 struct uint2
@@ -1420,7 +1445,7 @@ float4x4 V_CALL inverse(float4x4 m)
     // Horizontal sum of denominator. Free sign flip of z and w compensates for missing flip in inner terms.
     denom = denom + float4(denom.yx(),denom.wz());//shuffle(denom, denom, ShuffleComponent.LeftY, ShuffleComponent.LeftX, ShuffleComponent.RightW, ShuffleComponent.RightZ);   // x+y        x+y            z+w            z+w
     denom = denom - float4(denom.zz(),denom.xx());//shuffle(denom, denom, ShuffleComponent.LeftZ, ShuffleComponent.LeftZ, ShuffleComponent.RightX, ShuffleComponent.RightX);   // x+y-z-w  x+y-z-w        z+w-x-y        z+w-x-y
-    float4 rcp_denom_ppnn = safe_ratio4_zero(float4(1.0f),denom);
+    float4 rcp_denom_ppnn = safe_ratio4_one(float4(1.0f),denom);
 	float4x4 res;
     res.c0 = minors0 * rcp_denom_ppnn;
 
