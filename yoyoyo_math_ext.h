@@ -83,8 +83,8 @@ float3 V_CALL YoyoTranslateP(float4x4 a, float3 b)
 }
 
 //Physics
-b32 V_CALL YoyoIntersectSegmentTriangle(float3 p, float3 q, float3 a, float3 b, float3 c, float3 np,
-	f32* u, f32* v, f32* w, f32* t, float3* hit_point, float3* calc_n)
+bool V_CALL YoyoIntersectSegmentTriangle(float3 p, float3 q, float3 a, float3 b, float3 c, float3 np,
+	float* u, float* v, float* w, float* t, float3* hit_point, float3* calc_n)
 {
 	float3 ab = b - a;
 	float3 ac = c - a;
@@ -98,7 +98,7 @@ b32 V_CALL YoyoIntersectSegmentTriangle(float3 p, float3 q, float3 a, float3 b, 
 	//    v3 n = nt;
 	// Compute denominator d. If d <= 0, segment is parallel to or points
 	// away from triangle, so exit early
-	f32 d = dot(qp, n);
+	float d = dot(qp, n);
 	if (d <= 0.0f) return 0;
 
 	// Compute intersection t value of pq with plane of triangle. A ray
@@ -137,7 +137,7 @@ struct YoyoRay
 	float3 Dir;
 };
 
-internal YoyoRay YoyoRaycastFromScreen(float4x4 projection_matrix,float4x4 camera_matrix, float2 buffer_dim, float2 mouse_p)
+static YoyoRay YoyoRaycastFromScreen(float4x4 projection_matrix,float4x4 camera_matrix, float2 buffer_dim, float2 mouse_p)
 {
 	float3 DP = screen_to_world_point(projection_matrix, camera_matrix, buffer_dim, mouse_p, 0);
 	float3 DPEnd = screen_to_world_point(projection_matrix, camera_matrix, buffer_dim, mouse_p, 1.0f);

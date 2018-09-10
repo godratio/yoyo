@@ -192,9 +192,7 @@ int main(void)
     float3 a = float3(0,0,0);
     float3 b = float3(1,1,1);
     float3 c = a + b;
-    struct floatn nt = floatn(100);
-    float xn = _x(nt);//(nt)x;
-    struct floatn xy = _yx(nt);
+
     YoyoyoPlatformOutput(true, "math : x %f y %f z %f \n",c.x(),c.y(),c.z());
 //End Math Examples
 //Some math tests
@@ -344,17 +342,14 @@ float4x4 inverse_test(float4x4 a)
     }
     float output[4][4];
     inverse_(input, output);
-    for(int i = 0;i < 4;++i)
+    
+    //for(int i = 0;i < 4;++i)
     {
         float t[4];
-        if(i == 0)
-            a.c0 = float4(input[i][]);// .store(&t);
-        if(i == 1)
-            a.c1 = float4(input[i][0]);//.store(&t);
-        if(i == 2)
-            a.c2 = float4(input[i][0]);//.store(&t);
-        if( i == 3)
-            a.c3 = float4(input[i][0]);//.store(&t);
+            a.c0 = float4(&output[0][0]);// .store(&t);
+            a.c1 = float4(&output[1][0]);//.store(&t);
+            a.c2 = float4(&output[2][0]);//.store(&t);
+            a.c3 = float4(&output[3][0]);//.store(&t);
     }
     return a;
 }
@@ -642,26 +637,63 @@ TEST_CASE( "Matrices", "[MATHLIB]" )
         REQUIRE(a.y() == Approx(1.0f).margin(0.000001f));
         REQUIRE(a.z() == Approx(1.0f).margin(0.000001f));
     }
-
-    SECTION( "inverse 4x4 ")
+    
+    SECTION( "inverse identity   4x4 ")
     {
-        float4x4 a = float4x4::identity();//(1,1,1,1);
-        a = inverse(a);
-        REQUIRE(a.c0.x() == Approx(1.0f).margin(0.000001f));
-        REQUIRE(a.c1.y() == Approx(1.0f).margin(0.000001f));
-        REQUIRE(a.c2.z() == Approx(1.0f).margin(0.000001f));
-        REQUIRE(a.c3.w() == Approx(1.0f).margin(0.000001f));
-    }
-    SECTION( "inverse 4x4 ")
-    {
-        float4x4 a = float4x4::identity();//(1,1,1,1);
-        a = inverse_test(a);
-        REQUIRE(a.c0.x() == Approx(1.0f).margin(0.000001f));
-        REQUIRE(a.c1.y() == Approx(1.0f).margin(0.000001f));
-        REQUIRE(a.c2.z() == Approx(1.0f).margin(0.000001f));
-        REQUIRE(a.c3.w() == Approx(1.0f).margin(0.000001f));
+        //float4x4 a = float4x4::identity();//(1,1,1,1);
+        float4x4 b = float4x4::identity();//(1,1,1,1);
+        float4x4 test = inverse(b);
+        REQUIRE(test.c0.x() == Approx(1.0f).margin(0.000001f));
+        REQUIRE(test.c1.y() == Approx(1.0f).margin(0.000001f));
+        REQUIRE(test.c2.z() == Approx(1.0f).margin(0.000001f));
+        REQUIRE(test.c3.w() == Approx(1.0f).margin(0.000001f));
     }
 
+    SECTION( "inverse 1   4x4 ")
+    {
+        //float4x4 a = float4x4::identity();//(1,1,1,1);
+        float4x4 b = float4x4::identity();//(1,1,1,1);
+        b.c3 = float4(5.3f,2.111f,3.41245f,0.5f);
+        float4x4 test = inverse(b);
+        REQUIRE(test.c0.x() == Approx(1.0f).margin(0.000001f));
+        REQUIRE(test.c1.y() == Approx(1.0f).margin(0.000001f));
+        REQUIRE(test.c2.z() == Approx(1.0f).margin(0.000001f));
+        REQUIRE(test.c3.x() == Approx(-10.6f).margin(0.000001f));
+        REQUIRE(test.c3.y() == Approx(-4.222f).margin(0.000001f));
+        REQUIRE(test.c3.z() == Approx(-6.8249f).margin(0.000001f));
+        REQUIRE(test.c3.w() == Approx(2.0f).margin(0.000001f));
+    }
+
+    SECTION( "inverse 2   4x4 ")
+    {
+        //float4x4 a = float4x4::identity();//(1,1,1,1);
+        float4x4 b = float4x4(float4(5.3f, 5.3f, 5.3f, 5.3f),
+                              float4(5.3f, 0.5f, 0, 2.111f),
+                              float4(5.3f, 0, 0.5f, 0),
+                              float4(5.3f, 2.111f, 3.41245f, 0.5f));
+        float4x4 test = inverse(b);
+        REQUIRE(test.c0.x() == Approx(0.972888f).margin(0.000001f));
+        REQUIRE(test.c0.y() == Approx(-1.97484f).margin(0.000001f));
+        REQUIRE(test.c0.z() == Approx(3.16547f).margin(0.000001f));
+        REQUIRE(test.c0.w() == Approx(-1.97484f).margin(0.000001f));
+
+        REQUIRE(test.c1.x() == Approx(15.6864f).margin(0.000001f));
+        REQUIRE(test.c1.y() == Approx(-31.9603f).margin(0.000001f));
+        REQUIRE(test.c1.z() == Approx(47.6134f).margin(0.000001f));
+        REQUIRE(test.c1.w() == Approx(-31.3395f).margin(0.000001f));
+        //-10.3126, 20.9333, -31.554, 20.9333
+        REQUIRE(test.c2.x() == Approx(-10.3126f).margin(0.000001f));
+        REQUIRE(test.c2.y() == Approx(20.9333f).margin(0.000001f));
+        REQUIRE(test.c2.z() == Approx(-31.554f).margin(0.000001f));
+        REQUIRE(test.c2.w() == Approx(20.9333f).margin(0.000001f));
+        //-6.15798, 13.0018, -19.2249, 12.3811
+        REQUIRE(test.c3.x() == Approx(-6.15798f).margin(0.000001f));
+        REQUIRE(test.c3.y() == Approx(13.0018f).margin(0.000001f));
+        REQUIRE(test.c3.z() == Approx(-19.2249f).margin(0.000001f));
+        //NOTE(Ray):There is a numerical approximation error here
+        //12.38095f == Approx( 12.3810997009 ) close enough?
+        REQUIRE(test.c3.w() == Approx(12.3811f).margin(0.000001f));
+    }
     
 /*
     SECTION( "rotate")

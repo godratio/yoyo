@@ -3,13 +3,14 @@
 #include <stdint.h>
 #include <math.h>
 #include <xmmintrin.h>
-
+#include <x86intrin.h>
 //TODO(Ray):look up proper define for compilers 
 #if WINDOWS
 #define VM_INLINE   __forceinline
 #define V_CALL __vectorcall
 #else
 #define VM_INLINE __attribute__((always_inline))
+#define V_CALL __vectorcall
 #endif
 
 #define M_PI        3.14159265358979323846f
@@ -54,7 +55,7 @@ union float2data
 	{
 		float x, y;
 	};
-	f32 indexed[2] = {};
+	float indexed[2] = {};
 };
 
 union float3data
@@ -63,7 +64,7 @@ union float3data
 	{
 		float x, y, z;
 	};
-	f32 indexed[3] = {};
+	float indexed[3] = {};
 };
 
 struct float4data
@@ -73,18 +74,7 @@ struct float4data
 
 
 struct float4;
-struct float2
-{
-    struct floatn r;
-    r.m = x;
-    return r;
-}
-VM_INLINE struct floatn __vectorcall floatn(float x)
-{
-    struct floatn r;
-    r.m = _mm_set_ps(x,x,x,x);
-    return r;
-}
+
 
 struct  float2
 {
@@ -128,7 +118,7 @@ struct  float2
         t = _mm_shuffle_ps(t, t, _MM_SHUFFLE(3, 2, 0, 0));
         m = _mm_move_ss(t, m);
     }
-	static uint V_CALL size() { return sizeof(f32) * 2; }
+	static uint32_t V_CALL size() { return sizeof(float) * 2; }
     //VM_INLINE float operator[] (size_t i) const { return m.m128_f32[i]; };
     //VM_INLINE float& operator[] (size_t i) { return m.m128_f32[i]; };
     //VM_INLINE float3 float3i(int x, int y, int z) { return float3((float)x, (float)y, (float)z); }
@@ -153,9 +143,12 @@ struct float3
     VM_INLINE float3 V_CALL zxy() const { return SHUFFLE3(*this, 2, 0, 1); }
 
     //NOTE(Ray):Use these as lil as possible
+#if WINDOWS
     VM_INLINE float V_CALL operator[] (size_t i) const { return m.m128_f32[i]; };
 	VM_INLINE float& V_CALL operator[] (size_t i) { return m.m128_f32[i]; };
 	VM_INLINE float* V_CALL to_array() { return m.m128_f32; }
+#else
+#endif
     VM_INLINE void V_CALL store(float *p) const { p[0] = x(); p[1] = y(); p[2] = z(); }
 	float4 V_CALL xyxy() const;
 
@@ -175,7 +168,7 @@ struct float3
         t = _mm_shuffle_ps(t, t, _MM_SHUFFLE(3, 0, 1, 0));
         m = _mm_move_ss(t, m);
     }
-	static uint size() { return sizeof(f32) * 3; }
+	static uint32_t size() { return sizeof(float) * 3; }
     //VM_INLINE float operator[] (size_t i) const { return m.m128_f32[i]; };
     //VM_INLINE float& operator[] (size_t i) { return m.m128_f32[i]; };
     //VM_INLINE float3 float3i(int x, int y, int z) { return float3((float)x, (float)y, (float)z); }
@@ -246,10 +239,15 @@ struct float4
     VM_INLINE float2 V_CALL wy() const { return SHUFFLE2(*this, 3, 1); }
 
 	//NOTE(Ray):Should avoid using these whenever possible
+#if WINDOWS
 	VM_INLINE float V_CALL operator[] (size_t i) const { return m.m128_f32[i]; };
 	VM_INLINE float& V_CALL operator[] (size_t i) { return m.m128_f32[i]; };
-	VM_INLINE void V_CALL store(float *p) const { p[0] = x(); p[1] = y(); p[2] = z(); p[3] = w(); }
-	VM_INLINE float* V_CALL to_array() { return m.m128_f32; }
+		VM_INLINE float* V_CALL to_array() { return m.m128_f32; }
+#else
+
+#endif
+
+    VM_INLINE void V_CALL store(float *p) const { p[0] = x(); p[1] = y(); p[2] = z(); p[3] = w(); }
 
     void V_CALL setX(float x)
     {
@@ -273,7 +271,7 @@ struct float4
         t = _mm_shuffle_ps(t, t, _MM_SHUFFLE(0, 2, 1, 0));
         m = _mm_move_ss(t, m);
     }
-	static uint size() { return sizeof(f32) * 4; }
+	static uint32_t size() { return sizeof(float) * 4; }
 };
 
 VM_INLINE float4 V_CALL float2::xyxy() const { return SHUFFLE4(*this, 0, 1, 0, 1); }
@@ -839,7 +837,7 @@ struct float4x4
 	VM_INLINE static float4x4 V_CALL float4x4::identity() { return float4x4(1.0f, 0.0f, 0.0f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f, 0.0f, 0.0f, 1.0f); };
 	VM_INLINE static float4x4 V_CALL float4x4::zero() { return float4x4(0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f); }
 
-	float4x4(quaternion rotation,float3 translation);
+	V_CALL float4x4(quaternion rotation,float3 translation);
 };
 
 /*
@@ -1035,9 +1033,12 @@ struct quaternion
     VM_INLINE float2 V_CALL wy() const { return SHUFFLE2(*this, 3, 1); }
 	
 	//TODO(Ray):Try not to use these as much as possible.
+#if WINDOWS
 	VM_INLINE float V_CALL operator[] (size_t i) const { return m.m128_f32[i]; };
 	VM_INLINE float& V_CALL operator[] (size_t i) { return m.m128_f32[i]; };
     VM_INLINE void V_CALL store(float *p) const { p[0] = x(); p[1] = y(); p[2] = z(); p[3] = w(); }
+#else
+#endif
     VM_INLINE quaternion  static V_CALL identity(){return quaternion(0,0,0,1);}
     void V_CALL setX(float x)
     {
@@ -1402,7 +1403,135 @@ VM_INLINE float4 V_CALL movehl(float4 a,float4 b)
     return float4(b.zw(),a.zw());
 }
 
-float4x4 V_CALL inverse(float4x4 m)
+//////Begin inverse
+///NOTE(RAY):This algorithm was ripped from this article
+//https://lxjk.github.io/2017/09/03/Fast-4x4-Matrix-Inverse-with-SSE-SIMD-Explained.html
+
+#define MakeShuffleMask(x,y,z,w)           (x | (y<<2) | (z<<4) | (w<<6))
+
+// vec(0, 1, 2, 3) -> (vec[x], vec[y], vec[z], vec[w])
+#define VecSwizzle(vec, x,y,z,w)           _mm_shuffle_ps(vec, vec, MakeShuffleMask(x,y,z,w))
+#define VecSwizzle1(vec, x)                _mm_shuffle_ps(vec, vec, MakeShuffleMask(x,x,x,x))
+// special swizzle
+#define VecSwizzle_0101(vec)               _mm_movelh_ps(vec, vec)
+#define VecSwizzle_2323(vec)               _mm_movehl_ps(vec, vec)
+#define VecSwizzle_0022(vec)               _mm_moveldup_ps(vec)
+#define VecSwizzle_1133(vec)               _mm_movehdup_ps(vec)
+
+// return (vec1[x], vec1[y], vec2[z], vec2[w])
+#define VecShuffle(vec1, vec2, x,y,z,w)    _mm_shuffle_ps(vec1, vec2, MakeShuffleMask(x,y,z,w))
+// special shuffle
+#define VecShuffle_0101(vec1, vec2)        _mm_movelh_ps(vec1, vec2)
+#define VecShuffle_2323(vec1, vec2)        _mm_movehl_ps(vec2, vec1)
+// for row major matrix
+// we use __m128 to represent 2x2 matrix as A = | A0  A1 |
+//                                              | A2  A3 |
+// 2x2 row major Matrix multiply A*B
+__forceinline __m128 Mat2Mul(__m128 vec1, __m128 vec2)
+{
+    return
+    _mm_add_ps(_mm_mul_ps(                     vec1, VecSwizzle(vec2, 0,3,0,3)),
+               _mm_mul_ps(VecSwizzle(vec1, 1,0,3,2), VecSwizzle(vec2, 2,1,2,1)));
+}
+// 2x2 row major Matrix adjugate multiply (A#)*B
+__forceinline __m128 Mat2AdjMul(__m128 vec1, __m128 vec2)
+{
+    return
+    _mm_sub_ps(_mm_mul_ps(VecSwizzle(vec1, 3,3,0,0), vec2),
+               _mm_mul_ps(VecSwizzle(vec1, 1,1,2,2), VecSwizzle(vec2, 2,3,0,1)));
+    
+}
+// 2x2 row major Matrix multiply adjugate A*(B#)
+__forceinline __m128 Mat2MulAdj(__m128 vec1, __m128 vec2)
+{
+    return
+    _mm_sub_ps(_mm_mul_ps(                     vec1, VecSwizzle(vec2, 3,0,3,0)),
+               _mm_mul_ps(VecSwizzle(vec1, 1,0,3,2), VecSwizzle(vec2, 2,1,2,1)));
+}
+
+// Inverse function is the same no matter column major or row major
+// this version treats it as row major
+float4x4 V_CALL inverse(float4x4 inM)
+{
+    // use block matrix method
+    // A is a matrix, then i(A) or iA means inverse of A, A# (or A_ in code) means adjugate of A, |A| (or detA in code) is determinant, tr(A) is trace
+    
+    // sub matrices
+    __m128 A = VecShuffle_0101(inM.c0.m, inM.c1.m);
+    __m128 B = VecShuffle_2323(inM.c0.m, inM.c1.m);
+    __m128 C = VecShuffle_0101(inM.c2.m, inM.c3.m);
+    __m128 D = VecShuffle_2323(inM.c2.m, inM.c3.m);
+    
+    __m128 detA = _mm_set1_ps(inM.c0.x() * inM.c1.y() - inM.c0.y() * inM.c1.x());
+    __m128 detB = _mm_set1_ps(inM.c0.z() * inM.c1.w() - inM.c0.w() * inM.c1.z());
+    __m128 detC = _mm_set1_ps(inM.c2.x() * inM.c3.y() - inM.c2.y() * inM.c3.x());
+    __m128 detD = _mm_set1_ps(inM.c2.z() * inM.c3.w() - inM.c2.w() * inM.c3.z());
+    
+#if 0 // for determinant, float version is faster
+    // determinant as (|A| |B| |C| |D|)
+    __m128 detSub = _mm_sub_ps(
+                               _mm_mul_ps(VecShuffle(inM.c0.m, inM.c2.m, 0,2,0,2), VecShuffle(inM.c1.m, inM.c3.m, 1,3,1,3)),
+                               _mm_mul_ps(VecShuffle(inM.c0.m, inM.c2.m, 1,3,1,3), VecShuffle(inM.c1.m, inM.c3.m, 0,2,0,2))
+                               );
+    __m128 detA = VecSwizzle1(detSub, 0);
+    __m128 detB = VecSwizzle1(detSub, 1);
+    __m128 detC = VecSwizzle1(detSub, 2);
+    __m128 detD = VecSwizzle1(detSub, 3);
+#endif
+    
+    // let iM = 1/|M| * | X  Y |
+    //                  | Z  W |
+    
+    // D#C
+    __m128 D_C = Mat2AdjMul(D, C);
+    // A#B
+    __m128 A_B = Mat2AdjMul(A, B);
+    // X# = |D|A - B(D#C)
+    __m128 X_ = _mm_sub_ps(_mm_mul_ps(detD, A), Mat2Mul(B, D_C));
+    // W# = |A|D - C(A#B)
+    __m128 W_ = _mm_sub_ps(_mm_mul_ps(detA, D), Mat2Mul(C, A_B));
+    
+    // |M| = |A|*|D| + ... (continue later)
+    __m128 detM = _mm_mul_ps(detA, detD);
+    
+    // Y# = |B|C - D(A#B)#
+    __m128 Y_ = _mm_sub_ps(_mm_mul_ps(detB, C), Mat2MulAdj(D, A_B));
+    // Z# = |C|B - A(D#C)#
+    __m128 Z_ = _mm_sub_ps(_mm_mul_ps(detC, B), Mat2MulAdj(A, D_C));
+    
+    // |M| = |A|*|D| + |B|*|C| ... (continue later)
+    detM = _mm_add_ps(detM, _mm_mul_ps(detB, detC));
+    
+    // tr((A#B)(D#C))
+    __m128 tr = _mm_mul_ps(A_B, VecSwizzle(D_C, 0,2,1,3));
+    tr = _mm_hadd_ps(tr, tr);
+    tr = _mm_hadd_ps(tr, tr);
+    // |M| = |A|*|D| + |B|*|C| - tr((A#B)(D#C)
+    detM = _mm_sub_ps(detM, tr);
+    
+    const __m128 adjSignMask = _mm_setr_ps(1.f, -1.f, -1.f, 1.f);
+    // (1/|M|, -1/|M|, -1/|M|, 1/|M|)
+    __m128 rDetM = _mm_div_ps(adjSignMask, detM);
+    
+    X_ = _mm_mul_ps(X_, rDetM);
+    Y_ = _mm_mul_ps(Y_, rDetM);
+    Z_ = _mm_mul_ps(Z_, rDetM);
+    W_ = _mm_mul_ps(W_, rDetM);
+    
+    // apply adjugate and store, here we combine adjugate shuffle and store shuffle
+    float4x4 r = float4x4(float4(VecShuffle(X_, Y_, 3,1,3,1)),
+                          float4(VecShuffle(X_, Y_, 2,0,2,0)),
+                          float4(VecShuffle(Z_, W_, 3,1,3,1)),
+                          float4(VecShuffle(Z_, W_, 2,0,2,0)));
+    
+   
+    
+    return r;
+}
+//END INVERSE
+
+//NOTE(Ray):Leaving non working inverse here for now.
+float4x4 V_CALL inverse_old_not_working(float4x4 m)
 {
     float4 c0 = m.c0;
     float4 c1 = m.c1;
