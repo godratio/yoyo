@@ -486,9 +486,9 @@ VM_INLINE float V_CALL length(float2 v) { return sqrtf(dot(v, v)); }
 VM_INLINE float V_CALL length(float3 v) { return sqrtf(dot(v, v)); }
 VM_INLINE float V_CALL length(float4 v) { return sqrtf(dot(v, v)); }
 
-VM_INLINE float2 V_CALL normalize(float2 v) { return v * (1.0f / length(v)); }
-VM_INLINE float3 V_CALL normalize(float3 v) { return v * (1.0f / length(v)); }
-VM_INLINE float4 V_CALL normalize(float4 v) { return v * (1.0f / length(v)); }
+VM_INLINE float2 V_CALL normalize(float2 v) { return v * (safe_ratio_zero(1.0f , length(v))); }
+VM_INLINE float3 V_CALL normalize(float3 v) { return v * (safe_ratio_zero(1.0f , length(v))); }
+VM_INLINE float4 V_CALL normalize(float4 v) { return v * (safe_ratio_zero(1.0f , length(v))); }
 
 VM_INLINE float  V_CALL clamp(float  x, float  a, float  b) { return fmax(a, fmin(b, x)); }
 VM_INLINE float2 V_CALL clamp(float2 t, float2 a, float2 b) { return minimum(maximum(t, a), b); }
@@ -825,7 +825,7 @@ YoyoAString YoyoFloat4x4ToString()
 */
 
 //mul
- float4x4 V_CALL operator * (float4x4 lhs, float4x4 rhs) { return float4x4 (lhs.c0 * rhs.c0, lhs.c1 * rhs.c1, lhs.c2 * rhs.c2, lhs.c3 * rhs.c3); }
+// float4x4 V_CALL operator * (float4x4 lhs, float4x4 rhs) { return float4x4 (lhs.c0 * rhs.c0, lhs.c1 * rhs.c1, lhs.c2 * rhs.c2, lhs.c3 * rhs.c3); }
  float4x4 V_CALL operator * (float4x4 lhs, float rhs) { return    float4x4 (lhs.c0 * rhs, lhs.c1 * rhs, lhs.c2 * rhs, lhs.c3 * rhs); }
  float4x4 V_CALL operator * (float lhs, float4x4 rhs) { return    float4x4 (lhs * rhs.c0, lhs * rhs.c1, lhs * rhs.c2, lhs * rhs.c3); }
 
@@ -846,15 +846,24 @@ VM_INLINE float4x4 V_CALL operator / (float lhs, float4x4 rhs) { return float4x4
 
 float4x4 V_CALL mul(float4x4 a, float4x4 b)
 {
+#if 0
+	return float4x4(
+		a.c0.x() * b.c0.xyzw() + a.c0.y() * b.c1.xyzw() + a.c0.z() * b.c2.xyzw() + a.c0.w() * b.c3.xyzw(),
+		a.c1.x() * b.c0.xyzw() + a.c1.y() * b.c1.xyzw() + a.c1.z() * b.c2.xyzw() + a.c1.w() * b.c3.xyzw(),
+		a.c2.x() * b.c0.xyzw() + a.c2.y() * b.c1.xyzw() + a.c2.z() * b.c2.xyzw() + a.c2.w() * b.c3.xyzw(),
+		a.c3.x() * b.c0.xyzw() + a.c3.y() * b.c1.xyzw() + a.c3.z() * b.c2.xyzw() + a.c3.w() * b.c3.xyzw());
+#else
 	return float4x4(
 		a.c0.xyzw() * b.c0.x() + a.c1.xyzw() * b.c0.y() + a.c2.xyzw() * b.c0.z() + a.c3.xyzw() * b.c0.w(),
 		a.c0.xyzw() * b.c1.x() + a.c1.xyzw() * b.c1.y() + a.c2.xyzw() * b.c1.z() + a.c3.xyzw() * b.c1.w(),
 		a.c0.xyzw() * b.c2.x() + a.c1.xyzw() * b.c2.y() + a.c2.xyzw() * b.c2.z() + a.c3.xyzw() * b.c2.w(),
 		a.c0.xyzw() * b.c3.x() + a.c1.xyzw() * b.c3.y() + a.c2.xyzw() * b.c3.z() + a.c3.xyzw() * b.c3.w());
+#endif
 }
 
 float4 V_CALL operator*(float4 a, float4x4 b)
 {
+	//return float4((a * b.c0), a * b.c1, a* b.c2, a*b.c3);
 	return float4(
 		a.x() * b.c0.x() + a.y() * b.c0.y() + a.z() * b.c0.z() + a.w() * b.c0.w(),
 		a.x() * b.c1.x() + a.y() * b.c1.y() + a.z() * b.c1.z() + a.w() * b.c1.w(),
@@ -1360,12 +1369,12 @@ VM_INLINE float3 V_CALL transform(float4x4 a, float3 b)
 
 VM_INLINE float4 V_CALL movelh(float4 a,float4 b)
 {
-    return float4(a.x(),a.y(),b.x(),b.y());
+    return float4(a.xy(),b.xy());
 }
 
 VM_INLINE float4 V_CALL movehl(float4 a,float4 b)
 {
-    return float4(b.z(),b.w(),a.z(),a.w());
+    return float4(b.zw(),a.zw());
 }
 
 float4x4 V_CALL inverse(float4x4 m)
@@ -1541,8 +1550,8 @@ VM_INLINE float V_CALL mul(float2 x)
 	d = normalize(d);
  
 	return (float4x4(cam_right.x(),     cam_up.x(),     d.x(),     0,
-                    cam_right.y(),     cam_up.y(),     d.y(),     0,
-                    cam_right.z(),     cam_up.z(),     d.z(),     0,
+                     cam_right.y(),     cam_up.y(),     d.y(),     0,
+                     cam_right.z(),     cam_up.z(),     d.z(),     0,
                     -dot(cam_right, p),-dot(cam_up, p),-dot(d, p),1.0f));
    
 	/*
@@ -1555,7 +1564,7 @@ VM_INLINE float V_CALL mul(float2 x)
 
  float3 V_CALL screen_to_world_point(float4x4 projection_matrix,float4x4 cam_matrix,float2 buffer_dim, float2 screen_xy, float z_depth)
 {
-	float4x4 pc_mat = cam_matrix * projection_matrix;
+	float4x4 pc_mat = mul(cam_matrix, projection_matrix);
 	float4x4 inv_pc_mat = transpose(inverse(pc_mat));
 	float4 p = float4(
         2.0f * screen_xy.x() / buffer_dim.x() - 1.0f,
@@ -1563,8 +1572,8 @@ VM_INLINE float V_CALL mul(float2 x)
         z_depth,
         1.0f);
 
-	float4 w_div = inv_pc_mat * p;
-	float w = 1.0f / w_div.w();
+	float4 w_div = mul(p , inv_pc_mat);
+	float w = safe_ratio_zero(1.0f, w_div.w());
     return w_div.xyz() * w;
 }
 
@@ -1574,19 +1583,21 @@ VM_INLINE float V_CALL mul(float2 x)
 
     float aspect_ratio = buffer_dim.x() / buffer_dim.y();
 
-	float4x4 view_projection_matrix = projection_matrix * camera_matrix;
+	float4x4 view_projection_matrix = mul(projection_matrix , camera_matrix);
 
-	float4 clip = view_projection_matrix * input_p;
+	float4 clip = mul(input_p,view_projection_matrix);
 	//w divide value should be z of output.
 	clip.setW(clip.z());
 
+	 //TODO(Ray):Use swizzlers here to help cut down on operations
+	//float3 div_w = clip.xyz() / clip.www();
 	float3 NDC = float3(
-        (clip.x() / clip.w() + 1) * aspect_ratio,
-    	(clip.y() / clip.w() + 1) * aspect_ratio,
-        clip.z() / clip.w());
+        (safe_ratio_zero( clip.x() , clip.w()) + 1) * aspect_ratio,
+    	(safe_ratio_zero( clip.y() , clip.w()) + 1) * aspect_ratio,
+         safe_ratio_zero( clip.z() , clip.w()));
 
-	float2 Result = float2( NDC.x() * buffer_dim.x() / NDC.z(),
-                           NDC.y() * buffer_dim.y() / NDC.z());
+	float2 Result = float2( NDC.x() * safe_ratio_zero(buffer_dim.x() , NDC.z()),
+                           NDC.y() *  safe_ratio_zero(buffer_dim.y() , NDC.z()));
 //	Result.x = NDC.x * buffer_dim.x / NDC.z;
 //	Result.y = NDC.y * buffer_dim.y / NDC.z;
 	return Result;

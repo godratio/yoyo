@@ -1,5 +1,6 @@
 #pragma once
 #include "yoyoyo_math.h"
+#include <list>
 
 float4x4 float4x4Serialize(float4x4 m)
 {
@@ -130,7 +131,22 @@ b32 V_CALL YoyoIntersectSegmentTriangle(float3 p, float3 q, float3 a, float3 b, 
 	return 1;
 }
 
-//Serialization of float3 with bitsery.
+struct YoyoRay
+{
+	float3 Origin;
+	float3 Dir;
+};
+
+internal YoyoRay YoyoRaycastFromScreen(float4x4 projection_matrix,float4x4 camera_matrix, float2 buffer_dim, float2 mouse_p)
+{
+	float3 DP = screen_to_world_point(projection_matrix, camera_matrix, buffer_dim, mouse_p, 0);
+	float3 DPEnd = screen_to_world_point(projection_matrix, camera_matrix, buffer_dim, mouse_p, 1.0f);
+	float3 RayDir = normalize(DPEnd - DP);
+	YoyoRay Result;
+	Result.Origin = DP;
+	Result.Dir = RayDir;
+	return Result;
+}
 
 /*
 float3 YoyoScreenToWorldPoint(RenderCommandList* list, float2 buffer_dim, float2 screen_xy, float z_depth)
@@ -158,16 +174,7 @@ float3[] GetScreenRect(RenderCommandList* list,float2 buffer_dim)
 	return Result;
 }
 
-internal ray RaycastFromScreen(RenderCommandList* list,float2 buffer_dim, float2 mouse_p)
-{
-	float3 DP = ScreenToWorldPoint(list,buffer_dim, Float2(mouse_p.x, mouse_p.y), 0);
-	float3 DPEnd = ScreenToWorldPoint(list,buffer_dim, Float2(mouse_p.x, mouse_p.y), 1.0f);
-	float3 RayDir = Normalize(DPEnd - DP);
-	ray Result;
-	Result.Origin = DP;
-	Result.Dir = RayDir;
-	return Result;
-}
+
 */
 
 
