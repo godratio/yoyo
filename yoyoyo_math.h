@@ -3,7 +3,11 @@
 #include <stdint.h>
 #include <math.h>
 #include <xmmintrin.h>
+#if OSX
 #include <x86intrin.h>
+#elif WINDOWS
+#include <intrin.h>
+#endif
 //TODO(Ray):look up proper define for compilers 
 #if WINDOWS
 #define VM_INLINE   __forceinline
@@ -869,29 +873,20 @@ VM_INLINE float4x4 V_CALL operator / (float lhs, float4x4 rhs) { return float4x4
 
 float4x4 V_CALL mul(float4x4 a, float4x4 b)
 {
-#if 0
 	return float4x4(
-		a.c0.x() * b.c0.xyzw() + a.c0.y() * b.c1.xyzw() + a.c0.z() * b.c2.xyzw() + a.c0.w() * b.c3.xyzw(),
-		a.c1.x() * b.c0.xyzw() + a.c1.y() * b.c1.xyzw() + a.c1.z() * b.c2.xyzw() + a.c1.w() * b.c3.xyzw(),
-		a.c2.x() * b.c0.xyzw() + a.c2.y() * b.c1.xyzw() + a.c2.z() * b.c2.xyzw() + a.c2.w() * b.c3.xyzw(),
-		a.c3.x() * b.c0.xyzw() + a.c3.y() * b.c1.xyzw() + a.c3.z() * b.c2.xyzw() + a.c3.w() * b.c3.xyzw());
-#else
-	return float4x4(
-		a.c0.xyzw() * b.c0.x() + a.c1.xyzw() * b.c0.y() + a.c2.xyzw() * b.c0.z() + a.c3.xyzw() * b.c0.w(),
-		a.c0.xyzw() * b.c1.x() + a.c1.xyzw() * b.c1.y() + a.c2.xyzw() * b.c1.z() + a.c3.xyzw() * b.c1.w(),
-		a.c0.xyzw() * b.c2.x() + a.c1.xyzw() * b.c2.y() + a.c2.xyzw() * b.c2.z() + a.c3.xyzw() * b.c2.w(),
-		a.c0.xyzw() * b.c3.x() + a.c1.xyzw() * b.c3.y() + a.c2.xyzw() * b.c3.z() + a.c3.xyzw() * b.c3.w());
-#endif
+		a.c0 * b.c0.x() + a.c1 * b.c0.y() + a.c2 * b.c0.z() + a.c3 * b.c0.w(),
+		a.c0 * b.c1.x() + a.c1 * b.c1.y() + a.c2 * b.c1.z() + a.c3 * b.c1.w(),
+		a.c0 * b.c2.x() + a.c1 * b.c2.y() + a.c2 * b.c2.z() + a.c3 * b.c2.w(),
+		a.c0 * b.c3.x() + a.c1 * b.c3.y() + a.c2 * b.c3.z() + a.c3 * b.c3.w());
 }
 
 float4 V_CALL operator*(float4 a, float4x4 b)
 {
-	//return float4((a * b.c0), a * b.c1, a* b.c2, a*b.c3);
 	return float4(
 		a.x() * b.c0.x() + a.y() * b.c0.y() + a.z() * b.c0.z() + a.w() * b.c0.w(),
 		a.x() * b.c1.x() + a.y() * b.c1.y() + a.z() * b.c1.z() + a.w() * b.c1.w(),
 		a.x() * b.c2.x() + a.y() * b.c2.y() + a.z() * b.c2.z() + a.w() * b.c2.w(),
-		a.x() * b.c3.x() + a.y() * b.c3.y() + a.z() * b.c3.z() + a.w() * b.c3.w());;
+		a.x() * b.c3.x() + a.y() * b.c3.y() + a.z() * b.c3.z() + a.w() * b.c3.w());
 }
 
 float4 V_CALL mul(float4 a, float4x4 b)
@@ -910,6 +905,7 @@ float4 operator *(mat4 A, float4 B)
 	return Result;
 }
 */
+
 VM_INLINE float4 V_CALL operator*(float4x4 a, float4 b)
 {
 	return a.c0 * b.x() + a.c1 * b.y() + a.c2 * b.z() + a.c3 * b.w();
@@ -920,8 +916,6 @@ VM_INLINE float4 V_CALL mul(float4x4 a, float4 b)
 {
 	return a * b;
 }
-
-
 
 //mod
 //VM_INLINE float4x4 operator % (float4x4 lhs, float4x4 rhs) { return new float4x4 (lhs.c0 % rhs.c0, lhs.c1 % rhs.c1, lhs.c2 % rhs.c2, lhs.c3 % rhs.c3); }
@@ -1224,43 +1218,6 @@ quaternion V_CALL quaternion::look_rotation(float3 forward, float3 up)
 
 V_CALL float3x3::float3x3(quaternion rotation)
 {
-	/*
-	float4 v = rotation.xyzw();
-	float4 v2 = v + v;
-
-	uint3 npn = uint3(0x80000000, 0x00000000, 0x80000000);
-	uint3 nnp = uint3(0x80000000, 0x80000000, 0x00000000);
-	uint3 pnn = uint3(0x00000000, 0x80000000, 0x80000000);
-	c0 = float4(v2.y() * asfloat(asuint(v.yxw()) ^ npn) - v2.z() * asfloat(asuint(v.zwx()) ^ pnn) + float3(1, 0, 0),0.0f);
-	c1 = float4(v2.z() * asfloat(asuint(v.wzy()) ^ nnp) - v2.x() * asfloat(asuint(v.yxw()) ^ npn) + float3(0, 1, 0),0.0f);
-	c2 = float4(v2.x() * asfloat(asuint(v.zwx()) ^ pnn) - v2.y() * asfloat(asuint(v.wzy()) ^ nnp) + float3(0, 0, 1),0.0f);
-
-	
-	// TODO: This should be better, but it isn't currently because the input quaternion ends being loaded as scalars for some reason.
-	// Test again later.
-	float4 xv2 = v.x * v2;
-	float4 yv2 = v.y * v2;
-	float4 zv2 = v.z * v2;
-	float4 wv2 = v.w * v2;
-	uint3 npn = uint3(0x80000000, 0x00000000, 0x80000000);
-	uint3 nnp = uint3(0x80000000, 0x80000000, 0x00000000);
-	uint3 pnn = uint3(0x00000000, 0x80000000, 0x80000000);
-	c0 = asfloat(asuint(yv2.yxw) ^ npn) - asfloat(asuint(zv2.zwx) ^ pnn) + float3(1, 0, 0);
-	c1 = asfloat(asuint(zv2.wzy) ^ nnp) - asfloat(asuint(xv2.yxw) ^ npn) + float3(0, 1, 0);
-	c2 = asfloat(asuint(xv2.zwx) ^ pnn) - asfloat(asuint(yv2.wzy) ^ nnp) + float3(0, 0, 1);
-	*/
-
-	/*
-	// handles scale
-	float dt = dot(v,v);
-	uint3 npn = uint3(0x80000000, 0x00000000, 0x80000000);
-	uint3 nnp = uint3(0x80000000, 0x80000000, 0x00000000);
-	uint3 pnn = uint3(0x00000000, 0x80000000, 0x80000000);
-	c0 = v2.y * asfloat(asuint(v.yxw) ^ npn) - v2.z * asfloat(asuint(v.zwx) ^ pnn);
-	c1 = v2.z * asfloat(asuint(v.wzy) ^ nnp) - v2.x * asfloat(asuint(v.yxw) ^ npn);
-	c2 = v2.x * asfloat(asuint(v.zwx) ^ pnn) - v2.y * asfloat(asuint(v.wzy) ^ nnp);
-	*/
-
 	//rotation = normalize(rotation);
 	float x = rotation.x() * 2.0f;
 	float y = rotation.y() * 2.0f;
@@ -1285,12 +1242,6 @@ V_CALL float3x3::float3x3(quaternion rotation)
 	return float3x3(v.c0.x(), v.c1.x(), v.c2.x(),
 		            v.c0.y(), v.c1.y(), v.c2.y(),
 		            v.c0.z(), v.c1.z(), v.c2.z());
-	/*
-	return float4x4(
-	v.c0.x(), v.c0.y(), v.c0.z(), v.c0.w(),
-	v.c1.x(), v.c1.y(), v.c1.z(), v.c1.w(),
-	v.c2.x(), v.c2.y(), v.c2.z(), v.c2.w(),
-	v.c3.x(), v.c3.y(), v.c3.z(), v.c3.w());*/
 }
 
  V_CALL float4x4::float4x4(quaternion rotation,float3 translation)
@@ -1451,27 +1402,27 @@ __forceinline __m128 Mat2MulAdj(__m128 vec1, __m128 vec2)
 
 // Inverse function is the same no matter column major or row major
 // this version treats it as row major
-float4x4 V_CALL inverse(float4x4 inM)
+float4x4 V_CALL inverse(float4x4 in_matrix)
 {
     // use block matrix method
     // A is a matrix, then i(A) or iA means inverse of A, A# (or A_ in code) means adjugate of A, |A| (or detA in code) is determinant, tr(A) is trace
     
     // sub matrices
-    __m128 A = VecShuffle_0101(inM.c0.m, inM.c1.m);
-    __m128 B = VecShuffle_2323(inM.c0.m, inM.c1.m);
-    __m128 C = VecShuffle_0101(inM.c2.m, inM.c3.m);
-    __m128 D = VecShuffle_2323(inM.c2.m, inM.c3.m);
+    __m128 A = VecShuffle_0101(in_matrix.c0.m, in_matrix.c1.m);
+    __m128 B = VecShuffle_2323(in_matrix.c0.m, in_matrix.c1.m);
+    __m128 C = VecShuffle_0101(in_matrix.c2.m, in_matrix.c3.m);
+    __m128 D = VecShuffle_2323(in_matrix.c2.m, in_matrix.c3.m);
     
-    __m128 detA = _mm_set1_ps(inM.c0.x() * inM.c1.y() - inM.c0.y() * inM.c1.x());
-    __m128 detB = _mm_set1_ps(inM.c0.z() * inM.c1.w() - inM.c0.w() * inM.c1.z());
-    __m128 detC = _mm_set1_ps(inM.c2.x() * inM.c3.y() - inM.c2.y() * inM.c3.x());
-    __m128 detD = _mm_set1_ps(inM.c2.z() * inM.c3.w() - inM.c2.w() * inM.c3.z());
+    __m128 detA = _mm_set1_ps(in_matrix.c0.x() * in_matrix.c1.y() - in_matrix.c0.y() * in_matrix.c1.x());
+    __m128 detB = _mm_set1_ps(in_matrix.c0.z() * in_matrix.c1.w() - in_matrix.c0.w() * in_matrix.c1.z());
+    __m128 detC = _mm_set1_ps(in_matrix.c2.x() * in_matrix.c3.y() - in_matrix.c2.y() * in_matrix.c3.x());
+    __m128 detD = _mm_set1_ps(in_matrix.c2.z() * in_matrix.c3.w() - in_matrix.c2.w() * in_matrix.c3.z());
     
 #if 0 // for determinant, float version is faster
     // determinant as (|A| |B| |C| |D|)
     __m128 detSub = _mm_sub_ps(
-                               _mm_mul_ps(VecShuffle(inM.c0.m, inM.c2.m, 0,2,0,2), VecShuffle(inM.c1.m, inM.c3.m, 1,3,1,3)),
-                               _mm_mul_ps(VecShuffle(inM.c0.m, inM.c2.m, 1,3,1,3), VecShuffle(inM.c1.m, inM.c3.m, 0,2,0,2))
+                               _mm_mul_ps(VecShuffle(in_matrix.c0.m, in_matrix.c2.m, 0,2,0,2), VecShuffle(in_matrix.c1.m, in_matrix.c3.m, 1,3,1,3)),
+                               _mm_mul_ps(VecShuffle(in_matrix.c0.m, in_matrix.c2.m, 1,3,1,3), VecShuffle(in_matrix.c1.m, in_matrix.c3.m, 0,2,0,2))
                                );
     __m128 detA = VecSwizzle1(detSub, 0);
     __m128 detB = VecSwizzle1(detSub, 1);
@@ -1523,9 +1474,6 @@ float4x4 V_CALL inverse(float4x4 inM)
                           float4(VecShuffle(X_, Y_, 2,0,2,0)),
                           float4(VecShuffle(Z_, W_, 3,1,3,1)),
                           float4(VecShuffle(Z_, W_, 2,0,2,0)));
-    
-   
-    
     return r;
 }
 //END INVERSE
@@ -1707,18 +1655,11 @@ VM_INLINE float V_CALL mul(float2 x)
                      cam_right.y(),     cam_up.y(),     d.y(),     0,
                      cam_right.z(),     cam_up.z(),     d.z(),     0,
                     -dot(cam_right, p),-dot(cam_up, p),-dot(d, p),1.0f));
-   
-	/*
-	return float4x4(cam_right.x(), cam_right.y(), cam_right.z(), -dot(cam_right, p),
-		            cam_up.x(),    cam_up.y(),    cam_up.z(),    -dot(cam_up, p),
-		            d.x(),         d.y(),         d.z(),         -dot(d, p),
-		            0 ,            0,             0,             1.0f);
-	*/
 }
 
  float3 V_CALL screen_to_world_point(float4x4 projection_matrix,float4x4 cam_matrix,float2 buffer_dim, float2 screen_xy, float z_depth)
 {
-	float4x4 pc_mat = mul(cam_matrix, projection_matrix);
+	float4x4 pc_mat = mul(projection_matrix,cam_matrix);
 	float4x4 inv_pc_mat = transpose(inverse(pc_mat));
 	float4 p = float4(
         2.0f * screen_xy.x() / buffer_dim.x() - 1.0f,

@@ -73,13 +73,13 @@ float4x4 V_CALL YoyoSetCameraView(ObjectTransform* ot)
     return set_camera_view(ot->p,ot->forward,ot->up);
 }
 
-float3 V_CALL YoyoTranslateDir(float4x4 a, float3 b)
+float3 V_CALL YoyoTransformDir(float4x4 a, float3 b)
 {
-	return (float4(b, 0) * a).xyz();
+	return (mul(float4(b, 0) , transpose(a))).xyz();
 }
-float3 V_CALL YoyoTranslateP(float4x4 a, float3 b)
+float3 V_CALL YoyoTransformP(float4x4 a, float3 b)
 {
-	return (float4(b, 1) * a).xyz();
+	return (mul(float4(b, 1), transpose(a))).xyz();
 }
 
 //Physics
