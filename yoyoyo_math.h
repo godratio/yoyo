@@ -148,7 +148,11 @@ struct float3
 
     //NOTE(Ray):Use these as lil as possible
 #if WINDOWS
-    VM_INLINE float V_CALL operator[] (size_t i) const { return m.m128_f32[i]; };
+    VM_INLINE float V_CALL operator[] (size_t i) const { return m.m128_f32[i]; }
+
+#ifdef YOYO_USE_PHYSX_EXT
+	physx::PxVec3 float3::toPhysx();
+#endif
 	VM_INLINE float& V_CALL operator[] (size_t i) { return m.m128_f32[i]; };
 	VM_INLINE float* V_CALL to_array() { return m.m128_f32; }
 #else

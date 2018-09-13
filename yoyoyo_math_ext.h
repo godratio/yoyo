@@ -148,6 +148,14 @@ static YoyoRay YoyoRaycastFromScreen(float4x4 projection_matrix,float4x4 camera_
 	return Result;
 }
 
+#ifdef YOYO_USE_PHYSX_EXT
+//PHsyx extensions
+ physx::PxVec3 float3::toPhysx()
+{
+	return physx::PxVec3(m.m128_f32[0], m.m128_f32[1], m.m128_f32[2]);
+}
+#endif
+
 /*
 float3 YoyoScreenToWorldPoint(RenderCommandList* list, float2 buffer_dim, float2 screen_xy, float z_depth)
 {
