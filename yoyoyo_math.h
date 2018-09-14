@@ -151,7 +151,8 @@ struct float3
     VM_INLINE float V_CALL operator[] (size_t i) const { return m.m128_f32[i]; }
 
 #ifdef YOYO_USE_PHYSX_EXT
-	physx::PxVec3 float3::toPhysx();
+	VM_INLINE explicit V_CALL float3(physx::PxVec3 a) {  m = _mm_set_ps(a.z, a.z, a.y, a.x); }
+	VM_INLINE physx::PxVec3 float3::toPhysx();
 #endif
 	VM_INLINE float& V_CALL operator[] (size_t i) { return m.m128_f32[i]; };
 	VM_INLINE float* V_CALL to_array() { return m.m128_f32; }
@@ -558,7 +559,7 @@ VM_INLINE float2 V_CALL sqroot(float2 a) { return float2(sqrt(a.x()),sqrt(a.y())
 VM_INLINE float3 V_CALL sqroot(float3 a) { return float3(sqrt(a.x()),sqrt(a.y()),sqrt(a.z())); }
 VM_INLINE float4 V_CALL sqroot(float4 a) { return float4(sqrt(a.x()),sqrt(a.y()),sqrt(a.z()),sqrt(a.w())); }
 
-VM_INLINE float V_CALL  rsqrt(float a)  { return 1.0f / sqrt(a); }
+VM_INLINE float V_CALL  rsqrt(float a)  { return safe_ratio_zero(1.0f , sqrt(a)); }
 VM_INLINE float2 V_CALL rsqrt(float2 a) { return 1.0f / sqroot(a); }
 VM_INLINE float3 V_CALL rsqrt(float3 a) { return 1.0f / sqroot(a); }
 VM_INLINE float4 V_CALL rsqrt(float4 a) { return 1.0f / sqroot(a); }
@@ -1089,7 +1090,20 @@ VM_INLINE unsigned V_CALL mask(quaternion v) { return _mm_movemask_ps(v.m) & 7; 
 VM_INLINE bool V_CALL any(boolq v) { return mask(v) != 0; }
 VM_INLINE bool V_CALL all(boolq v) { return mask(v) == 7; }
 //TODO(Rays):Quaternion normalize needs more rigor.
-VM_INLINE quaternion V_CALL normalize(quaternion v) { return quaternion(v.xyzw() * (1.0f / length(v.xyzw()))); }
+//NOTE(Ray):Going back to the dumb but working quaternion normalization.
+inline quaternion normalize(quaternion Q)
+{
+	f32 Root = sqrt(Q.x() * Q.x() + Q.y() * Q.y() + Q.z() * Q.z() + Q.w() * Q.w());
+	Q = quaternion(Q.xyzw() / Root);
+	return Q;
+}
+/*
+VM_INLINE quaternion V_CALL normalize(quaternion q){
+ 	float4 x = q.xyzw();
+	return quaternion(rsqrt(dot(x, x)) * x);
+}
+//VM_INLINE quaternion V_CALL normalize(quaternion v) { return quaternion(v.xyzw() * (safe_ratio_zero(1.0f , length(v.xyzw())))); }
+*/
 VM_INLINE float V_CALL dot(quaternion a, quaternion b){return dot(a.xyzw(), b.xyzw());}
 VM_INLINE float V_CALL length(quaternion q){return sqrt(dot(q.xyzw(), q.xyzw()));}
 VM_INLINE float V_CALL lengthsq(quaternion q){return dot(q.xyzw(), q.xyzw());}
@@ -1153,7 +1167,7 @@ VM_INLINE float V_CALL lengthsq(quaternion q){return dot(q.xyzw(), q.xyzw());}
 
 quaternion V_CALL quaternion::look_rotation(float3 forward, float3 up)
 {
-    float3 dir = normalize(forward);//normalizeSafe(direction);
+    float3 dir = normalize(forward);
     float3 rightdir = cross(up, dir);
     float3 updir = cross(dir, rightdir);
 #if 0
@@ -1189,7 +1203,7 @@ quaternion V_CALL quaternion::look_rotation(float3 forward, float3 up)
         q.setX((m12 - m21) * num);
         q.setY((m20 - m02) * num);
         q.setZ((m01 - m10) * num);
-        return quaternion(q);
+        return normalize(quaternion(q));
     }
     if ((m00 >= m11) && (m00 >= m22))
     {
@@ -1199,7 +1213,7 @@ quaternion V_CALL quaternion::look_rotation(float3 forward, float3 up)
         q.setY((m01 + m10) * num4);
         q.setZ((m02 + m20) * num4);
         q.setW((m12 - m21) * num4);
-        return quaternion(q);
+        return normalize(quaternion(q));
     }
     if (m11 > m22)
     {
@@ -1209,7 +1223,7 @@ quaternion V_CALL quaternion::look_rotation(float3 forward, float3 up)
         q.setY(0.5f * num6);
         q.setZ((m21 + m12) * num3);
         q.setW((m20 - m02) * num3);
-        return quaternion(q);
+        return normalize(quaternion(q));
     }
     float num5 = sqrt(((1.0f + m22) - m00) - m11);
     float num2 = 0.5f / num5;
@@ -1217,7 +1231,7 @@ quaternion V_CALL quaternion::look_rotation(float3 forward, float3 up)
     q.setY((m21 + m12) * num2);
     q.setZ(0.5f * num5);
     q.setW((m01 - m10) * num2);
-    return quaternion(q);
+    return normalize(quaternion(q));
 }
 
 V_CALL float3x3::float3x3(quaternion rotation)
@@ -1631,17 +1645,17 @@ VM_INLINE float V_CALL mul(float2 x)
 
  float3 V_CALL forward(quaternion q)
 {
-	return (mul(q, float3(0, 0, 1)));
+	return normalize(mul(q, float3(0, 0, 1)));
 }
 
  float3 V_CALL up(quaternion q)
 {
-	return (mul(q, float3(0, 1, 0)));
+	return normalize(mul(q, float3(0, 1, 0)));
 }
 
  float3 V_CALL right(quaternion q)
 {
-	return (mul(q, float3(1, 0, 0)));
+	return normalize(mul(q, float3(1, 0, 0)));
 }
 
  float3 V_CALL project_on_plane(float3 v, float3 plane_normal)
