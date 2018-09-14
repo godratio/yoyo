@@ -135,6 +135,7 @@ struct float3
     VM_INLINE float3() {}
     VM_INLINE explicit V_CALL float3(const float *p) { m = _mm_set_ps(p[2], p[2], p[1], p[0]); }
     VM_INLINE explicit V_CALL float3(float x) { m = _mm_set_ps(x, x, x, x); }
+	VM_INLINE explicit V_CALL float3(int x) { m = _mm_set_ps((float)x, (float)x, (float)x, (float)x); }
 	VM_INLINE explicit V_CALL float3(float2 xy, float z) { m = _mm_set_ps(z, z, xy.y(), xy.x()); }
     VM_INLINE explicit V_CALL float3(float x, float y, float z) { m = _mm_set_ps(z, z, y, x); }
     VM_INLINE explicit V_CALL float3(__m128 v) { m = v; }
