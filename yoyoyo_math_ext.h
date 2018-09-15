@@ -149,11 +149,16 @@ static YoyoRay YoyoRaycastFromScreen(float4x4 projection_matrix,float4x4 camera_
 }
 
 #ifdef YOYO_USE_PHYSX_EXT
+
 //PHsyx extensions
  physx::PxVec3 float3::toPhysx()
 {
+#if WINDOWS
 	return physx::PxVec3(m.m128_f32[0], m.m128_f32[1], m.m128_f32[2]);
+#else
+#endif
 }
+
 #endif
 
 /*

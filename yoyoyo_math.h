@@ -915,7 +915,6 @@ float4 operator *(mat4 A, float4 B)
 VM_INLINE float4 V_CALL operator*(float4x4 a, float4 b)
 {
 	return a.c0 * b.x() + a.c1 * b.y() + a.c2 * b.z() + a.c3 * b.w();
-	
 }
 
 VM_INLINE float4 V_CALL mul(float4x4 a, float4 b)
