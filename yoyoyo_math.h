@@ -178,7 +178,7 @@ struct float3
         t = _mm_shuffle_ps(t, t, _MM_SHUFFLE(3, 0, 1, 0));
         m = _mm_move_ss(t, m);
     }
-	static uint32_t size() { return sizeof(float) * 3; }
+	VM_INLINE static uint32_t size() { return sizeof(float) * 3; }
     //VM_INLINE float operator[] (size_t i) const { return m.m128_f32[i]; };
     //VM_INLINE float& operator[] (size_t i) { return m.m128_f32[i]; };
     //VM_INLINE float3 float3i(int x, int y, int z) { return float3((float)x, (float)y, (float)z); }
@@ -247,7 +247,10 @@ struct float4
     VM_INLINE float2 V_CALL zz() const { return SHUFFLE2(*this, 2, 2); }
     VM_INLINE float2 V_CALL wz() const { return SHUFFLE2(*this, 3, 2); }
     VM_INLINE float2 V_CALL wy() const { return SHUFFLE2(*this, 3, 1); }
-
+#ifdef YOYO_USE_PHYSX_EXT
+	VM_INLINE explicit V_CALL float4(physx::PxVec3 a) { m = _mm_set_ps(a.z, a.z, a.y, a.x); }
+	VM_INLINE physx::PxVec4 float4::toPhysx();
+#endif
 	//NOTE(Ray):Should avoid using these whenever possible
 #if WINDOWS
 	VM_INLINE float V_CALL operator[] (size_t i) const { return m.m128_f32[i]; };
@@ -758,7 +761,7 @@ VM_INLINE float3 V_CALL select(float3 a, float3 b, bool c) { return c ? b : a; }
 VM_INLINE float4 V_CALL select(float4 a, float4 b, bool c) { return c ? b : a; }
 
 VM_INLINE float2 V_CALL reflect(float2 i, float2 n) { return i - 2.0f * n * dot(i, n); }
-VM_INLINE float3 V_CALL reflect(float3 i, float3 n) { return i - 2.0f * n * dot(i, n); }
+VM_INLINE float3 V_CALL reflect(float3 i, float3 n) { return i - 2.0f * dot(i,n) * n; }
 VM_INLINE float4 V_CALL reflect(float4 i, float4 n) { return i - 2.0f * n * dot(i, n); }
 
 VM_INLINE float2 V_CALL refract(float2 i, float2 n, float eta)
@@ -972,7 +975,10 @@ struct quaternion
         float4 q = normalize(float4(this->m));
         this->m =  _mm_set_ps(q.x(),q.y(),q.z(),q.w());
     }
-
+#ifdef YOYO_USE_PHYSX_EXT
+	VM_INLINE explicit V_CALL quaternion(physx::PxQuat a) { m = _mm_set_ps(a.w, a.z, a.y, a.x); }
+	VM_INLINE physx::PxQuat quaternion::toPhysx();
+#endif
         // Construct unit quaternion from rigid-transformation matrix. The matrix must be orthonormal.
 
      V_CALL quaternion(float4x4 m)

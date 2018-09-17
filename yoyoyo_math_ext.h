@@ -158,6 +158,21 @@ static YoyoRay YoyoRaycastFromScreen(float4x4 projection_matrix,float4x4 camera_
 #else
 #endif
 }
+ physx::PxVec4 float4::toPhysx()
+ {
+#if WINDOWS
+	 return physx::PxVec4(m.m128_f32[0], m.m128_f32[1], m.m128_f32[2],m.m128_f32[3]);
+#else
+#endif
+ }
+
+ physx::PxQuat quaternion::toPhysx()
+ {
+#if WINDOWS
+	 return physx::PxQuat(m.m128_f32[0], m.m128_f32[1], m.m128_f32[2],m.m128_f32[3]);
+#else
+#endif
+ }
 
 #endif
 
