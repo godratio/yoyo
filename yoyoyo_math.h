@@ -52,7 +52,7 @@
 #define SHUFFLE2m(m, X,Y) float2(_mm_shuffle_ps(m, m, _MM_SHUFFLE(Y,Y,Y,X)))
 #define SHUFFLE3m(m, X,Y,Z) float3(_mm_shuffle_ps(m, m, _MM_SHUFFLE(Z,Z,Y,X)))
 #define SHUFFLE4m(m, X,Y,Z,W) float4(_mm_shuffle_ps(m, (m, _MM_SHUFFLE(W,Z,Y,X)))
-//NOTE(Ray):Used only for making pointers to memory that correlates to one of our math types.
+//NOTE(Ray):used only for making pointers to memory that correlates to one of our math types.
 union float2data
 {
 	struct
@@ -1721,4 +1721,17 @@ VM_INLINE float V_CALL mul(float2 x)
 //	Result.y = NDC.y * buffer_dim.y / NDC.z;
 	return Result;
 }
+ /*
+  *	function GetBias(time,bias)
+{
+  return (time / ((((1.0/bias) - 2.0)*(1.0 - time))+1.0));
+}
 
+function GetGain(time,gain)
+{
+  if(time < 0.5)
+    return GetBias(time * 2.0,gain)/2.0;
+  else
+    return GetBias(time * 2.0 - 1.0,1.0 - gain)/2.0 + 0.5;
+}
+  */

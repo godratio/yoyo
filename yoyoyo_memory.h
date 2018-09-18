@@ -86,7 +86,6 @@ YoyoGetAlignmentOffset(MemoryArena *arena, size_t alignment)
 	{
 		AlignmentOffset = alignment - (ResultPointer & AlignmentMask);
 	}
-
 	return(AlignmentOffset);
 }
 
@@ -256,9 +255,7 @@ static void* YoyoPushSize_(MemoryArena*Partition, size_t Size, ParitionPushParam
 	{
 		YoyoClearSize(Partition, Size);
 	}
-
 	Partition->used = Partition->used + Size;
-
 	return Result;
 }
 

@@ -1,5 +1,5 @@
 #pragma once
-#include "yoyoyo_memory.h"
+//TODO(Ray):Move memory from api to yoyoyoyo
 #include <stdint.h>
 #include <cstring>
 
@@ -40,15 +40,15 @@ static YoyoVector YoyoInitVector_(uint32_t start_size, uint32_t unit_size, bool 
     result.start_at = -1;
     result.pushable = true;
     //TODO(ray): change this to get memory froma a pre allocated partition.
-    void* starting_memory = YoyoPlatformAllocateMemory(result.max_size);
+    void* starting_memory = PlatformAllocateMemory(result.max_size);
     MemoryArena* partition = (MemoryArena*)starting_memory;
-    YoyoAllocateArena(partition, result.max_size,partition+sizeof(MemoryArena*));
+    AllocatePartition(partition, result.max_size,partition+sizeof(MemoryArena*));
     
     result.mem_arena = partition;
     if(pre_empt)
     {
         result.count = start_size;
-        YoyoPushSize_(partition,result.max_size);
+        PushSize(partition,result.max_size);
     }
     else
     {
@@ -66,7 +66,7 @@ static void YoyoClearVector(YoyoVector *vector)
 	vector->count = 0;
 	vector->at_index = 0;
 	vector->start_at = -1;
-	vector->mem_arena->temp_count = 0;
+//	vector->mem_arena->temp_count = 0;
 }
 
 static void YoyoFreeVectorMem(YoyoVector *vector)
@@ -77,7 +77,7 @@ static void YoyoFreeVectorMem(YoyoVector *vector)
 		YoyoClearVector(vector);
 		vector->total_size = 0;
 		vector->total_count = 0;
-		YoyoPlatformDeallocateMemory(vector->mem_arena->base, vector->mem_arena->size);
+		PlatformDeAllocateMemory(vector->mem_arena->base, vector->mem_arena->size);
 		vector->base = nullptr;
 	}
 }
@@ -109,13 +109,13 @@ static uint32_t YoyoPushBack_(YoyoVector* vector, void* element, bool copy = tru
     {
 		uint32_t new_size = vector->total_size + (vector->total_size * vector->resize_ratio);
 		uint8_t* temp_ptr = (uint8_t*)vector->mem_arena->base;
-		vector->base = vector->mem_arena->base = YoyoPlatformAllocateMemory(new_size);
+		vector->base = vector->mem_arena->base = PlatformAllocateMemory(new_size);
 		vector->mem_arena->size = new_size;
 		memcpy(vector->base, (void*)temp_ptr, vector->total_size);
 		vector->max_size = new_size;
     }
     //TODO(ray):have some protection here to make sure we are added in the right type.
-    uint8_t *ptr = (uint8_t*)YoyoPushSize(vector->mem_arena, vector->unit_size);
+    uint8_t *ptr = (uint8_t*)PushSize(vector->mem_arena, vector->unit_size);
     if (copy)
     {
         uint32_t byte_count = vector->unit_size;
@@ -180,7 +180,7 @@ static void* YoyoSetVectorElement(YoyoVector* vector, uint32_t element_index, vo
 #define YoyoPushAndCastEmptyVectorElement(type,vector) (type*)YoyoPushEmptyVectorElement_(vector)
 static void* YoyoPushEmptyVectorElement_(YoyoVector* vector)
 {
-	uint8_t *ptr = (uint8_t*)YoyoPushSize(vector->mem_arena, vector->unit_size);
+	uint8_t *ptr = (uint8_t*)PushSize(vector->mem_arena, vector->unit_size);
 
 	vector->total_size += vector->unit_size;
 	vector->count++;
