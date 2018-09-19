@@ -76,9 +76,8 @@ struct float4data
 	float x, y, z, w;
 };
 
-
+typedef float4data quaterniondata;
 struct float4;
-
 
 struct  float2
 {
@@ -137,6 +136,7 @@ struct float3
     VM_INLINE explicit V_CALL float3(float x) { m = _mm_set_ps(x, x, x, x); }
 	VM_INLINE explicit V_CALL float3(int x) { m = _mm_set_ps((float)x, (float)x, (float)x, (float)x); }
 	VM_INLINE explicit V_CALL float3(float2 xy, float z) { m = _mm_set_ps(z, z, xy.y(), xy.x()); }
+	VM_INLINE explicit V_CALL float3(float3data a) { m = _mm_set_ps(a.z, a.z, a.y, a.x); }
     VM_INLINE explicit V_CALL float3(float x, float y, float z) { m = _mm_set_ps(z, z, y, x); }
     VM_INLINE explicit V_CALL float3(__m128 v) { m = v; }
 
@@ -150,13 +150,17 @@ struct float3
     //NOTE(Ray):Use these as lil as possible
 #if WINDOWS
     VM_INLINE float V_CALL operator[] (size_t i) const { return m.m128_f32[i]; }
-
+	VM_INLINE float* V_CALL to_array() { return m.m128_f32; }
+	VM_INLINE float3data V_CALL tofloat3data()
+    {
+		float3data a = { m.m128_f32[0],m.m128_f32[1],m.m128_f32[2] };
+	    return a;
+    }
 #ifdef YOYO_USE_PHYSX_EXT
 	VM_INLINE explicit V_CALL float3(physx::PxVec3 a) {  m = _mm_set_ps(a.z, a.z, a.y, a.x); }
 	VM_INLINE physx::PxVec3 float3::toPhysx();
 #endif
 	VM_INLINE float& V_CALL operator[] (size_t i) { return m.m128_f32[i]; };
-	VM_INLINE float* V_CALL to_array() { return m.m128_f32; }
 #else
 #endif
     VM_INLINE void V_CALL store(float *p) const { p[0] = x(); p[1] = y(); p[2] = z(); }
@@ -942,12 +946,17 @@ struct quaternion
     VM_INLINE explicit V_CALL quaternion(const float *p) { m = _mm_set_ps(p[3], p[2], p[1], p[0]); }
     VM_INLINE explicit V_CALL quaternion(float x, float y, float z,float w) { m = _mm_set_ps(w, z, y, x); }
     VM_INLINE explicit V_CALL quaternion(float4 x) { m = _mm_set_ps(x.w(), x.z(), x.y(), x.x()); }
-    
+	VM_INLINE explicit V_CALL quaternion(quaterniondata a) { m = _mm_set_ps(a.w, a.z, a.y, a.x); }
     VM_INLINE explicit V_CALL quaternion(float x) { m = _mm_set_ps(x, x, x, x); }
     VM_INLINE explicit V_CALL quaternion(__m128 v) { m = v; }
     VM_INLINE explicit V_CALL quaternion(float3 a,float b){m = _mm_set_ps(a.x(),a.y(),a.x(),b);}
     VM_INLINE explicit V_CALL quaternion(float2 a,float2 b){m = _mm_set_ps(a.x(),a.y(),b.x(),b.y());}
-
+	
+ 	VM_INLINE quaterniondata toquaterniondata()
+    {
+		quaterniondata result = {m.m128_f32[0],m.m128_f32[1],m.m128_f32[2],m.m128_f32[3]};
+		return result;
+    }
 //The matrix must be orthonormal.
     VM_INLINE explicit V_CALL quaternion(float3x3 m)
     {
