@@ -19,6 +19,7 @@ struct ObjectTransform
     float3 right;
 };
 
+
 ObjectTransform ObjectTransformSerialize(ObjectTransform* ot)
 {
 	ObjectTransform new_ot = {};
@@ -66,6 +67,12 @@ void V_CALL YoyoUpdateObjectTransform(ObjectTransform* ot)
 	YoyoUpdateLocalaxis(ot);
 	YoyoUpdateMatrix(ot);
 }
+
+ static void InitObjectTranform(ObjectTransform* ot)
+ {
+     ot->r = quaternion::look_rotation(float3(0,0,1),float3(0,1,0));
+     YoyoUpdateObjectTransform(ot);
+ }
 
 float4x4 V_CALL YoyoSetCameraView(ObjectTransform* ot)
 {

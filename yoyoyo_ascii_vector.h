@@ -136,6 +136,9 @@ static uint32_t YoyoPushBack_(YoyoVector* vector, void* element, bool copy = tru
     return result_index;
 }
 
+//NOTE(Ray):We purposely have no bounds checking here its your responsibility.
+//TODO(Ray):Implement a bounds check version of this function for when it might be good to have one.
+//for now dont want need it.
 #define YoyoGetVectorElement(type,vector,index) (type*)YoyoGetVectorElement_(vector,index)
 #define YoyoGetVectorFirst(type,vector) (type*)YoyoGetVectorElement_(vector,0)
 #define YoyoGetVectorLast(type,vector) (type*)YoyoGetVectorElement_(vector,vector.count)
