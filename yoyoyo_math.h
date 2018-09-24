@@ -814,6 +814,7 @@ struct float3x3
         this->c1 = float4(m10, m11, m12, 0);
         this->c2 = float4(m20, m21, m22, 0);
     }
+	VM_INLINE static uint32_t size() { return sizeof(float) * 9; }
 	V_CALL float3x3(quaternion rotation);
 };
 
@@ -850,7 +851,7 @@ struct float4x4
         c2 = (rotation.c2);
         c3 = float4(translation,1.0f);
     }
-
+	VM_INLINE static uint32_t size() { return sizeof(float) * 16; }
 	VM_INLINE static float4x4 V_CALL float4x4::identity() { return float4x4(1.0f, 0.0f, 0.0f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f, 0.0f, 0.0f, 1.0f); };
 	VM_INLINE static float4x4 V_CALL float4x4::zero() { return float4x4(0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f); }
 
@@ -989,7 +990,7 @@ struct quaternion
 	VM_INLINE physx::PxQuat quaternion::toPhysx();
 #endif
         // Construct unit quaternion from rigid-transformation matrix. The matrix must be orthonormal.
-
+	VM_INLINE static uint32_t size() { return sizeof(float) * 4; }
      V_CALL quaternion(float4x4 m)
     {
         float4 u = m.c0;

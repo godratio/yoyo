@@ -22,6 +22,7 @@ struct YoyoVector
 
 //BEGIN VECTOR LIFECYCLE
 #define YoyoInitVector(start_size,type,pre_empt) YoyoInitVector_(start_size,sizeof(type),pre_empt)
+#define YoyoInitVectorSize(start_size,size,pre_empt) YoyoInitVector_(start_size,size,pre_empt)
 static YoyoVector YoyoInitVector_(uint32_t start_size, uint32_t unit_size, bool pre_empt = false)
 {
     //TIMED_BLOCK();
@@ -107,7 +108,7 @@ static uint32_t YoyoPushBack_(YoyoVector* vector, void* element, bool copy = tru
     //check if we have space if not resize to create it.
     if(vector->max_size < vector->unit_size * (vector->count + 1))
     {
-		uint32_t new_size = vector->total_size + (vector->total_size * vector->resize_ratio);
+		uint32_t new_size = vector->max_size + (vector->max_size * vector->resize_ratio);
 		uint8_t* temp_ptr = (uint8_t*)vector->mem_arena->base;
 		vector->base = vector->mem_arena->base = PlatformAllocateMemory(new_size);
 		vector->mem_arena->size = new_size;
