@@ -141,9 +141,13 @@ static uint32_t YoyoPushBack_(YoyoVector* vector, void* element, bool copy = tru
 //TODO(Ray):Implement a bounds check version of this function for when it might be good to have one.
 //for now dont want need it.
 #define YoyoGetVectorElement(type,vector,index) (type*)YoyoGetVectorElement_(vector,index)
+
 #define YoyoGetVectorFirst(type,vector) (type*)YoyoGetVectorElement_(vector,0)
 #define YoyoGetVectorLast(type,vector) (type*)YoyoGetVectorElement_(vector,vector.count)
 #define YoyoPeekVectorElement(type,vector) (type*)YoyoGetVectorElement_(vector,*vector.count-1)
+//#define YoyoIteraterPeekVector(type,vector) (type*)YoyoIterateVectorElement_(vector,*vector.at_index)
+//#define YoyoIteraterPeekNextVector(type,vector) (type*)YoyoIterateVectorElement_(vector,*vector.at_index + 1)
+//#define YoyoIteraterPeekOffsetVector(type,vector,offset) (type*)YoyoIterateVectorElement_(vector,*vector.at_index + offset)
 static void* YoyoGetVectorElement_(YoyoVector* vector, uint32_t index)
 {
 	Assert(vector);
@@ -212,6 +216,8 @@ static void YoyoPopVectorElement(YoyoVector* vector)
 //END VECTOR GENERAL USAGE FUNCTIONS
 
 //BEGIN VECTOR ITERATION FUNCS
+
+
 #define YoyoIterateVector(vector,type) (type*)YoyoIterateVectorElement_(vector)
 #define YoyoIterateVectorFromIndex(vector,type,index) (type*)YoyoIterateVectorElement_(vector,index)
 #define YoyoIterateVectorFromToIndex(vector,type,index,to_index) (type*)YoyoIterateVectorElement_(vector,index,to_index)
@@ -232,6 +238,17 @@ static void* YoyoIterateVectorElement_(YoyoVector *vector, int start_at = -1, in
 	return YoyoGetVectorElement_(vector, vector->at_index++);
 }
 
+//NOTE(ray):Incorporates bounds checking and satisfies the iterator promise of a return by zero
+//if you if you try to access our of bounds of the iterator index.
+#define YoyoGetVectorIteratorOffset(type,vector,offset) (type*)YoyoGetVectorIterator_(vector,*vector.at_index + offset)
+static void* YoyoGetVectorIterator_(YoyoVector* vector, uint32_t index)
+{
+	Assert(vector);
+	if (index < 0 || index >= vector->count)return 0;
+	//TODO(Ray):May want to think about this. Need to give a hint to the client code.
+	void* Location = (uint8_t*)vector->base + (index * vector->unit_size);
+	return Location;
+}
 static void YoyoResetVectorIterator(YoyoVector *vector)
 {
 	//TIMED_BLOCK();
