@@ -151,6 +151,7 @@ static uint32_t YoyoPushBack_(YoyoVector* vector, void* element, bool copy = tru
 static void* YoyoGetVectorElement_(YoyoVector* vector, uint32_t index)
 {
 	Assert(vector);
+	if (index < 0 || index > vector->count - 1)return 0;
 	//TODO(Ray):May want to think about this. Need to give a hint to the client code.
 	void* Location = (uint8_t*)vector->base + (index * vector->unit_size);
 	return Location;

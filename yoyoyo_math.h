@@ -188,6 +188,8 @@ struct float3
     //VM_INLINE float3 float3i(int x, int y, int z) { return float3((float)x, (float)y, (float)z); }
 };
 
+struct quaternion;
+
 struct float4
 {
     __m128 m;
@@ -797,7 +799,6 @@ VM_INLINE float2 V_CALL degrees(float2 x) { return x * 57.295779513f; }
 VM_INLINE float3 V_CALL degrees(float3 x) { return x * 57.295779513f; }
 VM_INLINE float4 V_CALL degrees(float4 x) { return x * 57.295779513f; }
  
-struct quaternion;
 struct float3x3
 {
     float4 c0;
@@ -952,7 +953,7 @@ struct quaternion
     VM_INLINE explicit V_CALL quaternion(__m128 v) { m = v; }
     VM_INLINE explicit V_CALL quaternion(float3 a,float b){m = _mm_set_ps(a.x(),a.y(),a.x(),b);}
     VM_INLINE explicit V_CALL quaternion(float2 a,float2 b){m = _mm_set_ps(a.x(),a.y(),b.x(),b.y());}
-	
+
  	VM_INLINE quaterniondata toquaterniondata()
     {
 		quaterniondata result = {m.m128_f32[0],m.m128_f32[1],m.m128_f32[2],m.m128_f32[3]};
@@ -985,6 +986,8 @@ struct quaternion
         float4 q = normalize(float4(this->m));
         this->m =  _mm_set_ps(q.x(),q.y(),q.z(),q.w());
     }
+	VM_INLINE static float4 tofloat4(quaternion q) { return float4(q.m);}
+
 #ifdef YOYO_USE_PHYSX_EXT
 	VM_INLINE explicit V_CALL quaternion(physx::PxQuat a) { m = _mm_set_ps(a.w, a.z, a.y, a.x); }
 	VM_INLINE physx::PxQuat quaternion::toPhysx();
