@@ -70,7 +70,9 @@ void V_CALL YoyoUpdateObjectTransform(ObjectTransform* ot)
 
  static void InitObjectTranform(ObjectTransform* ot)
  {
-     ot->r = quaternion::look_rotation(float3(0,0,1),float3(0,1,0));
+     ot->r = quaternion::look_rotation(float3(0,1,0),float3(0,0,1));
+	 ot->s = float3(1);
+	 ot->p = float3(0);
      YoyoUpdateObjectTransform(ot);
  }
 
