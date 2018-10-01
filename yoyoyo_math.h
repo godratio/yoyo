@@ -59,7 +59,7 @@ union float2data
 	{
 		float x, y;
 	};
-	float indexed[2] = {};
+	float i[2] = {};
 };
 
 union float3data
@@ -68,12 +68,18 @@ union float3data
 	{
 		float x, y, z;
 	};
-	float indexed[3] = {};
+	float i[3] = {};
 };
 
-struct float4data
+union float4data
 {
-	float x, y, z, w;
+    struct
+    {
+        float x, y, z, w;
+    };
+    float i[4] = {};
+	
+    
 };
 
 typedef float4data quaterniondata;
@@ -146,22 +152,41 @@ struct float3
 	VM_INLINE float2 V_CALL xy() const { return SHUFFLE2(*this,0, 1); }
     VM_INLINE float3 V_CALL yzx() const { return SHUFFLE3(*this, 1, 2, 0); }
     VM_INLINE float3 V_CALL zxy() const { return SHUFFLE3(*this, 2, 0, 1); }
+    
+    
+#ifdef YOYO_USE_PHYSX_EXT
+    VM_INLINE explicit V_CALL float3(physx::PxVec3 a) {  m = _mm_set_ps(a.z, a.z, a.y, a.x); }
+    VM_INLINE physx::PxVec3 toPhysx();
+#endif
 
-    //NOTE(Ray):Use these as lil as possible
-#if WINDOWS
-    VM_INLINE float V_CALL operator[] (size_t i) const { return m.m128_f32[i]; }
-	VM_INLINE float* V_CALL to_array() { return m.m128_f32; }
-	VM_INLINE float3data V_CALL tofloat3data()
+    VM_INLINE float3data V_CALL tofloat3data()
     {
-		float3data a = { m.m128_f32[0],m.m128_f32[1],m.m128_f32[2] };
+//		float3data a = { ,m.m128_f32[1],m.m128_f32[2] };
+		float3data a = { _mm_cvtss_f32(m),
+                         _mm_cvtss_f32(_mm_shuffle_ps(m, m, _MM_SHUFFLE(1, 1, 1, 1))),
+                         _mm_cvtss_f32(_mm_shuffle_ps(m, m, _MM_SHUFFLE(2, 2, 2, 2)))};
 	    return a;
     }
-#ifdef YOYO_USE_PHYSX_EXT
-	VM_INLINE explicit V_CALL float3(physx::PxVec3 a) {  m = _mm_set_ps(a.z, a.z, a.y, a.x); }
-	VM_INLINE physx::PxVec3 float3::toPhysx();
-#endif
-	VM_INLINE float& V_CALL operator[] (size_t i) { return m.m128_f32[i]; };
+    
+#if WINDOWS
+    //TODO(Ray):These are trouble makers lets get rid of them rethink it.
+    //NOTE(Ray):Use these as lil as possible
+    VM_INLINE float V_CALL operator[] (size_t i) const { return _mm_cvtss_f32(_mm_shuffle_ps(m, m, _MM_SHUFFLE(i, i, i, i))); }
+    //NOTE(RAY):NOt a good idea to access by index here as its only supported on MSVC it seems.
+    VM_INLINE float& V_CALL operator[] (size_t i) {  return _mm_cvtss_f32(_mm_shuffle_ps(m, m, _MM_SHUFFLE(i, i, i, i)));  };
+    //TODO(Ray):This is only temporary remove these later.
+    //BAD PLATFORM SPECIFIC MATH LIB!
+    VM_INLINE float* V_CALL to_array() { return m.m128_f32; }
+
+ 
+    VM_INLINE float3data V_CALL tofloat3data()
+    {
+        float3data a = { m.m128_f32[0],m.m128_f32[1],m.m128_f32[2] };
+        return a;
+    }
 #else
+    
+    //VM_INLINE float& V_CALL operator[] (size_t i) { return m; };
 #endif
     VM_INLINE void V_CALL store(float *p) const { p[0] = x(); p[1] = y(); p[2] = z(); }
 	float4 V_CALL xyxy() const;
@@ -255,7 +280,7 @@ struct float4
     VM_INLINE float2 V_CALL wy() const { return SHUFFLE2(*this, 3, 1); }
 #ifdef YOYO_USE_PHYSX_EXT
 	VM_INLINE explicit V_CALL float4(physx::PxVec3 a) { m = _mm_set_ps(a.z, a.z, a.y, a.x); }
-	VM_INLINE physx::PxVec4 float4::toPhysx();
+	VM_INLINE physx::PxVec4 toPhysx();
 #endif
 	//NOTE(Ray):Should avoid using these whenever possible
 #if WINDOWS
@@ -853,8 +878,8 @@ struct float4x4
         c3 = float4(translation,1.0f);
     }
 	VM_INLINE static uint32_t size() { return sizeof(float) * 16; }
-	VM_INLINE static float4x4 V_CALL float4x4::identity() { return float4x4(1.0f, 0.0f, 0.0f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f, 0.0f, 0.0f, 1.0f); };
-	VM_INLINE static float4x4 V_CALL float4x4::zero() { return float4x4(0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f); }
+    VM_INLINE static float4x4 V_CALL identity() { return float4x4(1.0f, 0.0f, 0.0f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f, 0.0f, 0.0f, 1.0f); };
+    VM_INLINE static float4x4 V_CALL zero() { return float4x4(0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f); }
 
 	V_CALL float4x4(quaternion rotation,float3 translation);
 };
@@ -954,11 +979,17 @@ struct quaternion
     VM_INLINE explicit V_CALL quaternion(float3 a,float b){m = _mm_set_ps(a.x(),a.y(),a.x(),b);}
     VM_INLINE explicit V_CALL quaternion(float2 a,float2 b){m = _mm_set_ps(a.x(),a.y(),b.x(),b.y());}
 
+    /*
  	VM_INLINE quaterniondata toquaterniondata()
     {
+#if WINDOWS
 		quaterniondata result = {m.m128_f32[0],m.m128_f32[1],m.m128_f32[2],m.m128_f32[3]};
-		return result;
+#elif OSX
+        //quaterniondata result = {m.m128_f32[0],m.m128_f32[1],m.m128_f32[2],m.m128_f32[3]};
+#endif
+        return result;
     }
+     */
 //The matrix must be orthonormal.
     VM_INLINE explicit V_CALL quaternion(float3x3 m)
     {
@@ -990,7 +1021,7 @@ struct quaternion
 
 #ifdef YOYO_USE_PHYSX_EXT
 	VM_INLINE explicit V_CALL quaternion(physx::PxQuat a) { m = _mm_set_ps(a.w, a.z, a.y, a.x); }
-	VM_INLINE physx::PxQuat quaternion::toPhysx();
+	VM_INLINE physx::PxQuat toPhysx();
 #endif
         // Construct unit quaternion from rigid-transformation matrix. The matrix must be orthonormal.
 	VM_INLINE static uint32_t size() { return sizeof(float) * 4; }
@@ -1415,14 +1446,14 @@ VM_INLINE float4 V_CALL movehl(float4 a,float4 b)
 // we use __m128 to represent 2x2 matrix as A = | A0  A1 |
 //                                              | A2  A3 |
 // 2x2 row major Matrix multiply A*B
-__forceinline __m128 Mat2Mul(__m128 vec1, __m128 vec2)
+VM_INLINE __m128 Mat2Mul(__m128 vec1, __m128 vec2)
 {
     return
     _mm_add_ps(_mm_mul_ps(                     vec1, VecSwizzle(vec2, 0,3,0,3)),
                _mm_mul_ps(VecSwizzle(vec1, 1,0,3,2), VecSwizzle(vec2, 2,1,2,1)));
 }
 // 2x2 row major Matrix adjugate multiply (A#)*B
-__forceinline __m128 Mat2AdjMul(__m128 vec1, __m128 vec2)
+VM_INLINE __m128 Mat2AdjMul(__m128 vec1, __m128 vec2)
 {
     return
     _mm_sub_ps(_mm_mul_ps(VecSwizzle(vec1, 3,3,0,0), vec2),
@@ -1430,7 +1461,7 @@ __forceinline __m128 Mat2AdjMul(__m128 vec1, __m128 vec2)
     
 }
 // 2x2 row major Matrix multiply adjugate A*(B#)
-__forceinline __m128 Mat2MulAdj(__m128 vec1, __m128 vec2)
+VM_INLINE __m128 Mat2MulAdj(__m128 vec1, __m128 vec2)
 {
     return
     _mm_sub_ps(_mm_mul_ps(                     vec1, VecSwizzle(vec2, 3,0,3,0)),

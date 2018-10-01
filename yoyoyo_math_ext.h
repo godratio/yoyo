@@ -70,7 +70,9 @@ void V_CALL YoyoUpdateObjectTransform(ObjectTransform* ot)
 
  static void InitObjectTranform(ObjectTransform* ot)
  {
-     ot->r = quaternion::look_rotation(float3(0,0,1),float3(0,1,0));
+     ot->r = quaternion::look_rotation(float3(0,1,0),float3(0,0,1));
+	 ot->s = float3(1);
+	 ot->p = float3(0);
      YoyoUpdateObjectTransform(ot);
  }
 
@@ -163,6 +165,7 @@ static YoyoRay YoyoRaycastFromScreen(float4x4 projection_matrix,float4x4 camera_
 #if WINDOWS
 	return physx::PxVec3(m.m128_f32[0], m.m128_f32[1], m.m128_f32[2]);
 #else
+    return physx::PxVec3(m[0], m[1], m[2]);
 #endif
 }
  physx::PxVec4 float4::toPhysx()
@@ -170,6 +173,7 @@ static YoyoRay YoyoRaycastFromScreen(float4x4 projection_matrix,float4x4 camera_
 #if WINDOWS
 	 return physx::PxVec4(m.m128_f32[0], m.m128_f32[1], m.m128_f32[2],m.m128_f32[3]);
 #else
+     return physx::PxVec4(m[0], m[1], m[2],m[3]);
 #endif
  }
 
@@ -178,6 +182,7 @@ static YoyoRay YoyoRaycastFromScreen(float4x4 projection_matrix,float4x4 camera_
 #if WINDOWS
 	 return physx::PxQuat(m.m128_f32[0], m.m128_f32[1], m.m128_f32[2],m.m128_f32[3]);
 #else
+     return physx::PxQuat(m[0], m[1], m[2],m[3]);
 #endif
  }
 
