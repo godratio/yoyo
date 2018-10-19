@@ -1,24 +1,12 @@
 #pragma once
 #include "yoyoyo_math.h"
+#include "yoyoyo_scene.h"
 #include <list>
 
 float4x4 float4x4Serialize(float4x4 m)
 {
 	return float4x4(float4(m.c0.m), float4(m.c1.m), float4(m.c2.m), float4(m.c3.m));
 }
-
-//NOTE(Ray):If these become a perf bottle neck look to seperate these out.
-struct ObjectTransform
-{
-    float3 p;
-    quaternion r;
-    float3 s;
-    float4x4 m;
-    float3 forward;
-    float3 up;
-    float3 right;
-};
-
 
 ObjectTransform ObjectTransformSerialize(ObjectTransform* ot)
 {
