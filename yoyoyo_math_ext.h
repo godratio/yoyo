@@ -1,14 +1,27 @@
 #pragma once
-#include "yoyoyo_math.h"
-#include "yoyoyo_scene.h"
-#include <list>
 
-float4x4 float4x4Serialize(float4x4 m)
+#include "yoyoyo_math.h"
+//NOTE(Ray):If these become a perf bottle neck look to seperate these out.
+struct ObjectTransform
+{
+	float3 p;
+	float3 local_p;
+	quaternion r;
+	quaternion local_r;
+	float3 s;
+	float3 local_s;
+	float4x4 m;
+	float3 forward;
+	float3 up;
+	float3 right;
+};
+
+static float4x4 float4x4Serialize(float4x4 m)
 {
 	return float4x4(float4(m.c0.m), float4(m.c1.m), float4(m.c2.m), float4(m.c3.m));
 }
 
-ObjectTransform ObjectTransformSerialize(ObjectTransform* ot)
+static ObjectTransform ObjectTransformSerialize(ObjectTransform* ot)
 {
 	ObjectTransform new_ot = {};
 	new_ot.p = float3(ot->p.m);
@@ -22,35 +35,35 @@ ObjectTransform ObjectTransformSerialize(ObjectTransform* ot)
 }
 
 //NOTE(Ray):These are convienent methods for those using yoyoyo data formats for abstractions
-float4x4 V_CALL YoyoSetTransformMatrix(ObjectTransform* ot)
+static float4x4 V_CALL YoyoSetTransformMatrix(ObjectTransform* ot)
 {
 	ot->m = set_matrix(ot->p,ot->r,ot->s);
 	return ot->m;
 }
 
-float3 V_CALL YoyoWorldPToLocalP(ObjectTransform* ot,float3 a)
+static float3 V_CALL YoyoWorldPToLocalP(ObjectTransform* ot,float3 a)
 {
 	return world_local_p(YoyoSetTransformMatrix(ot),a);
 }
 
-float3 V_CALL YoyoLocalToWorldP(ObjectTransform* ot,float3 a)
+static float3 V_CALL YoyoLocalToWorldP(ObjectTransform* ot,float3 a)
 {
 	return local_world_p(YoyoSetTransformMatrix(ot),a);
 }
 
-void V_CALL YoyoUpdateLocalaxis(ObjectTransform* ot)
+static void V_CALL YoyoUpdateLocalaxis(ObjectTransform* ot)
 {
 	ot->up = up(ot->r);
 	ot->right = right(ot->r);
 	ot->forward = forward(ot->r);
 }
 
-void V_CALL YoyoUpdateMatrix(ObjectTransform* ot)
+static void V_CALL YoyoUpdateMatrix(ObjectTransform* ot)
 {
 	ot->m = YoyoSetTransformMatrix(ot);
 }
 
-void V_CALL YoyoUpdateObjectTransform(ObjectTransform* ot)
+static void V_CALL YoyoUpdateObjectTransform(ObjectTransform* ot)
 {
 	YoyoUpdateLocalaxis(ot);
 	YoyoUpdateMatrix(ot);
