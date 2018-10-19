@@ -108,12 +108,16 @@ static uint32_t YoyoPushBack_(YoyoVector* vector, void* element, bool copy = tru
     //check if we have space if not resize to create it.
     if(vector->max_size < vector->unit_size * (vector->count + 1))
     {
-		uint32_t new_size = vector->max_size + (vector->max_size * vector->resize_ratio);
+		float resize_ratio = 1.0f;
+		if (vector->count > 1)resize_ratio = vector->resize_ratio;
+
+		uint32_t new_size = vector->max_size + (vector->max_size * resize_ratio);
 		uint8_t* temp_ptr = (uint8_t*)vector->mem_arena->base;
 		vector->base = vector->mem_arena->base = PlatformAllocateMemory(new_size);
 		vector->mem_arena->size = new_size;
 		memcpy(vector->base, (void*)temp_ptr, vector->total_size);
 		vector->max_size = new_size;
+		PlatformDeAllocateMemory(temp_ptr, vector->total_size);
     }
     //TODO(ray):have some protection here to make sure we are added in the right type.
     uint8_t *ptr = (uint8_t*)PushSize(vector->mem_arena, vector->unit_size);
@@ -137,13 +141,16 @@ static uint32_t YoyoPushBack_(YoyoVector* vector, void* element, bool copy = tru
     return result_index;
 }
 
+//NOTE(Ray):Why are type and vector reversed between the push and access api methods!?!?!?! fix that.
 //NOTE(Ray):We purposely have no bounds checking here its your responsibility.
 //TODO(Ray):Implement a bounds check version of this function for when it might be good to have one.
 //for now dont want need it.
 #define YoyoGetVectorElement(type,vector,index) (type*)YoyoGetVectorElement_(vector,index)
 
 #define YoyoGetVectorFirst(type,vector) (type*)YoyoGetVectorElement_(vector,0)
+//NOTE(Ray):This is no good? Why get vector last instead of peek and why -1 and one noe sounds like a bug!!
 #define YoyoGetVectorLast(type,vector) (type*)YoyoGetVectorElement_(vector,vector.count)
+//NOTE(Ray):Peek is prefferred at the moment.
 #define YoyoPeekVectorElement(type,vector) (type*)YoyoGetVectorElement_(vector,*vector.count-1)
 //#define YoyoIteraterPeekVector(type,vector) (type*)YoyoIterateVectorElement_(vector,*vector.at_index)
 //#define YoyoIteraterPeekNextVector(type,vector) (type*)YoyoIterateVectorElement_(vector,*vector.at_index + 1)
