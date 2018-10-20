@@ -211,6 +211,16 @@ struct float3
     //VM_INLINE float operator[] (size_t i) const { return m.m128_f32[i]; };
     //VM_INLINE float& operator[] (size_t i) { return m.m128_f32[i]; };
     //VM_INLINE float3 float3i(int x, int y, int z) { return float3((float)x, (float)y, (float)z); }
+	VM_INLINE float3 V_CALL xyz() const { return SHUFFLE3(*this, 0, 1, 2); }
+	VM_INLINE float3 V_CALL xzy() const { return SHUFFLE3(*this, 1, 2, 0); }
+
+	VM_INLINE float3 V_CALL zyx() const { return SHUFFLE3(*this, 2, 1, 0); }
+
+	VM_INLINE float3 V_CALL yxz() const { return SHUFFLE3(*this, 1, 0, 2); }
+
+	VM_INLINE float3 V_CALL yxw() const { return SHUFFLE3(*this, 1, 0, 3); }
+	VM_INLINE float3 V_CALL wzy() const { return SHUFFLE3(*this, 3, 2, 1); }
+	VM_INLINE float3 V_CALL zwx() const { return SHUFFLE3(*this, 2, 3, 0); }
 };
 
 struct quaternion;
