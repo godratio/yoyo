@@ -160,8 +160,20 @@ static void* YoyoGetVectorElement_(YoyoVector* vector, uint32_t index)
 	Assert(vector);
 	if (index < 0 || index > vector->count - 1)return 0;
 	//TODO(Ray):May want to think about this. Need to give a hint to the client code.
-	void* Location = (uint8_t*)vector->base + (index * vector->unit_size);
-	return Location;
+	return  (uint8_t*)vector->base + (index * vector->unit_size);;
+}
+
+#define YoyoGetReferenceToElement(type,vector) (type**)YoyoGetVectorElement_(vector,*vector.count-1)
+//#define YoyoIteraterPeekVector(type,vector) (type*)YoyoIterateVectorElement_(vector,*vector.at_index)
+//#define YoyoIteraterPeekNextVector(type,vector) (type*)YoyoIterateVectorElement_(vector,*vector.at_index + 1)
+//#define YoyoIteraterPeekOffsetVector(type,vector,offset) (type*)YoyoIterateVectorElement_(vector,*vector.at_index + offset)
+static void** YoyoGetReferenceToElement_(YoyoVector* vector, uint32_t index)
+{
+	Assert(vector);
+	if (index < 0 || index > vector->count - 1)return 0;
+	//TODO(Ray):May want to think about this. Need to give a hint to the client code.
+	uint8_t** Location = ((uint8_t**)&vector->base + (index * vector->unit_size));
+	return (void**)Location;
 }
 
 static void* YoyoSetVectorElement(YoyoVector* vector, uint32_t element_index, void* element, bool copy = true)
@@ -260,7 +272,8 @@ static void* YoyoGetVectorIterator_(YoyoVector* vector, uint32_t index)
 static void YoyoResetVectorIterator(YoyoVector *vector)
 {
 	//TIMED_BLOCK();
-	Assert(vector);
+	if (!vector)return;
+	//Assert(vector);
 	vector->at_index = 0;
 	vector->start_at = -1;
 }

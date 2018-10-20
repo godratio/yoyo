@@ -44,11 +44,6 @@ namespace ObjectTransformCode
     }
 }
 
-struct SceneObject
-{
-	ObjectTransform ot;
-	ObjectTransformBuffer children;
-};
 
 enum SceneObjectType
 {
@@ -58,8 +53,14 @@ enum SceneObjectType
 
 struct SceneObjectBuffer
 {
-	YoyoVector scene_objects;
+	YoyoVector buffer;
 	SceneObjectType type;
+};
+
+struct SceneObject
+{
+	ObjectTransform ot;
+	SceneObjectBuffer children;
 };
 
 namespace SceneObjectCode
@@ -74,55 +75,82 @@ namespace SceneObjectCode
 		}
     	SceneObjectBuffer new_buff;
     	*buffer = new_buff;
-    	buffer->scene_objects = YoyoInitVector(size,SceneObject,false);
+    	buffer->buffer = YoyoInitVector(size,SceneObject,false);
     }
 
-    static SceneObject* AddSceneObject(SceneObjectBuffer* buffer,ObjectTransform* ot)
+    static int AddSceneObject(SceneObjectBuffer* so,ObjectTransform* ot)
     {
-        SceneObject so;
-		so.children = {};
-        so.ot = *ot;
-		
-        YoyoPushBack(&buffer->scene_objects,so);        
-		return YoyoPeekVectorElement(SceneObject,&buffer->scene_objects);
+		SceneObject new_so;
+		new_so.children = {};
+        new_so.ot = *ot;
+        return YoyoPushBack(&so->buffer,new_so);        
     }
 
-	static void AddChildToSceneObject(SceneObjectBuffer* buffer,SceneObject* so,ObjectTransform* new_child)
+	//NOTE(Ray):When adding a chid ot p is local position and p is offset from parents ot p.
+	static int AddChildToSceneObject(int so_index,SceneObjectBuffer* buffer,ObjectTransform* new_child)
     {
-		if(so->children.object_transforms.count == 0)//Assuming uninited vector be careful here for leaks!!
+		SceneObject* so = YoyoGetVectorElement(SceneObject, &buffer->buffer, so_index);
+		if(so->children.buffer.count == 0)//Assuming uninited vector be careful here for leaks!!
 		{
-			so->children.object_transforms = YoyoInitVector(1, ObjectTransform, false);
+			so->children.buffer = YoyoInitVector(1, SceneObject, false);
 		}
 
-		YoyoPushBack(&so->children.object_transforms, *new_child);
+		//and the local p is the absolute p relative to the parent p.
+		new_child->local_p = new_child->p;
+		new_child->local_s = new_child->s;
+		new_child->local_r = new_child->r;
+
+    	//New child p in this contex is the local p relative to the parent p reference frame
+		new_child->p  += rotate(so->ot.r, new_child->p);
+		//Rotations add
+		new_child->r = so->ot.r * new_child->r;
+		new_child->s = so->ot.s * new_child->s;
+		//SceneObject* new_so = AddSceneObject(&so->children, new_child);
+		SceneObject new_so;
+		new_so.children = {};
+		new_so.ot = *new_child;
+		return YoyoPushBack(&so->children.buffer, new_so);
+    }
+
+	static void UpdateChildren(SceneObject* parent_so,float3* position_sum,quaternion* rotation_product)
+    {
+		SceneObject* child_so;
+		while (child_so = YoyoIterateVector(&parent_so->children.buffer, SceneObject))
+		{
+			ObjectTransform* ot = &child_so->ot;
+			float3 current_p_sum = *position_sum;
+			quaternion current_r_product = *rotation_product;
+			ot->p = current_p_sum += rotate(inverse(current_r_product), ot->local_p);
+			ot->r = current_r_product = current_r_product * ot->local_r;
+			//TODO(Ray):Properly handle child scaling.
+			ot->s = parent_so->ot.s * ot->local_s;
+			YoyoUpdateObjectTransform(ot);
+			//NOTE(Ray):This is depth first recursion once we get to a leaf with no children we should exit out.
+			//This is bad for several reasons 
+			//reason1: if we get to have 10000 game objects could blow the stack
+			//reason2: do we need another reason? 
+			//Why are we doing this? because its the easiest way at the moment will rework this later if need be.
+			//Another option would be to have a data structure that has a pointer to the parent similar to teh skeletal animation system.
+			//Lets go this route see how it goes.
+
+			//Keep updating children children all the way down.
+			UpdateChildren(child_so, &current_p_sum, &current_r_product);
+		}
+		YoyoResetVectorIterator(&parent_so->children.buffer);
     }
 
     static void UpdateSceneObjects(SceneObjectBuffer* buffer,float3* position_sum,quaternion* rotation_product)
     {
         SceneObject* so;
-        while(so = YoyoIterateVector(&buffer->scene_objects,SceneObject))
+        while(so = YoyoIterateVector(&buffer->buffer,SceneObject))
         {
-			YoyoUpdateObjectTransform(&so->ot);
-            ObjectTransform parent_ot = so->ot;
-            ObjectTransform* child_ot;
-            while(child_ot = YoyoIterateVector(&so->children.object_transforms,ObjectTransform))
-            {
-                child_ot->p = *position_sum += rotate(*rotation_product, child_ot->local_p);
-                child_ot->r = *rotation_product = *rotation_product * child_ot->local_r;
-                child_ot->s = parent_ot.s * child_ot->local_s;
-                YoyoUpdateObjectTransform(child_ot);
-				//NOTE(Ray):This is depth first recursion once we get to a leaf with no children we should exit out.
-				//This is bad for several reasons 
-				//reason1: if we get to have 10000 game objects could blow the stack
-				//reason2: do we need another reason? 
-				//Why are we doing this? because its the easiest way at the moment will rework this later if need be.
-				//Another option would be to have a data structure that has a pointer to the parent similar to teh skeletal animation system.
-				//Lets go this route see how it goes.
-				UpdateSceneObjects(buffer, position_sum, rotation_product);
-            }
-			YoyoResetVectorIterator(&so->children.object_transforms);
+			ObjectTransform* parent_ot = &so->ot;
+			YoyoUpdateObjectTransform(parent_ot);
+			*position_sum += parent_ot->p;
+			*rotation_product = parent_ot->r;
+			UpdateChildren(so, position_sum, rotation_product);
         }
-		YoyoResetVectorIterator(&buffer->scene_objects);
+		YoyoResetVectorIterator(&buffer->buffer);
     }
 }
 
