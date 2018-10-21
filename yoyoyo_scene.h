@@ -76,6 +76,7 @@ namespace SceneObjectCode
     	SceneObjectBuffer new_buff;
     	*buffer = new_buff;
     	buffer->buffer = YoyoInitVector(size,SceneObject,false);
+		buffer->buffer.allow_resize = false;
     }
 
     static int AddSceneObject(SceneObjectBuffer* so,ObjectTransform* ot)
@@ -198,11 +199,11 @@ namespace SceneCode
     }
 
 	//NOTE(Ray):All empty scenes in fact all scenes must have one scene object that is the root object
-    static Scene* CreateEmptyScene(SceneBuffer* buffer)
+    static Scene* CreateEmptyScene(SceneBuffer* buffer,int max_scene_objects = 10000)
     {
         Scene scene;
         scene.buffer_count = 0;
-	    SceneObjectCode::InitSceneObject(&scene.scene_object_buffer,1);
+	    SceneObjectCode::InitSceneObject(&scene.scene_object_buffer,max_scene_objects);
         scene.state_flags = scene_state_default;
         YoyoPushBack(&buffer->buffer,scene);
         return YoyoPeekVectorElement(Scene,&buffer->buffer);
