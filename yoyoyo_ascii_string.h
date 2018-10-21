@@ -1,5 +1,5 @@
 #pragma once
-
+#include "yoyoyo_memory.h"
 #define MAX_FILENAME_LENGTH 50
 #define MAX_FILE_EXTENSION_LENGTH 10
 
