@@ -215,7 +215,7 @@ namespace SceneCode
         Scene* scene;
         float3 sum = float3(0);
         quaternion product = quaternion::identity();
-        while(scene = YoyoIterateVector(&buffer->buffer,Scene,false))
+        while(scene = YoyoIterateVector(&buffer->buffer,Scene))
         {
 			SceneObjectCode::UpdateSceneObjects(&scene->scene_object_buffer, &sum, &product);
         }

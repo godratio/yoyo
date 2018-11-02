@@ -64,6 +64,7 @@ union float2data
 
 union float3data
 {
+    
 	struct
 	{
 		float x, y, z;
@@ -93,6 +94,9 @@ struct  float2
     VM_INLINE explicit V_CALL float2(const float *p) { m = _mm_set_ps(p[1], p[1], p[1], p[0]); }
     VM_INLINE explicit V_CALL float2(float x) { m = _mm_set_ps(x, x, x, x); }
     VM_INLINE explicit V_CALL float2(float x, float y) { m = _mm_set_ps(y, y, y, x); }
+//NOTE(Ray):Cant do this compiler complains about ambigious functions signatures.
+    //VM_INLINE explicit V_CALL float2(uint32_t x, uint32_t y) { m = _mm_set_ps((float)y, (float)y, (float)y, (float)x); }
+
     VM_INLINE explicit V_CALL float2(__m128 v) { m = v; }
 
     VM_INLINE float V_CALL x() const { return _mm_cvtss_f32(m); }
@@ -153,7 +157,6 @@ struct float3
     VM_INLINE float3 V_CALL yzx() const { return SHUFFLE3(*this, 1, 2, 0); }
     VM_INLINE float3 V_CALL zxy() const { return SHUFFLE3(*this, 2, 0, 1); }
     
-    
 #ifdef YOYO_USE_PHYSX_EXT
     VM_INLINE explicit V_CALL float3(physx::PxVec3 a) {  m = _mm_set_ps(a.z, a.z, a.y, a.x); }
     VM_INLINE physx::PxVec3 toPhysx();
@@ -162,32 +165,13 @@ struct float3
     VM_INLINE float3data V_CALL tofloat3data()
     {
 //		float3data a = { ,m.m128_f32[1],m.m128_f32[2] };
-		float3data a = { _mm_cvtss_f32(m),
-                         _mm_cvtss_f32(_mm_shuffle_ps(m, m, _MM_SHUFFLE(1, 1, 1, 1))),
-                         _mm_cvtss_f32(_mm_shuffle_ps(m, m, _MM_SHUFFLE(2, 2, 2, 2)))};
+        float3data a;
+        a.x = _mm_cvtss_f32(m);
+        a.y = _mm_cvtss_f32(_mm_shuffle_ps(m, m, _MM_SHUFFLE(1, 1, 1, 1)));
+        a.z = _mm_cvtss_f32(_mm_shuffle_ps(m, m, _MM_SHUFFLE(2, 2, 2, 2)));
 	    return a;
     }
     
-#if WINDOWS
-    //TODO(Ray):These are trouble makers lets get rid of them rethink it.
-    //NOTE(Ray):Use these as lil as possible
-    VM_INLINE float V_CALL operator[] (size_t i) const { return _mm_cvtss_f32(_mm_shuffle_ps(m, m, _MM_SHUFFLE(i, i, i, i))); }
-    //NOTE(RAY):NOt a good idea to access by index here as its only supported on MSVC it seems.
-    VM_INLINE float& V_CALL operator[] (size_t i) {  return _mm_cvtss_f32(_mm_shuffle_ps(m, m, _MM_SHUFFLE(i, i, i, i)));  };
-    //TODO(Ray):This is only temporary remove these later.
-    //BAD PLATFORM SPECIFIC MATH LIB!
-    VM_INLINE float* V_CALL to_array() { return m.m128_f32; }
-
- 
-    VM_INLINE float3data V_CALL tofloat3data()
-    {
-        float3data a = { m.m128_f32[0],m.m128_f32[1],m.m128_f32[2] };
-        return a;
-    }
-#else
-    
-    //VM_INLINE float& V_CALL operator[] (size_t i) { return m; };
-#endif
     VM_INLINE void V_CALL store(float *p) const { p[0] = x(); p[1] = y(); p[2] = z(); }
 	float4 V_CALL xyxy() const;
 
@@ -236,6 +220,16 @@ struct float4
     VM_INLINE explicit V_CALL float4(__m128 v) { m = v; }
     VM_INLINE explicit V_CALL float4(float3 a,float b){m = _mm_set_ps(b,a.z(),a.y(),a.x());}
     VM_INLINE explicit V_CALL float4(float2 a,float2 b){m = _mm_set_ps(b.y(),b.x(),a.y(),a.x());}
+
+    VM_INLINE float4data V_CALL tofloat4data()
+    {
+        float4data a;
+        a.x = _mm_cvtss_f32(m);
+        a.y = _mm_cvtss_f32(_mm_shuffle_ps(m, m, _MM_SHUFFLE(1, 1, 1, 1)));
+        a.z = _mm_cvtss_f32(_mm_shuffle_ps(m, m, _MM_SHUFFLE(2, 2, 2, 2)));
+        a.w = _mm_cvtss_f32(_mm_shuffle_ps(m, m, _MM_SHUFFLE(3, 3, 3, 3)));
+	    return a;
+    }
 
     VM_INLINE float V_CALL x() const { return _mm_cvtss_f32(m); }
     VM_INLINE float V_CALL y() const { return _mm_cvtss_f32(_mm_shuffle_ps(m, m, _MM_SHUFFLE(1, 1, 1, 1))); }
@@ -293,13 +287,6 @@ struct float4
 	VM_INLINE physx::PxVec4 toPhysx();
 #endif
 	//NOTE(Ray):Should avoid using these whenever possible
-#if WINDOWS
-	VM_INLINE float V_CALL operator[] (size_t i) const { return m.m128_f32[i]; };
-	VM_INLINE float& V_CALL operator[] (size_t i) { return m.m128_f32[i]; };
-		VM_INLINE float* V_CALL to_array() { return m.m128_f32; }
-#else
-
-#endif
 
     VM_INLINE void V_CALL store(float *p) const { p[0] = x(); p[1] = y(); p[2] = z(); p[3] = w(); }
 
@@ -326,7 +313,7 @@ struct float4
         m = _mm_move_ss(t, m);
     }
 	static uint32_t size() { return sizeof(float) * 4; }
-};
+}__attribute__((aligned(16))) ;
 
 VM_INLINE float4 V_CALL float2::xyxy() const { return SHUFFLE4(*this, 0, 1, 0, 1); }
 VM_INLINE float4 V_CALL float3::xyxy() const { return SHUFFLE4(*this, 0, 1, 0, 1); }
