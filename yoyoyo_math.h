@@ -44,7 +44,7 @@
 //           SHUFFLE3(v, 0,0,0) splats the X coord out.
 #define SHUFFLEN(V, X,Y) floatn(_mm_shuffle_ps((V).m, (V).m, _MM_SHUFFLE(Y,Y,Y,X)))
 
-//#define YOYO_MATH_SIMD 1
+#define YOYO_MATH_SIMD 1
 
 #define SHUFFLE2(V, X,Y) float2(_mm_shuffle_ps((V).m, (V).m, _MM_SHUFFLE(Y,Y,Y,X)))
 #define SHUFFLE3(V, X,Y,Z) float3(_mm_shuffle_ps((V).m, (V).m, _MM_SHUFFLE(Z,Z,Y,X)))
@@ -100,7 +100,10 @@ struct float2
 #endif
     
 // Constructors.
-    VM_INLINE float2() {}
+    VM_INLINE float2()
+    {
+        m = _mm_set1_ps(0);
+    }
     VM_INLINE explicit V_CALL float2(const float *p)
     {
         #if YOYO_MATH_SIMD
@@ -261,7 +264,9 @@ struct float3
 {
     __m128 m;
     // Constructors.
-    VM_INLINE float3() {}
+    VM_INLINE float3() {
+        m = _mm_set1_ps(0.0f);
+    }
     VM_INLINE explicit V_CALL float3(const float *p) { m = _mm_set_ps(p[2], p[2], p[1], p[0]); }
     VM_INLINE explicit V_CALL float3(float x) { m = _mm_set_ps(x, x, x, x); }
 	VM_INLINE explicit V_CALL float3(int x) { m = _mm_set_ps((float)x, (float)x, (float)x, (float)x); }
@@ -344,7 +349,9 @@ struct float4
 {
     __m128 m;
     // Constructors.
-    VM_INLINE V_CALL float4() {}
+    VM_INLINE V_CALL float4() {
+        m = _mm_set1_ps(0.0f);
+    }
     VM_INLINE explicit V_CALL float4(const float *p) { m = _mm_set_ps(p[3], p[2], p[1], p[0]); }
     VM_INLINE explicit V_CALL float4(float x, float y, float z,float w) { m = _mm_set_ps(w, z, y, x); }
     VM_INLINE explicit V_CALL float4(float x) { m = _mm_set_ps(x, x, x, x); }
