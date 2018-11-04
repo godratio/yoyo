@@ -1,12 +1,13 @@
 #pragma once
 #include <stdint.h>
 #include <math.h>
-#include <x86intrin.h>
+
 #if OSX
-//#include <x86intrin>
+#include <x86intrin.h>
 #elif WINDOWS
-//#include <intrin.h>
+#include <intrin.h>
 #endif
+
 //TODO(Ray):look up proper define for compilers 
 #if WINDOWS
 #define VM_INLINE   __forceinline
@@ -43,6 +44,8 @@
 //           SHUFFLE3(v, 0,0,0) splats the X coord out.
 #define SHUFFLEN(V, X,Y) floatn(_mm_shuffle_ps((V).m, (V).m, _MM_SHUFFLE(Y,Y,Y,X)))
 
+//#define YOYO_MATH_SIMD 1
+
 #define SHUFFLE2(V, X,Y) float2(_mm_shuffle_ps((V).m, (V).m, _MM_SHUFFLE(Y,Y,Y,X)))
 #define SHUFFLE3(V, X,Y,Z) float3(_mm_shuffle_ps((V).m, (V).m, _MM_SHUFFLE(Z,Z,Y,X)))
 #define SHUFFLE4(V, X,Y,Z,W) float4(_mm_shuffle_ps((V).m, (V).m, _MM_SHUFFLE(W,Z,Y,X)))
@@ -51,6 +54,7 @@
 #define SHUFFLE2m(m, X,Y) float2(_mm_shuffle_ps(m, m, _MM_SHUFFLE(Y,Y,Y,X)))
 #define SHUFFLE3m(m, X,Y,Z) float3(_mm_shuffle_ps(m, m, _MM_SHUFFLE(Z,Z,Y,X)))
 #define SHUFFLE4m(m, X,Y,Z,W) float4(_mm_shuffle_ps(m, (m, _MM_SHUFFLE(W,Z,Y,X)))
+
 //NOTE(Ray):used only for making pointers to memory that correlates to one of our math types.
 union float2data
 {
@@ -85,7 +89,6 @@ union float4data
 typedef float4data quaterniondata;
 struct float4;
 
-//#define YOYO_MATH_SIMD 1
 
 struct float2
 {
@@ -113,7 +116,8 @@ struct float2
         #if YOYO_MATH_SIMD
         m = _mm_set_ps(x, x, x, x);
         #else
-        m[0] = x;m[1] = x;
+        m[0] = x;
+    	m[1] = x;
         #endif
     }
     
@@ -269,7 +273,18 @@ struct float3
     VM_INLINE float V_CALL x() const { return _mm_cvtss_f32(m); }
     VM_INLINE float V_CALL y() const { return _mm_cvtss_f32(_mm_shuffle_ps(m, m, _MM_SHUFFLE(1, 1, 1, 1))); }
     VM_INLINE float V_CALL z() const { return _mm_cvtss_f32(_mm_shuffle_ps(m, m, _MM_SHUFFLE(2, 2, 2, 2))); }
-	VM_INLINE float2 V_CALL xy() const { return SHUFFLE2(*this,0, 1); }
+	VM_INLINE float2 V_CALL xy() const
+    {
+#if YOYO_USE_SIMD
+	    return SHUFFLE2(*this,0, 1);
+#else
+#if WINDOWS
+		return float2(m.m128_f32[0], m.m128_f32[1]);
+#elif OSX
+        return float2(m[0], m[1]);
+#endif
+#endif
+    }
     VM_INLINE float3 V_CALL yzx() const { return SHUFFLE3(*this, 1, 2, 0); }
     VM_INLINE float3 V_CALL zxy() const { return SHUFFLE3(*this, 2, 0, 1); }
     
@@ -386,6 +401,163 @@ struct float4
     VM_INLINE float4 V_CALL yzxw() const { return SHUFFLE4(*this, 1, 2, 0, 3); }
     VM_INLINE float4 V_CALL zxyw() const { return SHUFFLE4(*this, 2, 0, 1, 3); }
 	VM_INLINE float4 V_CALL xyxy() const { return SHUFFLE4(*this, 0, 1, 0, 1); }
+    VM_INLINE float2 V_CALL xy() const
+    {
+#if YOYO_USE_SIMD
+        return SHUFFLE2(*this,0, 1);
+#else
+#if WINDOWS
+        return float2(m.m128_f32[0], m.m128_f32[1]);
+#elif OSX
+        return float2(m[0], m[1]);
+#endif
+#endif
+    }
+	
+	VM_INLINE float2 V_CALL zw() const
+	{
+#if YOYO_USE_SIMD
+		return SHUFFLE2(*this, 2, 3);
+#else
+#if WINDOWS
+		return float2(m.m128_f32[2], m.m128_f32[3]);
+#elif OSX
+        return float2(m[2], m[3]);
+#endif
+#endif
+	}
+	
+	VM_INLINE float2 V_CALL xx() const
+	{
+#if YOYO_USE_SIMD
+		return SHUFFLE2(*this, 0, 0);
+#else
+#if WINDOWS
+		return float2(m.m128_f32[0], m.m128_f32[0]);
+#elif OSX
+        return float2(m[0], m[0]);
+#endif
+#endif
+	}
+	
+	VM_INLINE float2 V_CALL yz() const
+	{
+#if YOYO_USE_SIMD
+		return SHUFFLE2(*this, 1, 2);
+#else
+#if WINDOWS
+		return float2(m.m128_f32[1], m.m128_f32[2]);
+#elif OSX
+        return float2(m[1], m[2]);
+#endif
+#endif
+	}
+
+	VM_INLINE float2 V_CALL wx() const
+	{
+#if YOYO_USE_SIMD
+		return SHUFFLE2(*this, 3, 0);
+#else
+#if WINDOWS
+		return float2(m.m128_f32[3], m.m128_f32[0]);
+#elif OSX
+        return float2(m[3], m[0]);
+#endif
+#endif
+	}
+
+	VM_INLINE float2 V_CALL xz() const
+	{
+#if YOYO_USE_SIMD
+		return SHUFFLE2(*this, 0, 2);
+#else
+#if WINDOWS
+		return float2(m.m128_f32[0], m.m128_f32[2]);
+#elif OSX
+        return float2(m[0], m[2]);
+#endif
+#endif
+	}
+
+	VM_INLINE float2 V_CALL yx() const
+	{
+#if YOYO_USE_SIMD
+		return SHUFFLE2(*this, 1, 0);
+#else
+#if WINDOWS
+		return float2(m.m128_f32[1], m.m128_f32[0]);
+#elif OSX
+        return float2(m[1], m[0]);
+#endif
+#endif
+	}
+
+	VM_INLINE float2 V_CALL yw() const
+	{
+#if YOYO_USE_SIMD
+		return SHUFFLE2(*this, 1, 3);
+#else
+#if WINDOWS
+		return float2(m.m128_f32[1], m.m128_f32[3]);
+#elif OSX
+        return float2(m[1], m[3]);
+#endif
+#endif
+	}
+
+	VM_INLINE float2 V_CALL zx() const
+	{
+#if YOYO_USE_SIMD
+		return SHUFFLE2(*this, 2, 0);
+#else
+#if WINDOWS
+		return float2(m.m128_f32[2], m.m128_f32[0]);
+#elif OSX
+        return float2(m[2], m[0]);
+#endif
+#endif
+	}
+
+	VM_INLINE float2 V_CALL zz() const
+	{
+#if YOYO_USE_SIMD
+		return SHUFFLE2(*this, 2, 2);
+#else
+#if WINDOWS
+		return float2(m.m128_f32[2], m.m128_f32[2]);
+#elif OSX
+        return float2(m[2], m[2]);
+#endif
+#endif
+	}
+
+	VM_INLINE float2 V_CALL wz() const
+	{
+#if YOYO_USE_SIMD
+		return SHUFFLE2(*this, 3, 2);
+#else
+#if WINDOWS
+		return float2(m.m128_f32[3], m.m128_f32[2]);
+#elif OSX
+        return float2(m[3], m[2]);
+#endif
+#endif
+	}
+	
+	VM_INLINE float2 V_CALL wy() const
+	{
+#if YOYO_USE_SIMD
+		return SHUFFLE2(*this, 3, 1);
+#else
+#if WINDOWS
+		return float2(m.m128_f32[3], m.m128_f32[1]);
+#elif OSX
+        return float2(m[3], m[1]);
+#endif
+#endif
+	}
+	
+#if 0
     VM_INLINE float2 V_CALL xy() const { return SHUFFLE2(*this, 0, 1); }
     VM_INLINE float2 V_CALL zw() const { return SHUFFLE2(*this, 2, 3); }
     VM_INLINE float2 V_CALL xx() const { return SHUFFLE2(*this, 0, 0); }
@@ -398,6 +570,7 @@ struct float4
     VM_INLINE float2 V_CALL zz() const { return SHUFFLE2(*this, 2, 2); }
     VM_INLINE float2 V_CALL wz() const { return SHUFFLE2(*this, 3, 2); }
     VM_INLINE float2 V_CALL wy() const { return SHUFFLE2(*this, 3, 1); }
+#endif
 #ifdef YOYO_USE_PHYSX_EXT
 	VM_INLINE explicit V_CALL float4(physx::PxVec3 a) { m = _mm_set_ps(a.z, a.z, a.y, a.x); }
 	VM_INLINE physx::PxVec4 toPhysx();
@@ -429,45 +602,259 @@ struct float4
         m = _mm_move_ss(t, m);
     }
 	static uint32_t size() { return sizeof(float) * 4; }
-}__attribute__((aligned(16))) ;
+};
 
-VM_INLINE float4 V_CALL float2::xyxy() const { return SHUFFLE4(*this, 0, 1, 0, 1); }
+VM_INLINE float4 V_CALL float2::xyxy() const
+{
+#if YOYO_USE_SIMD
+	return SHUFFLE4(*this, 0, 1, 0, 1);
+#else
+	return float4(m[0], m[1],m[0],m[1]);
+#endif
+}
 VM_INLINE float4 V_CALL float3::xyxy() const { return SHUFFLE4(*this, 0, 1, 0, 1); }
 
+
+
 typedef float2 bool2;
-VM_INLINE float2 V_CALL operator+ (float2 a, float2 b) { a.m = _mm_add_ps(a.m, b.m); return a; }
-VM_INLINE float2 V_CALL operator+ (float2 a, float b) { a.m = _mm_add_ps(a.m, _mm_set1_ps(b)); return a; }
-VM_INLINE float2 V_CALL operator+ (float  a, float2 b) { b.m = _mm_add_ps( _mm_set1_ps(a),b.m); return b; }
+VM_INLINE float2 V_CALL operator+ (float2 a, float2 b)
+{
+#if YOYO_USE_SIMD
+	a.m = _mm_add_ps(a.m, b.m); 
+	return a;
+#else
+	a.m[0] = a.m[0] + b.m[0];
+	a.m[1] = a.m[1] + b.m[1];
+	return a;
+#endif
+}
+VM_INLINE float2 V_CALL operator+ (float  a, float2 b)
+{
+#if YOYO_USE_SIMD
+	b.m = _mm_add_ps(_mm_set1_ps(a), b.m); 
+#else
+	b.m[0] = a + b.m[0];
+	b.m[1] = a + b.m[1];
+#endif
+	return b;
+}
 
-VM_INLINE float2 V_CALL operator- (float2 a, float2 b) { a.m = _mm_sub_ps(a.m, b.m); return a; }
-VM_INLINE float2 V_CALL operator- (float2 a, float b) { a.m = _mm_sub_ps(a.m, _mm_set1_ps(b)); return a; }
-VM_INLINE float2 V_CALL operator- (float  a, float2 b) { b.m = _mm_sub_ps( _mm_set1_ps(a),b.m); return b; }
+VM_INLINE float2 V_CALL operator- (float2 a, float2 b)
+{
+#if YOYO_USE_SIMD
+	a.m = _mm_sub_ps(a.m, b.m); 
+#else
+	a.m[0] = a.m[0] - b.m[0];
+	a.m[1] = a.m[1] - b.m[1];
+#endif
+	return a;
+}
 
-VM_INLINE float2 V_CALL operator* (float2 a, float2 b) { a.m = _mm_mul_ps(a.m, b.m); return a; }
-VM_INLINE float2 V_CALL operator/ (float2 a, float2 b) { a.m = _mm_div_ps(a.m, b.m); return a; }
-VM_INLINE float2 V_CALL operator* (float2 a, float b) { a.m = _mm_mul_ps(a.m, _mm_set1_ps(b)); return a; }
-VM_INLINE float2 V_CALL operator/ (float2 a, float b) { a.m = _mm_div_ps(a.m, _mm_set1_ps(b)); return a; }
-VM_INLINE float2 V_CALL operator* (float a, float2 b) { b.m = _mm_mul_ps(_mm_set1_ps(a), b.m); return b; }
-VM_INLINE float2 V_CALL operator/ (float a, float2 b) { b.m = _mm_div_ps(_mm_set1_ps(a), b.m); return b; }
+VM_INLINE float2 V_CALL operator- (float2 a, float b)
+{
+#if YOYO_USE_SIMD
+	a.m = _mm_sub_ps(a.m, _mm_set1_ps(b)); 
+#else
+	a.m[0] = a.m[0] - b;
+	a.m[1] = a.m[1] - b;
+#endif
+	return a;
+}
+
+VM_INLINE float2 V_CALL operator- (float  a, float2 b)
+{
+#if YOYO_USE_SIMD
+	b.m = _mm_sub_ps(_mm_set1_ps(a), b.m); 
+#else
+	b.m[0] = a - b.m[0];
+	b.m[1] = a - b.m[1];
+#endif
+	return b;
+}
+
+VM_INLINE float2 V_CALL operator* (float2 a, float2 b)
+{
+#if YOYO_USE_SIMD
+
+	a.m = _mm_mul_ps(a.m, b.m);
+#else
+	a.m[0] = a.m[0] * b.m[0];
+	a.m[1] = a.m[1] * b.m[1];
+#endif
+	return a;
+}
+
+VM_INLINE float2 V_CALL operator* (float2 a, float b)
+{
+#if YOYO_USE_SIMD
+	a.m = _mm_mul_ps(a.m, _mm_set1_ps(b)); 
+#else
+	a.m[0] = a.m[0] * b;
+	a.m[1] = a.m[1] * b;
+#endif
+	return a;
+}
+
+VM_INLINE float2 V_CALL operator* (float a, float2 b)
+{
+#if YOYO_USE_SIMD
+	b.m = _mm_mul_ps(_mm_set1_ps(a), b.m); 
+#else
+	b.m[0] = a * b.m[0];
+	b.m[1] = a * b.m[1];
+#endif
+	return b;
+}
+
+VM_INLINE float2 V_CALL operator/ (float2 a, float2 b)
+{
+#if YOYO_USE_SIMD
+	a.m = _mm_div_ps(a.m, b.m); 
+#else
+	a.m[0] = a.m[0] / b.m[0];
+	a.m[1] = a.m[1] / b.m[1];
+#endif
+	return a;
+}
+
+VM_INLINE float2 V_CALL operator/ (float2 a, float b)
+{
+#if YOYO_USE_SIMD
+	a.m = _mm_div_ps(a.m, _mm_set1_ps(b)); 
+#else
+	a.m[0] = a.m[0] * b;
+	a.m[1] = a.m[1] * b;
+#endif
+	return a;
+}
+
+VM_INLINE float2 V_CALL operator/ (float a, float2 b)
+{
+#if YOYO_USE_SIMD
+	b.m = _mm_div_ps(_mm_set1_ps(a), b.m); 
+#else
+	b.m[0] = a / b.m[0];
+	b.m[1] = a / b.m[1];
+#endif
+	return b;
+}
+
+VM_INLINE bool2 V_CALL operator==(float2 a, float2 b)
+{
+#if YOYO_USE_SIMD
+	a.m = _mm_cmpeq_ps(a.m, b.m); 
+#else
+	//TODO(Ray):What kind of equality should we check here bitwise?
+	a.m[0] = a.m[0] == b.m[0] ? 1 : 0;
+	a.m[1] = a.m[1] == b.m[1] ? 1 : 0;
+#endif
+	return a;
+}
+
+VM_INLINE bool2 V_CALL operator!=(float2 a, float2 b)
+{
+#if YOYO_USE_SIMD
+	a.m = _mm_cmpneq_ps(a.m, b.m); 
+#else
+	a.m[0] = a.m[0] != b.m[0] ? 1 : 0;
+	a.m[1] = a.m[1] != b.m[1] ? 1 : 0;
+#endif
+	return a;
+}
+
+VM_INLINE bool2 V_CALL operator< (float2 a, float2 b)
+{
+#if YOYO_USE_SIMD
+	a.m = _mm_cmplt_ps(a.m, b.m);
+#else
+	a.m[0] = a.m[0] < b.m[0] ? 1 : 0;
+	a.m[1] = a.m[1] < b.m[1] ? 1 : 0;
+#endif
+	return a;
+}
+
+VM_INLINE bool2 V_CALL operator> (float2 a, float2 b)
+{
+#if YOYO_USE_SIMD
+	a.m = _mm_cmpgt_ps(a.m, b.m); 
+#else
+	a.m[0] = a.m[0] > b.m[0] ? 1 : 0;
+	a.m[1] = a.m[1] > b.m[1] ? 1 : 0;
+#endif
+	return a;
+}
+
+VM_INLINE bool2 V_CALL operator<=(float2 a, float2 b)
+{
+#if YOYO_USE_SIMD
+	a.m = _mm_cmple_ps(a.m, b.m);
+#else
+	a.m[0] = a.m[0] <= b.m[0] ? 1 : 0;
+	a.m[1] = a.m[1] <= b.m[1] ? 1 : 0;
+#endif
+	return a;
+}
+
+VM_INLINE bool2 V_CALL operator>=(float2 a, float2 b)
+{
+#if YOYO_USE_SIMD
+	a.m = _mm_cmpge_ps(a.m, b.m); 
+#else
+	a.m[0] = a.m[0] >= b.m[0] ? 1 : 0;
+	a.m[1] = a.m[1] >= b.m[1] ? 1 : 0;
+#endif
+	return a;
+}
+
+VM_INLINE float2 V_CALL operator- (float2 a)
+{
+#if YOYO_USE_SIMD
+	return float2(_mm_setzero_ps()) - a;
+#else
+	return float2(0.0f) - a;
+#endif
+
+}
+
+//VM_INLINE float2 V_CALL operator+ (float2 a, float b) { a.m = _mm_add_ps(a.m, _mm_set1_ps(b)); return a; }
+//VM_INLINE float2 V_CALL operator+ (float  a, float2 b) { b.m = _mm_add_ps( _mm_set1_ps(a),b.m); return b; }
+
+//VM_INLINE float2 V_CALL operator- (float2 a, float2 b) { a.m = _mm_sub_ps(a.m, b.m); return a; }
+//VM_INLINE float2 V_CALL operator- (float2 a, float b) { a.m = _mm_sub_ps(a.m, _mm_set1_ps(b)); return a; }
+//VM_INLINE float2 V_CALL operator- (float  a, float2 b) { b.m = _mm_sub_ps( _mm_set1_ps(a),b.m); return b; }
+
+//VM_INLINE float2 V_CALL operator* (float2 a, float2 b) { a.m = _mm_mul_ps(a.m, b.m); return a; }
+//VM_INLINE float2 V_CALL operator* (float2 a, float b) { a.m = _mm_mul_ps(a.m, _mm_set1_ps(b)); return a; }
+//VM_INLINE float2 V_CALL operator* (float a, float2 b) { b.m = _mm_mul_ps(_mm_set1_ps(a), b.m); return b; }
+
+//VM_INLINE float2 V_CALL operator/ (float2 a, float2 b) { a.m = _mm_div_ps(a.m, b.m); return a; }
+//VM_INLINE float2 V_CALL operator/ (float2 a, float b) { a.m = _mm_div_ps(a.m, _mm_set1_ps(b)); return a; }
+//VM_INLINE float2 V_CALL operator/ (float a, float2 b) { b.m = _mm_div_ps(_mm_set1_ps(a), b.m); return b; }
+
 VM_INLINE float2& V_CALL operator+= (float2 &a, float2 b) { a = a + b; return a; }
 VM_INLINE float2& V_CALL operator-= (float2 &a, float2 b) { a = a - b; return a; }
 VM_INLINE float2& V_CALL operator*= (float2 &a, float2 b) { a = a * b; return a; }
 VM_INLINE float2& V_CALL operator/= (float2 &a, float2 b) { a = a / b; return a; }
 VM_INLINE float2& V_CALL operator*= (float2 &a, float b) { a = a * b; return a; }
 VM_INLINE float2& V_CALL operator/= (float2 &a, float b) { a = a / b; return a; }
-VM_INLINE bool2 V_CALL operator==(float2 a, float2 b) { a.m = _mm_cmpeq_ps(a.m, b.m); return a; }
-VM_INLINE bool2 V_CALL operator!=(float2 a, float2 b) { a.m = _mm_cmpneq_ps(a.m, b.m); return a; }
-VM_INLINE bool2 V_CALL operator< (float2 a, float2 b) { a.m = _mm_cmplt_ps(a.m, b.m); return a; }
-VM_INLINE bool2 V_CALL operator> (float2 a, float2 b) { a.m = _mm_cmpgt_ps(a.m, b.m); return a; }
-VM_INLINE bool2 V_CALL operator<=(float2 a, float2 b) { a.m = _mm_cmple_ps(a.m, b.m); return a; }
-VM_INLINE bool2 V_CALL operator>=(float2 a, float2 b) { a.m = _mm_cmpge_ps(a.m, b.m); return a; }
-VM_INLINE float2 V_CALL operator- (float2 a) { return float2(_mm_setzero_ps()) - a; }
+
+//VM_INLINE bool2 V_CALL operator==(float2 a, float2 b) { a.m = _mm_cmpeq_ps(a.m, b.m); return a; }
+//VM_INLINE bool2 V_CALL operator!=(float2 a, float2 b) { a.m = _mm_cmpneq_ps(a.m, b.m); return a; }
+//VM_INLINE bool2 V_CALL operator< (float2 a, float2 b) { a.m = _mm_cmplt_ps(a.m, b.m); return a; }
+//VM_INLINE bool2 V_CALL operator> (float2 a, float2 b) { a.m = _mm_cmpgt_ps(a.m, b.m); return a; }
+//VM_INLINE bool2 V_CALL operator<=(float2 a, float2 b) { a.m = _mm_cmple_ps(a.m, b.m); return a; }
+//VM_INLINE bool2 V_CALL operator>=(float2 a, float2 b) { a.m = _mm_cmpge_ps(a.m, b.m); return a; }
+//VM_INLINE float2 V_CALL operator- (float2 a) { return float2(_mm_setzero_ps()) - a; }
 //VM_INLINE float2 abs(float2 v) { v.m = _mm_andnot_ps(vsignbits, v.m); return v; }
 // Returns a 3-bit code where bit0..bit2 is X..Z
+
+#if 0
 VM_INLINE unsigned V_CALL mask(float2 v) { return _mm_movemask_ps(v.m) & 7; }
+
 // Once we have a comparison, we can branch based on its results:
 VM_INLINE bool V_CALL any(bool2 v) { return mask(v) != 0; }
 VM_INLINE bool V_CALL all(bool2 v) { return mask(v) == 7; }
+#endif
 
 typedef float3 bool3;
 VM_INLINE float3 V_CALL operator+ (float3 a, float3 b) { a.m = _mm_add_ps(a.m, b.m); return a; }
@@ -584,10 +971,11 @@ struct uint4
     VM_INLINE explicit V_CALL uint4(float4 a){this->x = (uint)a.x();this->y = (uint)a.y();this->z = (uint)a.z();this->w = (uint)a.w();}
     VM_INLINE explicit V_CALL uint4(float a,float b,float c,float d){this->x = (uint)a;this->y = (uint)b;this->z = (uint)c;this->w = (uint)d;}
 };
-
+#if 0
 VM_INLINE uint2 V_CALL operator & (uint2 lhs, uint2 rhs) { return uint2 (lhs.x & rhs.x, lhs.y & rhs.y); }
 VM_INLINE uint2 V_CALL operator & (uint2 lhs, uint rhs)  { return uint2 (lhs.x & rhs, lhs.y & rhs); }
 VM_INLINE uint2 V_CALL operator & (uint lhs, uint2 rhs)  { return uint2 (lhs & rhs.x, lhs & rhs.y); }
+#endif
 
 VM_INLINE uint3 V_CALL operator & (uint3 lhs, uint3 rhs) { return uint3 (lhs.x & rhs.x, lhs.y & rhs.y,lhs.z & rhs.z); }
 VM_INLINE uint3 V_CALL operator & (uint3 lhs, uint rhs)  { return uint3 (lhs.x & rhs, lhs.y & rhs,lhs.z & rhs); }
@@ -600,7 +988,6 @@ VM_INLINE uint3 V_CALL operator ^ (uint lhs, uint3 rhs) { return uint3(lhs ^ rhs
 VM_INLINE uint4 V_CALL operator & (uint4 lhs, uint4 rhs) { return uint4 (lhs.x & rhs.x, lhs.y & rhs.y,lhs.z & rhs.z,lhs.w & rhs.w); }
 VM_INLINE uint4 V_CALL operator & (uint4 lhs, uint rhs)  { return uint4 (lhs.x & rhs, lhs.y & rhs,lhs.z & rhs,lhs.w & rhs); }
 VM_INLINE uint4 V_CALL operator & (uint lhs, uint4 rhs)  { return uint4 (lhs & rhs.x, lhs & rhs.y,lhs & rhs.z,lhs & rhs.w); }
-
 VM_INLINE bool2 V_CALL operator > (uint2 lhs, uint2 rhs) { return bool2 (lhs.x > rhs.x, lhs.y > rhs.y); }
 VM_INLINE bool2 V_CALL operator > (uint2 lhs, uint rhs)  { return bool2 (lhs.x > rhs, lhs.y > rhs); }
 VM_INLINE bool2 V_CALL operator > (uint lhs, uint2 rhs)  { return bool2 (lhs > rhs.x, lhs > rhs.y); }
@@ -612,11 +999,11 @@ VM_INLINE bool3 V_CALL operator > (uint lhs, uint3 rhs)  { return bool3 (lhs > r
 VM_INLINE bool4 V_CALL operator > (uint4 lhs, uint4 rhs) { return bool4 (lhs.x > rhs.x, lhs.y > rhs.y,lhs.z > rhs.z,lhs.w > rhs.w); }
 VM_INLINE bool4 V_CALL operator > (uint4 lhs, uint rhs)  { return bool4 (lhs.x > rhs, lhs.y > rhs,lhs.z > rhs, lhs.w > rhs); }
 VM_INLINE bool4 V_CALL operator > (uint lhs, uint4 rhs)  { return bool4 (lhs > rhs.x, lhs > rhs.y,lhs > rhs.z,lhs > rhs.w); }
-
+#if 0
 //HLSL Functions
 VM_INLINE float2 V_CALL minimum(float2 a, float2 b) { a.m = _mm_min_ps(a.m, b.m); return a; }
 VM_INLINE float2 V_CALL maximum(float2 a, float2 b) { a.m = _mm_max_ps(a.m, b.m); return a; }
-
+#endif
 VM_INLINE float3 V_CALL minimum(float3 a, float3 b) { a.m = _mm_min_ps(a.m, b.m); return a; }
 VM_INLINE float3 V_CALL maximum(float3 a, float3 b) { a.m = _mm_max_ps(a.m, b.m); return a; }
 
@@ -671,7 +1058,9 @@ VM_INLINE float3 V_CALL normalize(float3 v) { return v * (safe_ratio_zero(1.0f ,
 VM_INLINE float4 V_CALL normalize(float4 v) { return v * (safe_ratio_zero(1.0f , length(v))); }
 
 VM_INLINE float  V_CALL clamp(float  x, float  a, float  b) { return fmax(a, fmin(b, x)); }
+#if 0
 VM_INLINE float2 V_CALL clamp(float2 t, float2 a, float2 b) { return minimum(maximum(t, a), b); }
+#endif
 VM_INLINE float3 V_CALL clamp(float3 t, float3 a, float3 b) { return minimum(maximum(t, a), b); }
 VM_INLINE float4 V_CALL clamp(float4 t, float4 a, float4 b) { return minimum(maximum(t, a), b); }
 
@@ -739,7 +1128,11 @@ VM_INLINE float3 V_CALL asfloat(uint3 x) { return float3((float)x.x, (float)x.y,
 VM_INLINE float4 V_CALL asfloat(uint4 x) { return float4((float)x.x, (float)x.y, (float)x.z, (float)x.w); }
 
 VM_INLINE bool  V_CALL isnan(float x)  { return (asuint(x) & 0x7FFFFFFF) > 0x7F800000; }
+
+#if 0
 VM_INLINE bool2 V_CALL isnan(float2 x) { return (asuint(x) & 0x7FFFFFFF) > 0x7F800000; }
+#endif
+
 VM_INLINE bool3 V_CALL isnan(float3 x) { return (asuint(x) & 0x7FFFFFFF) > 0x7F800000; }
 VM_INLINE bool4 V_CALL isnan(float4 x) { return (asuint(x) & 0x7FFFFFFF) > 0x7F800000; }
 
@@ -763,7 +1156,10 @@ VM_INLINE float3 V_CALL mad(float3 a, float3 b, float3 c) { return a * b + c; }
 VM_INLINE float4 V_CALL mad(float4 a, float4 b, float4 c) { return a * b + c; }
 
 VM_INLINE float  V_CALL saturate(float  x) { return clamp(x, 0.0f, 1.0f); }
+
+#if 0
 VM_INLINE float2 V_CALL saturate(float2 x) { return clamp(x, float2(0.0f), float2(1.0f)); }
+#endif
 VM_INLINE float3 V_CALL saturate(float3 x) { return clamp(x, float3(0.0f), float3(1.0f)); }
 VM_INLINE float4 V_CALL saturate(float4 x) { return clamp(x, float4(0.0f), float4(1.0f)); }
 
@@ -883,11 +1279,15 @@ VM_INLINE float V_CALL smoothstep(float a, float b, float x)
     float t = saturate((x - a) / (b - a));
     return t * t * (3.0f - (2.0f * t));
 }
+
+#if 0
 VM_INLINE float2 V_CALL smoothstep(float2 a, float2 b, float2 x)
 {
     float2 t = saturate((x - a) / (b - a));
     return t * t * (3.0f - (2.0f * t));
 }
+#endif
+
 VM_INLINE float3 V_CALL smoothstep(float3 a, float3 b, float3 x)
 {
     float3 t = saturate((x - a) / (b - a));
@@ -1180,6 +1580,7 @@ struct quaternion
     VM_INLINE float4 V_CALL wwww() const { return SHUFFLE4(*this, 3, 3, 3, 3); }
     VM_INLINE float4 V_CALL yzxw() const { return SHUFFLE4(*this, 1, 2, 0, 3); }
     VM_INLINE float4 V_CALL zxyw() const { return SHUFFLE4(*this, 2, 0, 1, 3); }
+#if 0
     VM_INLINE float2 V_CALL xy() const { return SHUFFLE2(*this, 0, 1); }
     VM_INLINE float2 V_CALL zw() const { return SHUFFLE2(*this, 2, 3); }
 
@@ -1193,7 +1594,7 @@ struct quaternion
     VM_INLINE float2 V_CALL zz() const { return SHUFFLE2(*this, 2, 2); }
     VM_INLINE float2 V_CALL wz() const { return SHUFFLE2(*this, 3, 2); }
     VM_INLINE float2 V_CALL wy() const { return SHUFFLE2(*this, 3, 1); }
-	
+#endif
 	//TODO(Ray):Try not to use these as much as possible.
 #if WINDOWS
 	VM_INLINE float V_CALL operator[] (size_t i) const { return m.m128_f32[i]; };
