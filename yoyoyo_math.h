@@ -1,12 +1,11 @@
 #pragma once
-//TODO(Ray):almost all of this is untested
 #include <stdint.h>
 #include <math.h>
-#include <xmmintrin.h>
-#if OSX
 #include <x86intrin.h>
+#if OSX
+//#include <x86intrin>
 #elif WINDOWS
-#include <intrin.h>
+//#include <intrin.h>
 #endif
 //TODO(Ray):look up proper define for compilers 
 #if WINDOWS
@@ -86,55 +85,172 @@ union float4data
 typedef float4data quaterniondata;
 struct float4;
 
-struct  float2
+//#define YOYO_MATH_SIMD 1
+
+struct float2
 {
+    
+#if YOYO_MATH_SIMD
     __m128 m;
-    // Constructors.
+#else
+    float m[2];
+#endif
+    
+// Constructors.
     VM_INLINE float2() {}
-    VM_INLINE explicit V_CALL float2(const float *p) { m = _mm_set_ps(p[1], p[1], p[1], p[0]); }
-    VM_INLINE explicit V_CALL float2(float x) { m = _mm_set_ps(x, x, x, x); }
-    VM_INLINE explicit V_CALL float2(float x, float y) { m = _mm_set_ps(y, y, y, x); }
+    VM_INLINE explicit V_CALL float2(const float *p)
+    {
+        #if YOYO_MATH_SIMD
+        m = _mm_set_ps(p[1], p[1], p[1], p[0]);
+        #else
+        m[0] = p[0];
+        m[1] = p[1];
+        #endif
+    }
+    
+    VM_INLINE explicit V_CALL float2(float x)
+    {
+        #if YOYO_MATH_SIMD
+        m = _mm_set_ps(x, x, x, x);
+        #else
+        m[0] = x;m[1] = x;
+        #endif
+    }
+    
+    VM_INLINE explicit V_CALL float2(float x, float y)
+    {
+        #if YOYO_MATH_SIMD
+        m = _mm_set_ps(y, y, y, x);
+        #else
+        m[0] = x;
+        m[1] = y;
+        #endif
+    }
+    
 //NOTE(Ray):Cant do this compiler complains about ambigious functions signatures.
     //VM_INLINE explicit V_CALL float2(uint32_t x, uint32_t y) { m = _mm_set_ps((float)y, (float)y, (float)y, (float)x); }
-
-    VM_INLINE explicit V_CALL float2(__m128 v) { m = v; }
-
-    VM_INLINE float V_CALL x() const { return _mm_cvtss_f32(m); }
-    VM_INLINE float V_CALL y() const { return _mm_cvtss_f32(_mm_shuffle_ps(m, m, _MM_SHUFFLE(1, 1, 1, 1))); }
-
-	VM_INLINE float V_CALL u() const { return _mm_cvtss_f32(m); }
-	VM_INLINE float V_CALL v() const { return _mm_cvtss_f32(_mm_shuffle_ps(m, m, _MM_SHUFFLE(1, 1, 1, 1))); }
-
-	VM_INLINE float2 V_CALL yx() const { return SHUFFLE2(*this, 1, 0); }
-    VM_INLINE float2 V_CALL xy() const { return SHUFFLE2(*this, 0, 1); }
-
-	VM_INLINE float2 V_CALL vu() const { return SHUFFLE2(*this, 1, 0); }
-	VM_INLINE float2 V_CALL uv() const { return SHUFFLE2(*this, 0, 1); }
-	float4 V_CALL xyxy() const;
-    //NOTE(Ray):Use these as lil as possible
-#if WINDOWS
-    VM_INLINE float operator[] (size_t i) const { return m.m128_f32[i]; };
-	VM_INLINE float& operator[] (size_t i) { return m.m128_f32[i]; };
-#elif OSX || IOS
-    VM_INLINE float operator[] (size_t i) const { return m[i]; };
-   // VM_INLINE float& operator[] (size_t i) { return m[i]; };
+#if YOYO_MATH_SIMD
+    VM_INLINE explicit V_CALL float2(__m128 v)
+    {
+        m = v;
+    }
 #endif
-    VM_INLINE void store(float *p) const { p[0] = x(); p[1] = y(); }
-	VM_INLINE float* to_array() { float result[2] = { x(),y()}; return result; }
+    
+    VM_INLINE float V_CALL x() const
+    {
+        #if YOYO_MATH_SIMD
+        return _mm_cvtss_f32(m);
+        #else
+        return m[0];
+        #endif
+    }
+
+    VM_INLINE float V_CALL y() const
+    {
+        #if YOYO_MATH_SIMD
+        return _mm_cvtss_f32(_mm_shuffle_ps(m, m, _MM_SHUFFLE(1, 1, 1, 1)));
+        #else
+        return m[1];
+        #endif
+    }
+    
+    VM_INLINE float V_CALL u() const
+    {
+        #if YOYO_MATH_SIMD
+        return _mm_cvtss_f32(m);
+        #else
+        return m[0];
+        #endif
+    }
+
+    VM_INLINE float V_CALL v() const
+    {
+        #if YOYO_MATH_SIMD
+        return _mm_cvtss_f32(_mm_shuffle_ps(m, m, _MM_SHUFFLE(1, 1, 1, 1)));
+        #else
+        return m[1];
+        #endif
+    }
+
+	VM_INLINE float2 V_CALL xy() const
+    {
+        #if YOYO_MATH_SIMD
+        return SHUFFLE2(*this, 1, 0);
+        #else
+        return float2(m[0],m[1]);
+        #endif
+    }
+
+    VM_INLINE float2 V_CALL yx() const
+    {
+        #if YOYO_MATH_SIMD
+        return SHUFFLE2(*this, 0, 1);
+        #else
+        return float2(m[1],m[0]);
+        #endif
+    }
+
+	VM_INLINE float2 V_CALL uv() const
+    {
+        #if YOYO_MATH_SIMD
+        return SHUFFLE2(*this, 1, 0);
+        #else
+        return float2(m[0],m[1]);
+        #endif
+    }
+
+    VM_INLINE float2 V_CALL vu() const
+    {
+        #if YOYO_MATH_SIMD
+        return SHUFFLE2(*this, 0, 1);
+        #else
+        return float2(m[1],m[0]);
+        #endif
+    }
+ 
+
+    VM_INLINE void store(float *p) const
+    {
+        #if YOYO_MATH_SIMD
+        p[0] = x(); p[1] = y();
+        #else
+        p[0] = m[0];p[1] = m[1];
+        #endif
+    }
+
+    VM_INLINE float* to_array()
+    {
+        #if YOYO_MATH_SIMD
+        float result[2] = { x(),y()}; return result;
+        #else
+        float result[2] = { m[0],m[1]}; return result;
+        #endif
+    }
+
     void setX(float x)
     {
+        #if YOYO_MATH_SIMD
         m = _mm_move_ss(m, _mm_set_ss(x));
+        #else
+        m[0] = x;
+        #endif
     }
+
     void V_CALL setY(float y)
     {
+        #if YOYO_MATH_SIMD
         __m128 t = _mm_move_ss(m, _mm_set_ss(y));
         t = _mm_shuffle_ps(t, t, _MM_SHUFFLE(3, 2, 0, 0));
         m = _mm_move_ss(t, m);
+        #else
+        m[1] = y;
+        #endif
     }
+
 	static uint32_t V_CALL size() { return sizeof(float) * 2; }
-    //VM_INLINE float operator[] (size_t i) const { return m.m128_f32[i]; };
-    //VM_INLINE float& operator[] (size_t i) { return m.m128_f32[i]; };
-    //VM_INLINE float3 float3i(int x, int y, int z) { return float3((float)x, (float)y, (float)z); }
+
+	float4 V_CALL xyxy() const;
+
 };
 
 struct float3
