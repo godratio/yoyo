@@ -55,6 +55,7 @@
 #define SHUFFLE3m(m, X,Y,Z) float3(_mm_shuffle_ps(m, m, _MM_SHUFFLE(Z,Z,Y,X)))
 #define SHUFFLE4m(m, X,Y,Z,W) float4(_mm_shuffle_ps(m, (m, _MM_SHUFFLE(W,Z,Y,X)))
 
+#include "yoyo_simd.h"
 //NOTE(Ray):used only for making pointers to memory that correlates to one of our math types.
 union float2data
 {
@@ -3084,6 +3085,7 @@ VM_INLINE float4 V_CALL movehl(float4 a,float4 b)
 // special shuffle
 #define VecShuffle_0101(vec1, vec2)        _mm_movelh_ps(vec1, vec2)
 #define VecShuffle_2323(vec1, vec2)        _mm_movehl_ps(vec2, vec1)
+
 // for row major matrix
 // we use __m128 to represent 2x2 matrix as A = | A0  A1 |
 //                                              | A2  A3 |
@@ -3094,6 +3096,14 @@ VM_INLINE __m128 Mat2Mul(__m128 vec1, __m128 vec2)
     _mm_add_ps(_mm_mul_ps(                     vec1, VecSwizzle(vec2, 0,3,0,3)),
                _mm_mul_ps(VecSwizzle(vec1, 1,0,3,2), VecSwizzle(vec2, 2,1,2,1)));
 }
+
+VM_INLINE float4 Mat2Mul(float4 vec1, float4 vec2)
+{
+    float a = vec1 * vec2.xwxw();
+    float b = vec1.yxwz() * vec2.yxyx();
+    return (a + b);
+}
+
 // 2x2 row major Matrix adjugate multiply (A#)*B
 VM_INLINE __m128 Mat2AdjMul(__m128 vec1, __m128 vec2)
 {
@@ -3102,12 +3112,27 @@ VM_INLINE __m128 Mat2AdjMul(__m128 vec1, __m128 vec2)
                _mm_mul_ps(VecSwizzle(vec1, 1,1,2,2), VecSwizzle(vec2, 2,3,0,1)));
     
 }
+
+VM_INLINE float4 Mat2AdjMul(float4 vec1, float4 vec2)
+{
+    float a = vec1.wwxx() * vec2;
+    float b = vec1.yyzz() * vec2.zwxy();
+    return (a-b);
+}
+
 // 2x2 row major Matrix multiply adjugate A*(B#)
 VM_INLINE __m128 Mat2MulAdj(__m128 vec1, __m128 vec2)
 {
     return
     _mm_sub_ps(_mm_mul_ps(                     vec1, VecSwizzle(vec2, 3,0,3,0)),
                _mm_mul_ps(VecSwizzle(vec1, 1,0,3,2), VecSwizzle(vec2, 2,1,2,1)));
+}
+
+VM_INLINE float4 Mat2MulAdj(float4 vec1, float4 vec2)
+{
+    float4 a = vec1 * vec2.wxwx();
+    float4 b = vec1.yxwz() * vec2.zyzy();
+    return (a - b);
 }
 
 // Inverse function is the same no matter column major or row major
@@ -3124,18 +3149,26 @@ float4x4 V_CALL inverse(float4x4 in_matrix)
     __m128 C = VecShuffle_0101(in_matrix.c2.m, in_matrix.c3.m);
     __m128 D = VecShuffle_2323(in_matrix.c2.m, in_matrix.c3.m);
 #else
-	float4 A = float4(in_matrix.c0.zw(), in_matrix.c1.zw());//lhps(in_matrix.c0.m, in_matrix.c1.m);
-	 //TODO(RAY):Continue here
-	float4 B = float4(in_matrix.c0.xy(), in_matrix.c1.xy());// hlps(in_matrix.c0.m, in_matrix.c1.m);
-	float4 C = float4(in_matrix.c2.zw(), in_matrix.c3.zw());// lhps(in_matrix.c2.m, in_matrix.c3.m);
-	float4 D = float4(in_matrix.c2.xy(), in_matrix.c3.xy()) ;// VecShuffle_2323(in_matrix.c2.m, in_matrix.c3.m);
-#endif
+	//23_->01 23->01
+	float4 A = float4(in_matrix.c1.zw(), in_matrix.c0.zw());//lhps(in_matrix.c0.m, in_matrix.c1.m);
+ 	float4 B = float4(in_matrix.c1.xy(), in_matrix.c0.xy());// hlps(in_matrix.c0.m, in_matrix.c1.m);
  	
+ 	float4 C = float4(in_matrix.c3.zw(), in_matrix.c2.zw());// lhps(in_matrix.c2.m, in_matrix.c3.m);
+	float4 D = float4(in_matrix.c3.xy(), in_matrix.c2.xy()) ;// VecShuffle_2323(in_matrix.c2.m, in_matrix.c3.m);
+#endif
+
+#if YOYO_MATH_SIMD 	
     __m128 detA = _mm_set1_ps(in_matrix.c0.x() * in_matrix.c1.y() - in_matrix.c0.y() * in_matrix.c1.x());
     __m128 detB = _mm_set1_ps(in_matrix.c0.z() * in_matrix.c1.w() - in_matrix.c0.w() * in_matrix.c1.z());
     __m128 detC = _mm_set1_ps(in_matrix.c2.x() * in_matrix.c3.y() - in_matrix.c2.y() * in_matrix.c3.x());
     __m128 detD = _mm_set1_ps(in_matrix.c2.z() * in_matrix.c3.w() - in_matrix.c2.w() * in_matrix.c3.z());
-    
+#else
+	float4 detA = float4(in_matrix.c0.x() * in_matrix.c1.y() - in_matrix.c0.y() * in_matrix.c1.x());
+	float4 detB = float4(in_matrix.c0.z() * in_matrix.c1.w() - in_matrix.c0.w() * in_matrix.c1.z());
+	float4 detC = float4(in_matrix.c2.x() * in_matrix.c3.y() - in_matrix.c2.y() * in_matrix.c3.x());
+	float4 detD = float4(in_matrix.c2.z() * in_matrix.c3.w() - in_matrix.c2.w() * in_matrix.c3.z());
+#endif
+
 #if 0 // for determinant, float version is faster
     // determinant as (|A| |B| |C| |D|)
     __m128 detSub = _mm_sub_ps(
@@ -3147,7 +3180,8 @@ float4x4 V_CALL inverse(float4x4 in_matrix)
     __m128 detC = VecSwizzle1(detSub, 2);
     __m128 detD = VecSwizzle1(detSub, 3);
 #endif
-    
+	float4x4 r;
+#if YOYO_MATH_SIMD
     // let iM = 1/|M| * | X  Y |
     //                  | Z  W |
     
@@ -3186,78 +3220,71 @@ float4x4 V_CALL inverse(float4x4 in_matrix)
     Y_ = _mm_mul_ps(Y_, rDetM);
     Z_ = _mm_mul_ps(Z_, rDetM);
     W_ = _mm_mul_ps(W_, rDetM);
-    
+
+
     // apply adjugate and store, here we combine adjugate shuffle and store shuffle
-    float4x4 r = float4x4(float4(VecShuffle(X_, Y_, 3,1,3,1)),
+    r = float4x4(float4(VecShuffle(X_, Y_, 3,1,3,1)),
                           float4(VecShuffle(X_, Y_, 2,0,2,0)),
                           float4(VecShuffle(Z_, W_, 3,1,3,1)),
                           float4(VecShuffle(Z_, W_, 2,0,2,0)));
-    return r;
+    
+#else
+	// let iM = 1/|M| * | X  Y |
+  //                  | Z  W |
+
+  // D#C
+	float4 D_C = Mat2AdjMul(D, C);
+	// A#B
+	float4 A_B = Mat2AdjMul(A, B);
+	// X# = |D|A - B(D#C)
+    float4 aaa = ;
+    float4 b ;
+    float4 X_ = (detD *  A) - Mat2Mul(B, D_C);
+	// W# = |A|D - C(A#B)
+	float4 W_ = ((detA * D) - Mat2Mul(C, A_B));
+
+	// |M| = |A|*|D| + ... (continue later)
+	float4 detM = (detA * detD);
+
+	// Y# = |B|C - D(A#B)#
+	float4 Y_ = ((detB * C) - Mat2MulAdj(D, A_B));
+	// Z# = |C|B - A(D#C)#
+	float4 Z_ = ((detC * B) - Mat2MulAdj(A, D_C));
+
+	// |M| = |A|*|D| + |B|*|C| ... (continue later)
+	detM = (detM + (detB * detC));
+
+	// tr((A#B)(D#C))
+	float4 tr = (A_B * (D_C.xzyw()));
+
+    tr = yoyo_math::HorizontalAdd(tr,tr);
+    tr = yoyo_math::HorizontalAdd(tr,tr);
+
+	// |M| = |A|*|D| + |B|*|C| - tr((A#B)(D#C)
+    detM = (detM - tr);
+
+	const float4 adjSignMask = float4(1.0f,-1.0f,-1.0f,1.0f);
+	// (1/|M|, -1/|M|, -1/|M|, 1/|M|)
+	float4 rDetM = (adjSignMask / detM);
+
+	X_ = (X_ * rDetM);
+	Y_ = (Y_ * rDetM);
+	Z_ = (Z_ * rDetM);
+	W_ = (W_ * rDetM);
+
+	// apply adjugate and store, here we combine adjugate shuffle and store shuffle
+    float4 c0 = float4(X_.wy(), Y_.wy());//, 3, 1, 3, 1));
+    float4 c1 = (X_.zx(), Y_.zx());//, 2, 0, 2, 0);
+    float4 c2 = (Z_.wx(), W_.wx());//, 3, 1, 3, 1);
+    float4 c3 = (Z_.zx(), W_.zx());//, 2, 0, 2, 0);
+	r = float4x4(c0),
+		float4(c1),
+		float4(c2),
+		float4(c3);
+#endif
+ 	return r;
 }
 //END INVERSE
-
-//NOTE(Ray):Leaving non working inverse here for now.
-float4x4 V_CALL inverse_old_not_working(float4x4 m)
-{
-    float4 c0 = m.c0;
-    float4 c1 = m.c1;
-    float4 c2 = m.c2;
-    float4 c3 = m.c3;
-
-    float4 r0y_r1y_r0x_r1x = movelh(c1, c0);
-    float4 r0z_r1z_r0w_r1w = movelh(c2, c3);
-    float4 r2y_r3y_r2x_r3x = movehl(c0, c1);
-    float4 r2z_r3z_r2w_r3w = movehl(c3, c2);
-
-    float4 r1y_r2y_r1x_r2x = float4(c1.yz(),c0.yz());//shuffle(c1, c0, ShuffleComponent.LeftY, ShuffleComponent.LeftZ, ShuffleComponent.RightY, ShuffleComponent.RightZ);
-    float4 r1z_r2z_r1w_r2w = float4(c2.yz(),c3.yz());//shuffle(c2, c3, ShuffleComponent.LeftY, ShuffleComponent.LeftZ, ShuffleComponent.RightY, ShuffleComponent.RightZ);
-    float4 r3y_r0y_r3x_r0x = float4(c1.wx(),c0.wx());//shuffle(c1, c0, ShuffleComponent.LeftW, ShuffleComponent.LeftX, ShuffleComponent.RightW, ShuffleComponent.RightX);
-    float4 r3z_r0z_r3w_r0w = float4(c2.wx(),c3.wx());//shuffle(c2, c3, ShuffleComponent.LeftW, ShuffleComponent.LeftX, ShuffleComponent.RightW, ShuffleComponent.RightX);
-
-    float4 r0_wzyx = float4(r0z_r1z_r0w_r1w.zx(),r0y_r1y_r0x_r1x.xz());//shuffle(r0z_r1z_r0w_r1w, r0y_r1y_r0x_r1x, ShuffleComponent.LeftZ, ShuffleComponent.LeftX, ShuffleComponent.RightX, ShuffleComponent.RightZ);
-    float4 r1_wzyx = float4(r0z_r1z_r0w_r1w.wy(),r0y_r1y_r0x_r1x.yw());//shuffle(r0z_r1z_r0w_r1w, r0y_r1y_r0x_r1x, ShuffleComponent.LeftW, ShuffleComponent.LeftY, ShuffleComponent.RightY, ShuffleComponent.RightW);
-    float4 r2_wzyx = float4(r2z_r3z_r2w_r3w.zw(),r2y_r3y_r2x_r3x.xz());//shuffle(r2z_r3z_r2w_r3w, r2y_r3y_r2x_r3x, ShuffleComponent.LeftZ, ShuffleComponent.LeftX, ShuffleComponent.RightX, ShuffleComponent.RightZ);
-    float4 r3_wzyx = float4(r2z_r3z_r2w_r3w.wy(),r2y_r3y_r2x_r3x.yw());//shuffle(r2z_r3z_r2w_r3w, r2y_r3y_r2x_r3x, ShuffleComponent.LeftW, ShuffleComponent.LeftY, ShuffleComponent.RightY, ShuffleComponent.RightW);
-    float4 r0_xyzw = float4(r0y_r1y_r0x_r1x.zx(),r0z_r1z_r0w_r1w.xz());//shuffle(r0y_r1y_r0x_r1x, r0z_r1z_r0w_r1w, ShuffleComponent.LeftZ, ShuffleComponent.LeftX, ShuffleComponent.RightX, ShuffleComponent.RightZ);
-
-    // Calculate remaining inner term pairs. inner terms have zw=-xy, so we only have to calculate xy and can pack two pairs per vector.
-    float4 inner12_23 = r1y_r2y_r1x_r2x * r2z_r3z_r2w_r3w - r1z_r2z_r1w_r2w * r2y_r3y_r2x_r3x;
-    float4 inner02_13 = r0y_r1y_r0x_r1x * r2z_r3z_r2w_r3w - r0z_r1z_r0w_r1w * r2y_r3y_r2x_r3x;
-    float4 inner30_01 = r3z_r0z_r3w_r0w * r0y_r1y_r0x_r1x - r3y_r0y_r3x_r0x * r0z_r1z_r0w_r1w;
-
-    // Expand inner terms back to 4 components. zw signs still need to be flipped
-    float4 inner12 = float4(inner12_23.xz(),inner12_23.zx());//shuffle(inner12_23, inner12_23, ShuffleComponent.LeftX, ShuffleComponent.LeftZ, ShuffleComponent.RightZ, ShuffleComponent.RightX);
-    float4 inner23 = float4(inner12_23.yw(),inner12_23.wy());//shuffle(inner12_23, inner12_23, ShuffleComponent.LeftY, ShuffleComponent.LeftW, ShuffleComponent.RightW, ShuffleComponent.RightY);
-
-    float4 inner02 = float4(inner02_13.xz(),inner02_13.zx());//shuffle(inner02_13, inner02_13, ShuffleComponent.LeftX, ShuffleComponent.LeftZ, ShuffleComponent.RightZ, ShuffleComponent.RightX);
-    float4 inner13 = float4(inner02_13.yw(),inner02_13.wy());// shuffle(inner02_13, inner02_13, ShuffleComponent.LeftY, ShuffleComponent.LeftW, ShuffleComponent.RightW, ShuffleComponent.RightY);
-
-    // Calculate minors
-    float4 minors0 = r3_wzyx * inner12 - r2_wzyx * inner13 + r1_wzyx * inner23;
-
-    float4 denom = r0_xyzw * minors0;
-
-    // Horizontal sum of denominator. Free sign flip of z and w compensates for missing flip in inner terms.
-    denom = denom + float4(denom.yx(),denom.wz());//shuffle(denom, denom, ShuffleComponent.LeftY, ShuffleComponent.LeftX, ShuffleComponent.RightW, ShuffleComponent.RightZ);   // x+y        x+y            z+w            z+w
-    denom = denom - float4(denom.zz(),denom.xx());//shuffle(denom, denom, ShuffleComponent.LeftZ, ShuffleComponent.LeftZ, ShuffleComponent.RightX, ShuffleComponent.RightX);   // x+y-z-w  x+y-z-w        z+w-x-y        z+w-x-y
-    float4 rcp_denom_ppnn = safe_ratio4_one(float4(1.0f),denom);
-	float4x4 res;
-    res.c0 = minors0 * rcp_denom_ppnn;
-
-    float4 inner30 = float4(inner30_01.xz(),inner30_01.zx());//shuffle(inner30_01, inner30_01, ShuffleComponent.LeftX, ShuffleComponent.LeftZ, ShuffleComponent.RightZ, ShuffleComponent.RightX);
-    float4 inner01 = float4(inner30_01.yw(),inner30_01.wy());//shuffle(inner30_01, inner30_01, ShuffleComponent.LeftY, ShuffleComponent.LeftW, ShuffleComponent.RightW, ShuffleComponent.RightY);
-
-    float4 minors1 = r2_wzyx * inner30 - r0_wzyx * inner23 - r3_wzyx * inner02;
-    res.c1 = minors1 * rcp_denom_ppnn;
-
-    float4 minors2 = r0_wzyx * inner13 - r1_wzyx * inner30 - r3_wzyx * inner01;
-    res.c2 = minors2 * rcp_denom_ppnn;
-
-    float4 minors3 = r1_wzyx * inner02 - r0_wzyx * inner12 + r2_wzyx * inner01;
-    res.c3 = minors3 * rcp_denom_ppnn;
-
-    return res;
-}
 
 float4x4 V_CALL init_pers_proj_matrix(float2 buffer_dim, float fov_y = 68.0f, float2 far_near = float2(0.5f, 1000.0f))
 {
