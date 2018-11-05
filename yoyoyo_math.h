@@ -7,7 +7,6 @@
 #elif WINDOWS
 #include <intrin.h>
 #endif
-
 //TODO(Ray):look up proper define for compilers 
 #if WINDOWS
 #define VM_INLINE   __forceinline
@@ -55,7 +54,8 @@
 #define SHUFFLE3m(m, X,Y,Z) float3(_mm_shuffle_ps(m, m, _MM_SHUFFLE(Z,Z,Y,X)))
 #define SHUFFLE4m(m, X,Y,Z,W) float4(_mm_shuffle_ps(m, (m, _MM_SHUFFLE(W,Z,Y,X)))
 
-#include "yoyo_simd.h"
+#include "yoyoyo_simd.h"
+//using namespace yoyo_math;
 //NOTE(Ray):used only for making pointers to memory that correlates to one of our math types.
 union float2data
 {
@@ -89,7 +89,6 @@ union float4data
 
 typedef float4data quaterniondata;
 struct float4;
-
 
 struct float2
 {
@@ -213,6 +212,18 @@ struct float2
         #endif
     }
  
+	VM_INLINE float2data V_CALL tofloat2data()
+	{
+		float2data a;
+#if YOYO_MATH_SIMD
+		a.x = _mm_cvtss_f32(m);
+		a.y = _mm_cvtss_f32(_mm_shuffle_ps(m, m, _MM_SHUFFLE(1, 1, 1, 1)));
+#else
+		a.i[0] = m[0];
+		a.i[1] = m[1];
+#endif
+		return a;
+	}
 
     VM_INLINE void store(float *p) const
     {
@@ -279,7 +290,7 @@ struct float3
 		m[2] = p[2];
 #endif
 	}
-
+	
 	VM_INLINE explicit V_CALL float3(float x)
 	{
 #if YOYO_MATH_SIMD
@@ -288,6 +299,30 @@ struct float3
 		m[0] = x;
 		m[1] = x;
 		m[2] = x;
+#endif
+	}
+
+	VM_INLINE explicit V_CALL float3(int x)
+	{
+		float f_x = (float)x;
+#if YOYO_MATH_SIMD
+		m = _mm_set_ps(f_x, f_x, f_x, f_x);
+#else
+		m[0] = f_x;
+		m[1] = f_x;
+		m[2] = f_x;
+#endif
+	}
+
+	VM_INLINE explicit V_CALL float3(uint32_t x)
+	{
+		float f_x = (float)x;
+#if YOYO_MATH_SIMD
+		m = _mm_set_ps(f_x, f_x, f_x, f_x);
+#else
+		m[0] = f_x;
+		m[1] = f_x;
+		m[2] = f_x;
 #endif
 	}
 
@@ -794,11 +829,99 @@ struct float4
     VM_INLINE float4 V_CALL wwww() const { return SHUFFLE4(*this, 3, 3, 3, 3); }
     VM_INLINE float4 V_CALL yzxw() const { return SHUFFLE4(*this, 1, 2, 0, 3); }
     VM_INLINE float4 V_CALL zxyw() const { return SHUFFLE4(*this, 2, 0, 1, 3); }
-	VM_INLINE float4 V_CALL xyxy() const { return SHUFFLE4(*this, 0, 1, 0, 1); }
 #endif
-	
-	VM_INLINE float2 V_CALL xy() const
 
+	VM_INLINE float4 V_CALL xzyw() const
+	{
+#if YOYO_MATH_SIMD
+		return SHUFFLE4(*this, 0, 1, 2, 3);
+#else
+		return float4(m[0], m[1], m[2], m[3]);
+#endif
+	}
+
+	VM_INLINE float4 V_CALL zwxy() const
+	{
+#if YOYO_MATH_SIMD
+		return SHUFFLE4(*this, 2, 3, 0, 1);
+#else
+		return float4(m[2], m[3], m[0], m[1]);
+#endif
+	}
+	VM_INLINE float4 V_CALL yyzz() const
+	{
+#if YOYO_MATH_SIMD
+		return SHUFFLE4(*this, 1, 1, 2, 2);
+#else
+		return float4(m[1], m[1], m[2], m[2]);
+#endif
+	}
+	VM_INLINE float4 V_CALL wwxx() const
+	{
+#if YOYO_MATH_SIMD
+		return SHUFFLE4(*this, 3, 3, 0, 0);
+#else
+		return float4(m[3], m[3], m[0], m[0]);
+#endif
+	}
+
+	VM_INLINE float4 V_CALL wxwx() const
+	{
+#if YOYO_MATH_SIMD
+		return SHUFFLE4(*this, 3, 0, 3, 0);
+#else
+		return float4(m[3], m[0], m[3], m[0]);
+#endif
+	}
+
+	VM_INLINE float4 V_CALL zyzy() const
+	{
+#if YOYO_MATH_SIMD
+		return SHUFFLE4(*this, 2, 1, 2, 1);
+#else
+		return float4(m[2], m[1], m[2], m[1]);
+#endif
+	}
+
+	VM_INLINE float4 V_CALL yxwz() const
+	{
+#if YOYO_MATH_SIMD
+		return SHUFFLE4(*this, 1, 0, 3, 2);
+#else
+		return float4(m[1], m[0], m[3], m[2]);
+#endif
+	}
+
+	VM_INLINE float4 V_CALL yxyx() const
+	{
+#if YOYO_MATH_SIMD
+		return SHUFFLE4(*this, 1, 0, 1, 0);
+#else
+		return float4(m[1], m[0], m[1], m[0]);
+#endif
+	}
+
+
+	VM_INLINE float4 V_CALL xwxw() const
+	{
+#if YOYO_MATH_SIMD
+		return SHUFFLE4(*this, 0, 3, 0, 3);
+#else
+		return float4(m[0], m[3], m[0], m[3]);
+#endif
+	}
+	
+
+	VM_INLINE float4 V_CALL xyxy() const
+    {
+#if YOYO_MATH_SIMD
+	    return SHUFFLE4(*this, 0, 1, 0, 1);
+#else
+		return float4(m[0], m[1], m[0], m[1]);
+#endif
+    }
+
+	VM_INLINE float2 V_CALL xy() const
     {
 #if YOYO_USE_SIMD
         return SHUFFLE2(*this,0, 1);
@@ -1000,8 +1123,6 @@ VM_INLINE float4 V_CALL float3::xyxy() const
 	return float4(m[0], m[1], m[0], m[1]);
 #endif
 }
-
-
 
 typedef float2 bool2;
 VM_INLINE float2 V_CALL operator+ (float2 a, float2 b)
@@ -2439,17 +2560,23 @@ struct quaternion
     //VM_INLINE explicit V_CALL quaternion(float3 a,float b){m = _mm_set_ps(a.x(),a.y(),a.x(),b);}
     //VM_INLINE explicit V_CALL quaternion(float2 a,float2 b){m = _mm_set_ps(a.x(),a.y(),b.x(),b.y());}
 
-    /*
  	VM_INLINE quaterniondata toquaterniondata()
     {
-#if WINDOWS
-		quaterniondata result = {m.m128_f32[0],m.m128_f32[1],m.m128_f32[2],m.m128_f32[3]};
-#elif OSX
-        //quaterniondata result = {m.m128_f32[0],m.m128_f32[1],m.m128_f32[2],m.m128_f32[3]};
+#if YOYO_MATH_SIMD
+		quaterniondata a;
+		a.x = _mm_cvtss_f32(m);
+		a.y = _mm_cvtss_f32(_mm_shuffle_ps(m, m, _MM_SHUFFLE(1, 1, 1, 1)));
+		a.z = _mm_cvtss_f32(_mm_shuffle_ps(m, m, _MM_SHUFFLE(2, 2, 2, 2)));
+		a.w = _mm_cvtss_f32(_mm_shuffle_ps(m, m, _MM_SHUFFLE(3, 3, 3, 3)));
+#else
+		quaterniondata a;
+		a.x = m[0];
+		a.y = m[1];
+		a.z = m[2];
+		a.w = m[3];
 #endif
-        return result;
+		return a;
     }
-     */
 //The matrix must be orthonormal.
     VM_INLINE explicit V_CALL quaternion(float3x3 m)
     {
@@ -3065,7 +3192,16 @@ VM_INLINE float4 V_CALL movehl(float4 a,float4 b)
     return float4(b.zw(),a.zw());
 }
 
-//////Begin inverse
+//////Begin 
+static float4 HorizontalAdd(float4 a, float4 b)
+{
+	//TODO(Ray):Compress these once we verified all is good.
+	float x = a.x() + a.y();
+	float y = a.z() + a.w();
+	float z = b.x() + b.y();
+	float w = b.z() + b.w();
+	return float4(x, y, z, w);
+}
 ///NOTE(RAY):This algorithm was ripped from this article
 //https://lxjk.github.io/2017/09/03/Fast-4x4-Matrix-Inverse-with-SSE-SIMD-Explained.html
 
@@ -3096,11 +3232,10 @@ VM_INLINE __m128 Mat2Mul(__m128 vec1, __m128 vec2)
     _mm_add_ps(_mm_mul_ps(                     vec1, VecSwizzle(vec2, 0,3,0,3)),
                _mm_mul_ps(VecSwizzle(vec1, 1,0,3,2), VecSwizzle(vec2, 2,1,2,1)));
 }
-
 VM_INLINE float4 Mat2Mul(float4 vec1, float4 vec2)
 {
-    float a = vec1 * vec2.xwxw();
-    float b = vec1.yxwz() * vec2.yxyx();
+    float4 a = vec1 * vec2.xwxw();
+    float4 b = vec1.yxwz() * vec2.yxyx();
     return (a + b);
 }
 
@@ -3115,8 +3250,8 @@ VM_INLINE __m128 Mat2AdjMul(__m128 vec1, __m128 vec2)
 
 VM_INLINE float4 Mat2AdjMul(float4 vec1, float4 vec2)
 {
-    float a = vec1.wwxx() * vec2;
-    float b = vec1.yyzz() * vec2.zwxy();
+    float4 a = vec1.wwxx() * vec2;
+    float4 b = vec1.yyzz() * vec2.zwxy();
     return (a-b);
 }
 
@@ -3237,8 +3372,6 @@ float4x4 V_CALL inverse(float4x4 in_matrix)
 	// A#B
 	float4 A_B = Mat2AdjMul(A, B);
 	// X# = |D|A - B(D#C)
-    float4 aaa = ;
-    float4 b ;
     float4 X_ = (detD *  A) - Mat2Mul(B, D_C);
 	// W# = |A|D - C(A#B)
 	float4 W_ = ((detA * D) - Mat2Mul(C, A_B));
@@ -3257,8 +3390,8 @@ float4x4 V_CALL inverse(float4x4 in_matrix)
 	// tr((A#B)(D#C))
 	float4 tr = (A_B * (D_C.xzyw()));
 
-    tr = yoyo_math::HorizontalAdd(tr,tr);
-    tr = yoyo_math::HorizontalAdd(tr,tr);
+    tr = HorizontalAdd(tr,tr);
+    tr = HorizontalAdd(tr,tr);
 
 	// |M| = |A|*|D| + |B|*|C| - tr((A#B)(D#C)
     detM = (detM - tr);
@@ -3274,13 +3407,13 @@ float4x4 V_CALL inverse(float4x4 in_matrix)
 
 	// apply adjugate and store, here we combine adjugate shuffle and store shuffle
     float4 c0 = float4(X_.wy(), Y_.wy());//, 3, 1, 3, 1));
-    float4 c1 = (X_.zx(), Y_.zx());//, 2, 0, 2, 0);
-    float4 c2 = (Z_.wx(), W_.wx());//, 3, 1, 3, 1);
-    float4 c3 = (Z_.zx(), W_.zx());//, 2, 0, 2, 0);
-	r = float4x4(c0),
+    float4 c1 = float4(X_.zx(), Y_.zx());//, 2, 0, 2, 0);
+    float4 c2 = float4(Z_.wx(), W_.wx());//, 3, 1, 3, 1);
+    float4 c3 = float4(Z_.zx(), W_.zx());//, 2, 0, 2, 0);
+	r = float4x4((c0),
 		float4(c1),
 		float4(c2),
-		float4(c3);
+		float4(c3));
 #endif
  	return r;
 }

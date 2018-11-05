@@ -163,28 +163,19 @@ static YoyoRay YoyoRaycastFromScreen(float4x4 projection_matrix,float4x4 camera_
 //PHsyx extensions
  physx::PxVec3 float3::toPhysx()
 {
-#if WINDOWS
-	return physx::PxVec3(m.m128_f32[0], m.m128_f32[1], m.m128_f32[2]);
-#else
-    return physx::PxVec3(m[0], m[1], m[2]);
-#endif
+	float3data a = tofloat3data();
+	return physx::PxVec3(a.i[0], a.i[1], a.i[2]);
 }
  physx::PxVec4 float4::toPhysx()
  {
-#if WINDOWS
-	 return physx::PxVec4(m.m128_f32[0], m.m128_f32[1], m.m128_f32[2],m.m128_f32[3]);
-#else
-     return physx::PxVec4(m[0], m[1], m[2],m[3]);
-#endif
+	float4data a = tofloat4data();
+	 return physx::PxVec4(a.i[0], a.i[1], a.i[2],a.i[3]);
  }
 
  physx::PxQuat quaternion::toPhysx()
  {
-#if WINDOWS
-	 return physx::PxQuat(m.m128_f32[0], m.m128_f32[1], m.m128_f32[2],m.m128_f32[3]);
-#else
-     return physx::PxQuat(m[0], m[1], m[2],m[3]);
-#endif
+	 quaterniondata qd = toquaterniondata();
+	 return physx::PxQuat(qd.i[0], qd.i[1], qd.i[2],qd.i[3]);
  }
 
 #endif
