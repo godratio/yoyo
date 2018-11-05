@@ -54,7 +54,7 @@
 #define SHUFFLE3m(m, X,Y,Z) float3(_mm_shuffle_ps(m, m, _MM_SHUFFLE(Z,Z,Y,X)))
 #define SHUFFLE4m(m, X,Y,Z,W) float4(_mm_shuffle_ps(m, (m, _MM_SHUFFLE(W,Z,Y,X)))
 
-#include "yoyoyo_simd.h"
+//#include "yoyoyo_simd.h"
 //using namespace yoyo_math;
 //NOTE(Ray):used only for making pointers to memory that correlates to one of our math types.
 union float2data
@@ -1087,7 +1087,7 @@ struct float4
 	void setZ(float x)
 	{
 #if YOYO_MATH_SIMD
-		__m128 t = _mm_move_ss(m, _mm_set_ss(z));
+        __m128 t = _mm_move_ss(m, _mm_set_ss(z()));
 		t = _mm_shuffle_ps(t, t, _MM_SHUFFLE(3, 0, 1, 0));
 		m = _mm_move_ss(t, m);
 #else
@@ -1098,7 +1098,7 @@ struct float4
 	void V_CALL setW(float y)
 	{
 #if YOYO_MATH_SIMD
-		__m128 t = _mm_move_ss(m, _mm_set_ss(w));
+        __m128 t = _mm_move_ss(m, _mm_set_ss(w()));
 		t = _mm_shuffle_ps(t, t, _MM_SHUFFLE(0, 2, 1, 0));
 		m = _mm_move_ss(t, m);
 #else
@@ -1377,8 +1377,9 @@ VM_INLINE float3 V_CALL operator+ (float3 a, float3 b)
 	a.m[0] = a.m[0] + b.m[0];
 	a.m[1] = a.m[1] + b.m[1];
 	a.m[2] = a.m[2] + b.m[2];
-	return a;
+	
 #endif
+    return a;
 }
 
 VM_INLINE float3 V_CALL operator+ (float  a, float3 b)
@@ -1591,7 +1592,7 @@ VM_INLINE bool3 V_CALL operator>=(float3 a, float3 b)
 VM_INLINE bool3 V_CALL operator- (float3 a)
 {
 #if YOYO_MATH_SIMD
-	return float2(_mm_setzero_ps()) - a;
+    return float3(_mm_setzero_ps()) - a;
 #else
 	return float3(0.0f) - a;
 #endif
@@ -1882,7 +1883,7 @@ VM_INLINE bool4 V_CALL operator>=(float4 a, float4 b)
 VM_INLINE bool4 V_CALL operator- (float4 a)
 {
 #if YOYO_MATH_SIMD
-	return float2(_mm_setzero_ps()) - a;
+	return float4(_mm_setzero_ps()) - a;
 #else
 	return float4(0.0f) - a;
 #endif
@@ -2502,7 +2503,7 @@ struct quaternion
 	VM_INLINE explicit V_CALL quaternion(float4 a)
 	{
 #if YOYO_MATH_SIMD
-		m = _mm_set_ps(x, x, x, x);
+		m = _mm_set_ps(a.x(), a.y(), a.z(), a.w());
 #else
 		m[0] = a.m[0];
 		m[1] = a.m[1];
