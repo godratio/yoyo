@@ -25,7 +25,7 @@ static ObjectTransform ObjectTransformSerialize(ObjectTransform* ot)
 {
 	ObjectTransform new_ot = {};
 	new_ot.p = float3(ot->p.m);
-	new_ot.r = quaternion(ot->r.m);
+	new_ot.r = quaternion(ot->r.xyzw());
 	new_ot.s = float3(ot->s.m);
 	new_ot.m = float4x4Serialize(ot->m);// float4x4(float4(ot->m.c0.m), float4(ot->m.c1.m), float4(ot->m.c2.m), float4(ot->m.c3.m));
 	new_ot.forward = float3(ot->forward.m);
