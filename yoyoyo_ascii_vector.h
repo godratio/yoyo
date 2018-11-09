@@ -88,7 +88,7 @@ static void YoyoFreeVectorMem(YoyoVector *vector)
 
 #define YoyoPushBack(vector, element) YoyoPushBack_(vector,(void*)&element,true);
 #define YoyoPushBackPtr(vector, element) YoyoPushBack_(vector,(void*)element,true);
-#define YoyoPushBackVoidPtr(vector, element) YoyoPushBack_(vector,element,true);
+#define YoyoPushBackVoidPtr(vector, element) YoyoPushBack_(vector,(void*)&(*(u8*)element),true);
 #define YoyoPushBackCopy(vector, element, copy) YoyoPushBack_(vector,(void*)&element,copy);
 #define YoyoPushBackPtrCopy(vector, element, copy) YoyoPushBack_(vector,(void*)&element,copy);
 //NOTE(ray):If you use SetVectorElement Pushes will no longer work properly.
