@@ -1,5 +1,5 @@
 #pragma once
-
+//TODO(Ray):Move memory from api to yoyoyoyo
 #include <stdint.h>
 #include <cstring>
 
@@ -22,6 +22,7 @@ struct YoyoVector
 
 //BEGIN VECTOR LIFECYCLE
 #define YoyoInitVector(start_size,type,pre_empt) YoyoInitVector_(start_size,sizeof(type),pre_empt)
+#define YoyoInitVectorSize(start_size,size,pre_empt) YoyoInitVector_(start_size,size,pre_empt)
 static YoyoVector YoyoInitVector_(uint32_t start_size, uint32_t unit_size, bool pre_empt = false)
 {
     //TIMED_BLOCK();
@@ -40,15 +41,15 @@ static YoyoVector YoyoInitVector_(uint32_t start_size, uint32_t unit_size, bool 
     result.start_at = -1;
     result.pushable = true;
     //TODO(ray): change this to get memory froma a pre allocated partition.
-    void* starting_memory = YoyoPlatformAllocateMemory(result.max_size);
+    void* starting_memory = PlatformAllocateMemory(result.max_size);
     MemoryArena* partition = (MemoryArena*)starting_memory;
-    YoyoAllocateArena(partition, result.max_size,partition+sizeof(MemoryArena*));
+    AllocatePartition(partition, result.max_size,partition+sizeof(MemoryArena*));
     
     result.mem_arena = partition;
     if(pre_empt)
     {
         result.count = start_size;
-        YoyoPushSize_(partition,result.max_size);
+        PushSize(partition,result.max_size);
     }
     else
     {
@@ -66,7 +67,7 @@ static void YoyoClearVector(YoyoVector *vector)
 	vector->count = 0;
 	vector->at_index = 0;
 	vector->start_at = -1;
-	vector->mem_arena->temp_count = 0;
+//	vector->mem_arena->temp_count = 0;
 }
 
 static void YoyoFreeVectorMem(YoyoVector *vector)
@@ -77,15 +78,17 @@ static void YoyoFreeVectorMem(YoyoVector *vector)
 		YoyoClearVector(vector);
 		vector->total_size = 0;
 		vector->total_count = 0;
-		YoyoPlatformDeallocateMemory(vector->mem_arena->base, vector->mem_arena->size);
+		PlatformDeAllocateMemory(vector->mem_arena->base, vector->mem_arena->size);
 		vector->base = nullptr;
 	}
 }
 //END VECTOR LIFECYCLE
 
 //BEGIN VECTOR GENERAL USAGE FUNCTIONS
+
 #define YoyoPushBack(vector, element) YoyoPushBack_(vector,(void*)&element,true);
 #define YoyoPushBackPtr(vector, element) YoyoPushBack_(vector,(void*)element,true);
+#define YoyoPushBackVoidPtr(vector, element) YoyoPushBack_(vector,(void*)&(*(u8*)element),true);
 #define YoyoPushBackCopy(vector, element, copy) YoyoPushBack_(vector,(void*)&element,copy);
 #define YoyoPushBackPtrCopy(vector, element, copy) YoyoPushBack_(vector,(void*)&element,copy);
 //NOTE(ray):If you use SetVectorElement Pushes will no longer work properly.
@@ -107,15 +110,19 @@ static uint32_t YoyoPushBack_(YoyoVector* vector, void* element, bool copy = tru
     //check if we have space if not resize to create it.
     if(vector->max_size < vector->unit_size * (vector->count + 1))
     {
-		uint32_t new_size = vector->total_size + (vector->total_size * vector->resize_ratio);
+		float resize_ratio = 1.0f;
+		if (vector->count > 1)resize_ratio = vector->resize_ratio;
+
+		uint32_t new_size = vector->max_size + (vector->max_size * resize_ratio);
 		uint8_t* temp_ptr = (uint8_t*)vector->mem_arena->base;
-		vector->base = vector->mem_arena->base = YoyoPlatformAllocateMemory(new_size);
+		vector->base = vector->mem_arena->base = PlatformAllocateMemory(new_size);
 		vector->mem_arena->size = new_size;
 		memcpy(vector->base, (void*)temp_ptr, vector->total_size);
 		vector->max_size = new_size;
+		PlatformDeAllocateMemory(temp_ptr, vector->total_size);
     }
     //TODO(ray):have some protection here to make sure we are added in the right type.
-    uint8_t *ptr = (uint8_t*)YoyoPushSize(vector->mem_arena, vector->unit_size);
+    uint8_t *ptr = (uint8_t*)PushSize(vector->mem_arena, vector->unit_size);
     if (copy)
     {
         uint32_t byte_count = vector->unit_size;
@@ -136,16 +143,47 @@ static uint32_t YoyoPushBack_(YoyoVector* vector, void* element, bool copy = tru
     return result_index;
 }
 
+//NOTE(Ray):Why are type and vector reversed between the push and access api methods!?!?!?! fix that.
+//NOTE(Ray):We purposely have no bounds checking here its your responsibility.
+//TODO(Ray):Implement a bounds check version of this function for when it might be good to have one.
+//for now dont want need it.
 #define YoyoGetVectorElement(type,vector,index) (type*)YoyoGetVectorElement_(vector,index)
+
 #define YoyoGetVectorFirst(type,vector) (type*)YoyoGetVectorElement_(vector,0)
+//NOTE(Ray):This is no good? Why get vector last instead of peek and why -1 and one noe sounds like a bug!!
 #define YoyoGetVectorLast(type,vector) (type*)YoyoGetVectorElement_(vector,vector.count)
+//NOTE(Ray):Peek is prefferred at the moment.
 #define YoyoPeekVectorElement(type,vector) (type*)YoyoGetVectorElement_(vector,*vector.count-1)
+//#define YoyoIteraterPeekVector(type,vector) (type*)YoyoIterateVectorElement_(vector,*vector.at_index)
+//#define YoyoIteraterPeekNextVector(type,vector) (type*)YoyoIterateVectorElement_(vector,*vector.at_index + 1)
+//#define YoyoIteraterPeekOffsetVector(type,vector,offset) (type*)YoyoIterateVectorElement_(vector,*vector.at_index + offset)
 static void* YoyoGetVectorElement_(YoyoVector* vector, uint32_t index)
 {
 	Assert(vector);
+	if (index < 0 || index > vector->count - 1)return 0;
 	//TODO(Ray):May want to think about this. Need to give a hint to the client code.
-	void* Location = (uint8_t*)vector->base + (index * vector->unit_size);
-	return Location;
+	return  (uint8_t*)vector->base + (index * vector->unit_size);;
+}
+#define YoyoGetVectorElementAnyIndex(type,vector,index) (type*)YoyoGetVectorElementAnyIndex_(vector,index)
+static void* YoyoGetVectorElementAnyIndex_(YoyoVector* vector, uint32_t index)
+{
+    Assert(vector);
+    if (index < 0 || index > vector->total_count - 1)return 0;
+    //TODO(Ray):May want to think about this. Need to give a hint to the client code.
+    return  (uint8_t*)vector->base + (index * vector->unit_size);;
+}
+
+#define YoyoGetReferenceToElement(type,vector) (type**)YoyoGetVectorElement_(vector,*vector.count-1)
+//#define YoyoIteraterPeekVector(type,vector) (type*)YoyoIterateVectorElement_(vector,*vector.at_index)
+//#define YoyoIteraterPeekNextVector(type,vector) (type*)YoyoIterateVectorElement_(vector,*vector.at_index + 1)
+//#define YoyoIteraterPeekOffsetVector(type,vector,offset) (type*)YoyoIterateVectorElement_(vector,*vector.at_index + offset)
+static void** YoyoGetReferenceToElement_(YoyoVector* vector, uint32_t index)
+{
+	Assert(vector);
+	if (index < 0 || index > vector->count - 1)return 0;
+	//TODO(Ray):May want to think about this. Need to give a hint to the client code.
+	uint8_t** Location = ((uint8_t**)&vector->base + (index * vector->unit_size));
+	return (void**)Location;
 }
 
 static void* YoyoSetVectorElement(YoyoVector* vector, uint32_t element_index, void* element, bool copy = true)
@@ -180,7 +218,7 @@ static void* YoyoSetVectorElement(YoyoVector* vector, uint32_t element_index, vo
 #define YoyoPushAndCastEmptyVectorElement(type,vector) (type*)YoyoPushEmptyVectorElement_(vector)
 static void* YoyoPushEmptyVectorElement_(YoyoVector* vector)
 {
-	uint8_t *ptr = (uint8_t*)YoyoPushSize(vector->mem_arena, vector->unit_size);
+	uint8_t *ptr = (uint8_t*)PushSize(vector->mem_arena, vector->unit_size);
 
 	vector->total_size += vector->unit_size;
 	vector->count++;
@@ -208,6 +246,8 @@ static void YoyoPopVectorElement(YoyoVector* vector)
 //END VECTOR GENERAL USAGE FUNCTIONS
 
 //BEGIN VECTOR ITERATION FUNCS
+
+
 #define YoyoIterateVector(vector,type) (type*)YoyoIterateVectorElement_(vector)
 #define YoyoIterateVectorFromIndex(vector,type,index) (type*)YoyoIterateVectorElement_(vector,index)
 #define YoyoIterateVectorFromToIndex(vector,type,index,to_index) (type*)YoyoIterateVectorElement_(vector,index,to_index)
@@ -228,13 +268,23 @@ static void* YoyoIterateVectorElement_(YoyoVector *vector, int start_at = -1, in
 	return YoyoGetVectorElement_(vector, vector->at_index++);
 }
 
+//NOTE(ray):Incorporates bounds checking and satisfies the iterator promise of a return by zero
+//if you if you try to access our of bounds of the iterator index.
+#define YoyoGetVectorIteratorOffset(type,vector,offset) (type*)YoyoGetVectorIterator_(vector,*vector.at_index + offset)
+static void* YoyoGetVectorIterator_(YoyoVector* vector, uint32_t index)
+{
+	Assert(vector);
+	if (index < 0 || index >= vector->count)return 0;
+	//TODO(Ray):May want to think about this. Need to give a hint to the client code.
+	void* Location = (uint8_t*)vector->base + (index * vector->unit_size);
+	return Location;
+}
 static void YoyoResetVectorIterator(YoyoVector *vector)
 {
 	//TIMED_BLOCK();
-	Assert(vector);
+	if (!vector)return;
+	//Assert(vector);
 	vector->at_index = 0;
 	vector->start_at = -1;
 }
-
 //END VECTOR ITERATION FUNCS
-
