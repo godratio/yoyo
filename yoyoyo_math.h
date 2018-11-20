@@ -3250,6 +3250,7 @@ static float4 HorizontalAdd(float4 a, float4 b)
 #define VecShuffle_0101(vec1, vec2)        _mm_movelh_ps(vec1, vec2)
 #define VecShuffle_2323(vec1, vec2)        _mm_movehl_ps(vec2, vec1)
 
+#if YOYO_MATH_SIMD
 // for row major matrix
 // we use __m128 to represent 2x2 matrix as A = | A0  A1 |
 //                                              | A2  A3 |
@@ -3259,12 +3260,6 @@ VM_INLINE __m128 Mat2Mul(__m128 vec1, __m128 vec2)
     return
     _mm_add_ps(_mm_mul_ps(                     vec1, VecSwizzle(vec2, 0,3,0,3)),
                _mm_mul_ps(VecSwizzle(vec1, 1,0,3,2), VecSwizzle(vec2, 2,1,2,1)));
-}
-VM_INLINE float4 Mat2Mul(float4 vec1, float4 vec2)
-{
-    float4 a = vec1 * vec2.xwxw();
-    float4 b = vec1.yxwz() * vec2.yxyx();
-    return (a + b);
 }
 
 // 2x2 row major Matrix adjugate multiply (A#)*B
@@ -3276,19 +3271,26 @@ VM_INLINE __m128 Mat2AdjMul(__m128 vec1, __m128 vec2)
     
 }
 
-VM_INLINE float4 Mat2AdjMul(float4 vec1, float4 vec2)
-{
-    float4 a = vec1.wwxx() * vec2;
-    float4 b = vec1.yyzz() * vec2.zwxy();
-    return (a-b);
-}
-
 // 2x2 row major Matrix multiply adjugate A*(B#)
 VM_INLINE __m128 Mat2MulAdj(__m128 vec1, __m128 vec2)
 {
     return
     _mm_sub_ps(_mm_mul_ps(                     vec1, VecSwizzle(vec2, 3,0,3,0)),
                _mm_mul_ps(VecSwizzle(vec1, 1,0,3,2), VecSwizzle(vec2, 2,1,2,1)));
+}
+#else
+VM_INLINE float4 Mat2Mul(float4 vec1, float4 vec2)
+{
+    float4 a = vec1 * vec2.xwxw();
+    float4 b = vec1.yxwz() * vec2.yxyx();
+    return (a + b);
+}
+
+VM_INLINE float4 Mat2AdjMul(float4 vec1, float4 vec2)
+{
+    float4 a = vec1.wwxx() * vec2;
+    float4 b = vec1.yyzz() * vec2.zwxy();
+    return (a-b);
 }
 
 VM_INLINE float4 Mat2MulAdj(float4 vec1, float4 vec2)
@@ -3297,7 +3299,7 @@ VM_INLINE float4 Mat2MulAdj(float4 vec1, float4 vec2)
     float4 b = vec1.yxwz() * vec2.zyzy();
     return (a - b);
 }
-
+#endif
 // Inverse function is the same no matter column major or row major
 // this version treats it as row major
 float4x4 V_CALL inverse(float4x4 in_matrix)
@@ -3581,11 +3583,8 @@ VM_INLINE float V_CALL mul(float2 x)
  float2 V_CALL world_to_screen_point(float4x4 projection_matrix,float4x4 camera_matrix,float2 buffer_dim, float3 p)
 {
 	float4 input_p = float4(p,1.0f);
-
     float aspect_ratio = buffer_dim.x() / buffer_dim.y();
-
 	float4x4 view_projection_matrix = mul(projection_matrix , camera_matrix);
-
 	float4 clip = mul(input_p,view_projection_matrix);
 	//w divide value should be z of output.
 	clip.setW(clip.z());

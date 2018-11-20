@@ -35,7 +35,7 @@ static YoyoHashTable YoyoInitHashTable(uint32_t start_count)
 	return result;
 }
 
-uint64_t YoyoMeowHashFunction(void* buffer,uint64_t size)
+static uint64_t YoyoMeowHashFunction(void* buffer,uint64_t size)
 {
     meow_hash hash = MeowHash_Accelerated(0, size, buffer);
     return MeowU64From(hash,0);
