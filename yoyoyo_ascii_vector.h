@@ -61,21 +61,20 @@ static YoyoVector YoyoInitVector_(uint32_t start_size, uint32_t unit_size, bool 
 
 static void YoyoClearVector(YoyoVector *vector)
 {
-	//TIMED_BLOCK();
 	Assert(vector);
+    vector->pushable = true;
 	vector->mem_arena->used = 0;
 	vector->count = 0;
 	vector->at_index = 0;
 	vector->start_at = -1;
-//	vector->mem_arena->temp_count = 0;
 }
 
 static void YoyoFreeVectorMem(YoyoVector *vector)
 {
-	//TIMED_BLOCK();
 	if (vector->total_size > 0)
 	{
 		YoyoClearVector(vector);
+        vector->pushable = true;
 		vector->total_size = 0;
 		vector->total_count = 0;
 		PlatformDeAllocateMemory(vector->mem_arena->base, vector->mem_arena->size);
