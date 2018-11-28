@@ -748,7 +748,7 @@ struct float4
 		return m[0];
 #endif
 	}
-	VM_INLINE float V_CALL right() const
+	VM_INLINE float V_CALL top() const
 	{
 #if YOYO_MATH_SIMD
 		return _mm_cvtss_f32(_mm_shuffle_ps(m, m, _MM_SHUFFLE(1, 1, 1, 1)));
@@ -757,7 +757,7 @@ struct float4
 #endif
 	}
 
-	VM_INLINE float V_CALL top() const
+	VM_INLINE float V_CALL right() const
 	{
 #if YOYO_MATH_SIMD
 		return _mm_cvtss_f32(_mm_shuffle_ps(m, m, _MM_SHUFFLE(2, 2, 2, 2)));
