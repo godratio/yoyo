@@ -8,6 +8,7 @@
 struct ObjectTransformBuffer
 {
 	YoyoVector object_transforms;
+    uint64_t next_free_index = 0;
 };
 
 namespace ObjectTransformCode
@@ -22,8 +23,14 @@ namespace ObjectTransformCode
 		ObjectTransformBuffer buff;
 		*buffer = buff;
     	buffer->object_transforms = YoyoInitVector(start_size, ObjectTransform, false);
+        for(int i = 0;i < start_size;++i)
+        {
+            ObjectTransform* ot = (ObjectTransform*)buffer->object_transforms.base + i;
+            ot->is_free = true;
+        }
     }
 
+//This is the retained mode api    
     static void AddObjectTransform(ObjectTransformBuffer* buffer,float3 p,float3 s,quaternion r)
     {
         ObjectTransform new_ot;
@@ -32,6 +39,39 @@ namespace ObjectTransformCode
         new_ot.r = r;
 		YoyoUpdateObjectTransform(&new_ot);
         YoyoPushBack(&buffer->object_transforms,new_ot);
+    }
+
+    static void SetNextOT(ObjectTransformBuffer* buffer)
+    {
+        float iteration = 0;
+        //find and set the next non used projectile
+        for (int i = buffer->next_free_index; iteration < buffer->object_transforms.total_count; ++iteration)
+        {
+            int wrapped_i = i % (int)buffer->object_transforms.total_count;
+            ObjectTransform* new_ot = (ObjectTransform*)buffer->object_transforms.base + wrapped_i;
+            if (new_ot->is_free)
+            {
+                buffer->next_free_index = wrapped_i;
+                break;
+            }
+            ++i;
+        }
+    }
+    
+    //This is the free list or immediate mode api    
+    static ObjectTransform* AddObjectTransformIM(ObjectTransformBuffer* buffer,float3 p,float3 s,quaternion r)
+    {
+        ObjectTransform* new_ot = YoyoGetVectorElement(ObjectTransform,&buffer->object_transforms,buffer->next_free_index);
+        if(new_ot)
+        {
+            new_ot->p = p;
+            new_ot->s = s;
+            new_ot->r = r;
+            new_ot->is_free = false;
+            YoyoUpdateObjectTransform(new_ot);
+            SetNextOT(buffer);
+        }
+        return new_ot;
     }
 
 	static void UpdateObjectTransforms(ObjectTransformBuffer* buffer)

@@ -1,6 +1,7 @@
 #pragma once
 
 #include "yoyoyo_math.h"
+
 //NOTE(Ray):If these become a perf bottle neck look to seperate these out.
 struct ObjectTransform
 {
@@ -14,6 +15,7 @@ struct ObjectTransform
 	float3 forward;
 	float3 up;
 	float3 right;
+    bool is_free = true;
 };
 
 static float4x4 float4x4Serialize(float4x4 m)
