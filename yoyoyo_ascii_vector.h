@@ -1,7 +1,8 @@
 #pragma once
+
 //TODO(Ray):Move memory from api to yoyoyoyo
 #include <stdint.h>
-#include <cstring>
+//#include <cstring>
 
 struct YoyoVector
 {
