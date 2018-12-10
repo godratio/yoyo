@@ -98,14 +98,14 @@ static void YoyoFreeVectorMem(YoyoVector *vector)
  * \param copy Should we do a byte for byte copy?  
  * \return returns an index into the array in the vector for the created element
  */
-static uint32_t YoyoPushBack_(YoyoVector* vector, void* element, bool copy = true)
+static uint32_t YoyoPushBack_(YoyoVector* vector, void* element, bool copy = true,bool clear = false)
 {
     //TIMED_BLOCK();
     Assert(vector && element);
     Assert(vector->pushable);
 	Assert(vector->start_at == -1);//You must have forget to reset the vector or are trying to resize during iteration.
 
-    //TODO(Ray):Test this.
+    //TODO(Ray):Test this. This is not working properly I believe.  Havent used it.
     //check if we have space if not resize to create it.
     if(vector->max_size < vector->unit_size * (vector->count + 1))
     {
@@ -120,8 +120,11 @@ static uint32_t YoyoPushBack_(YoyoVector* vector, void* element, bool copy = tru
 		vector->max_size = new_size;
 		PlatformDeAllocateMemory(temp_ptr, vector->total_size);
     }
+    partition_push_params mem_params = DefaultPartitionParams();
+    mem_params.Flags = PartitionFlag_None;
     //TODO(ray):have some protection here to make sure we are added in the right type.
-    uint8_t *ptr = (uint8_t*)PushSize(vector->mem_arena, vector->unit_size);
+    //TODO(Ray):Might be better to allow for compile time switch to memcpy.
+    uint8_t *ptr = (uint8_t*)PushSize(vector->mem_arena, vector->unit_size,mem_params);
     if (copy)
     {
         uint32_t byte_count = vector->unit_size;
@@ -147,7 +150,6 @@ static uint32_t YoyoPushBack_(YoyoVector* vector, void* element, bool copy = tru
 //TODO(Ray):Implement a bounds check version of this function for when it might be good to have one.
 //for now dont want need it.
 #define YoyoGetVectorElement(type,vector,index) (type*)YoyoGetVectorElement_(vector,index)
-
 #define YoyoGetVectorFirst(type,vector) (type*)YoyoGetVectorElement_(vector,0)
 //NOTE(Ray):This is no good? Why get vector last instead of peek and why -1 and one noe sounds like a bug!!
 #define YoyoGetVectorLast(type,vector) (type*)YoyoGetVectorElement_(vector,vector.count)
@@ -163,6 +165,7 @@ static void* YoyoGetVectorElement_(YoyoVector* vector, uint32_t index)
 	//TODO(Ray):May want to think about this. Need to give a hint to the client code.
 	return  (uint8_t*)vector->base + (index * vector->unit_size);;
 }
+
 #define YoyoGetVectorElementAnyIndex(type,vector,index) (type*)YoyoGetVectorElementAnyIndex_(vector,index)
 static void* YoyoGetVectorElementAnyIndex_(YoyoVector* vector, uint32_t index)
 {
@@ -218,7 +221,6 @@ static void* YoyoSetVectorElement(YoyoVector* vector, uint32_t element_index, vo
 static void* YoyoPushEmptyVectorElement_(YoyoVector* vector)
 {
 	uint8_t *ptr = (uint8_t*)PushSize(vector->mem_arena, vector->unit_size);
-
 	vector->total_size += vector->unit_size;
 	vector->count++;
 	return (void*)ptr;
@@ -245,8 +247,6 @@ static void YoyoPopVectorElement(YoyoVector* vector)
 //END VECTOR GENERAL USAGE FUNCTIONS
 
 //BEGIN VECTOR ITERATION FUNCS
-
-
 #define YoyoIterateVector(vector,type) (type*)YoyoIterateVectorElement_(vector)
 #define YoyoIterateVectorFromIndex(vector,type,index) (type*)YoyoIterateVectorElement_(vector,index)
 #define YoyoIterateVectorFromToIndex(vector,type,index,to_index) (type*)YoyoIterateVectorElement_(vector,index,to_index)
