@@ -2960,7 +2960,7 @@ VM_INLINE float V_CALL lengthsq(quaternion q){return dot(q.xyzw(), q.xyzw());}
     return quaternion(q.xyzw() * float4(-1.0f, -1.0f, -1.0f, 1.0f));
 }
 
- float3 V_CALL rotate(quaternion q, float3 dir)
+float3 V_CALL rotate(quaternion q, float3 dir)
 {
     float3 t = 2 * cross(q.xyz(), dir);
     return dir + q.w() * t + cross(q.xyz(), t);
