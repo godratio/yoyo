@@ -102,6 +102,19 @@ struct SceneObject
 	ObjectTransform ot;
 	SceneObjectBuffer children;
     int handle;
+    SceneObjectBuffer* container;//NOTE(Ray):We are holding a pointer to its own container
+    //this is due to the child parent relations ship and eachchild hold its own childrens in a container.
+    //This makes look up of parent object much easier.  This trade off was chosen intentionally as holding
+    //all children in a mega buffer has its own drawbacks and this while this is not the most efficient it
+    //has the advantage of making insertions and deletions trivial as well as movement.
+    //We could have a copy of the whole hierarchy traversable to speed up calculating children transforms...
+    //as the moment this seems faste enough and if there might be othe ways to do speed up based on some type of loding.
+    //We will revisit this later on some projects im sure.
+
+    //NOTE(Ray):Was using handles but at this point the handles may not be giving enough benefit considering
+    //the layers of complexity the are adding. For now we will just hold a pointer to the parent.
+    SceneObject* parent;
+    uint32_t flags;//bit0 worldpset bit1 worldrset
 };
 
 namespace SceneObjectCode
@@ -129,19 +142,21 @@ namespace SceneObjectCode
         }
         return 0;
     }
+
     //RETURNS HANDLE into scene object 
-    static int AddSceneObject(SceneObjectBuffer* so,ObjectTransform* ot)
+    static int AddSceneObject(SceneObjectBuffer** so,ObjectTransform* ot)
     {
 		SceneObject new_so;
 		new_so.children = {};
         new_so.ot = *ot;
-        uint32_t handle = YoyoPushBack(&so->buffer,new_so);
-        SceneObject* new_so_ptr = GetSceneObject(so,handle);
+        uint32_t handle = YoyoPushBack(&(*so)->buffer,new_so);
+        SceneObject* new_so_ptr = GetSceneObject(*so,handle);
         new_so_ptr->handle = handle;
+        new_so_ptr->container = *so;
         return handle;
     }
 
-    static int AddSceneObject(SceneObjectBuffer* so,float3 p,quaternion r,float3 s)
+    static int AddSceneObject(SceneObjectBuffer** so,float3 p,quaternion r,float3 s)
     {
         ObjectTransform ot;
         ot.p = p;
@@ -149,7 +164,6 @@ namespace SceneObjectCode
         ot.s = s;
         return AddSceneObject(so,&ot);
     }
-
 
     static void UpdateSceneObject(SceneObject* so,float3 p,quaternion r,float3 s)
     {
@@ -189,6 +203,8 @@ namespace SceneObjectCode
 
         SceneObject* new_so_ptr = GetSceneObject(&so->children,handle);
         new_so_ptr->handle = handle;
+        new_so_ptr->container = &so->children;
+        new_so_ptr->parent = so;
 		return handle;
     }
 
@@ -210,8 +226,8 @@ namespace SceneObjectCode
 			ObjectTransform* ot = &child_so->ot;
 			float3 current_p_sum = *position_sum;
 			quaternion current_r_product = *rotation_product;
-			ot->p = current_p_sum += rotate((current_r_product), ot->local_p);
-			ot->r = current_r_product = current_r_product * ot->local_r;
+			ot->p = child_so->flags & 0x01 ? ot->p : current_p_sum += rotate((current_r_product), ot->local_p);
+			ot->r = child_so->flags & 0x02 ? ot->r : current_r_product = current_r_product * ot->local_r;
 			//TODO(Ray):Properly handle child scaling.
 			ot->s = parent_so->ot.s * ot->local_s;
 			YoyoUpdateObjectTransform(ot);
@@ -241,6 +257,28 @@ namespace SceneObjectCode
             UpdateChildren(so, &current_p_sum, rotation_product);
         }
 		YoyoResetVectorIterator(&buffer->buffer);
+    }
+
+    static void SetWorldP(SceneObject* so,float3 p)
+    {
+//        if(so)
+        {
+            float3 new_local_p = p - so->parent->ot.p;
+            so->ot.p = p;
+            so->ot.local_p = new_local_p;
+            so->flags |= 0x01;
+        }
+    }
+    
+    static void SetWorldR(SceneObject* so,quaternion r)
+    {
+//        if(so)
+        {
+//            float3 new_local_r = p - so->parent->ot.r;
+            so->ot.r = r;
+//            so->ot.local_r = new_local_r;
+            so->flags |= 0x02;
+        }
     }
 }
 
