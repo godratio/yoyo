@@ -226,8 +226,34 @@ namespace SceneObjectCode
 			ObjectTransform* ot = &child_so->ot;
 			float3 current_p_sum = *position_sum;
 			quaternion current_r_product = *rotation_product;
-			ot->p = child_so->flags & 0x01 ? ot->p : current_p_sum += rotate((current_r_product), ot->local_p);
-			ot->r = child_so->flags & 0x02 ? ot->r : current_r_product = current_r_product * ot->local_r;
+
+            //TODO(Ray):NOTE(Ray):Having issues with 02 compiling this code on IOS
+            //Something is funky with the flags and / or ternary operator so moved to
+            //straight if branching it also not providing good result.
+            //Need to check flags as this was hastily done... will come back to it later.
+            //For now removing setting global p and r.
+            //Something not good about the flagsg
+            //Loooks like flags are getting set even when not supposed to be in ios o2
+//            if(child_so->flags & 0x01)
+            {
+//                current_p_sum += ot->p;
+            }
+//            else
+            {
+                ot->p = current_p_sum += rotate((current_r_product), ot->local_p);
+            }
+
+//            if(child_so->flags & 0x02)
+            {
+//                ot->r = ot->r;
+            }
+//            else
+            {
+                ot->r = current_r_product = current_r_product * ot->local_r;
+            }
+
+            //ot->p = current_p_sum += rotate((current_r_product), ot->local_p);
+            //ot->r = current_r_product = current_r_product * ot->local_r;
 			//TODO(Ray):Properly handle child scaling.
 			ot->s = parent_so->ot.s * ot->local_s;
 			YoyoUpdateObjectTransform(ot);
