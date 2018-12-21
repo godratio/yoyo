@@ -1,4 +1,4 @@
-#pragma once
+#if !defined(YOYOYO_H)
 
 //TODO(Ray):Move this dependence from here to yoyomemory
 #include "../api/api_include.h"
@@ -15,6 +15,11 @@
 #define TeraBytes(Value) (GigaBytes(Value) * 1024LL)
 
 #include "yoyoyo_ascii_vector.h"
-#include "yoyoyo_math.h"
 #include "yoyoyo_hashtable.h"
+
+#include "yoyoyo_math.h"
+#include "yoyoyo_math_ext.h"
 #include "yoyoyo_scene.h"
+
+#define YOYOYO_H
+#endif

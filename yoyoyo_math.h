@@ -1,4 +1,5 @@
-#pragma once
+#if !defined(YOYO_MATH_H)
+
 #include <stdint.h>
 #include <math.h>
 
@@ -84,198 +85,59 @@ union float4data
         float x, y, z, w;
     };
     float i[4] = {};
-	
-    
 };
 
 typedef float4data quaterniondata;
 struct float4;
-
 struct float2
 {
-    
 #if YOYO_MATH_SIMD
     __m128 m;
 #else
     float m[2];
 #endif
-    
+
 // Constructors.
-    VM_INLINE float2()
-    {
-#if YOYO_MATH_SIMD
-        m = _mm_set1_ps(0);
-#else
-        m[0] = 0;
-        m[1] = 0;
-#endif
-    }
-    VM_INLINE explicit V_CALL float2(const float *p)
-    {
-        #if YOYO_MATH_SIMD
-        m = _mm_set_ps(p[1], p[1], p[1], p[0]);
-        #else
-        m[0] = p[0];
-        m[1] = p[1];
-        #endif
-    }
+    VM_INLINE float2();
+    VM_INLINE explicit V_CALL float2(const float *p);
     
-    VM_INLINE explicit V_CALL float2(float x)
-    {
-        #if YOYO_MATH_SIMD
-        m = _mm_set_ps(x, x, x, x);
-        #else
-        m[0] = x;
-    	m[1] = x;
-        #endif
-    }
+    VM_INLINE explicit V_CALL float2(float x);
     
-    VM_INLINE explicit V_CALL float2(float x, float y)
-    {
-        #if YOYO_MATH_SIMD
-        m = _mm_set_ps(y, y, y, x);
-        #else
-        m[0] = x;
-        m[1] = y;
-        #endif
-    }
+    VM_INLINE explicit V_CALL float2(float x, float y);
     
 //NOTE(Ray):Cant do this compiler complains about ambigious functions signatures.
     //VM_INLINE explicit V_CALL float2(uint32_t x, uint32_t y) { m = _mm_set_ps((float)y, (float)y, (float)y, (float)x); }
 #if YOYO_MATH_SIMD
-    VM_INLINE explicit V_CALL float2(__m128 v)
-    {
-        m = v;
-    }
+    VM_INLINE explicit V_CALL float2(__m128 v);
 #endif
     
-    VM_INLINE float V_CALL x() const
-    {
-        #if YOYO_MATH_SIMD
-        return _mm_cvtss_f32(m);
-        #else
-        return m[0];
-        #endif
-    }
+    VM_INLINE float V_CALL x() const;
 
-    VM_INLINE float V_CALL y() const
-    {
-        #if YOYO_MATH_SIMD
-        return _mm_cvtss_f32(_mm_shuffle_ps(m, m, _MM_SHUFFLE(1, 1, 1, 1)));
-        #else
-        return m[1];
-        #endif
-    }
+    VM_INLINE float V_CALL y() const;
     
-    VM_INLINE float V_CALL u() const
-    {
-        #if YOYO_MATH_SIMD
-        return _mm_cvtss_f32(m);
-        #else
-        return m[0];
-        #endif
-    }
-
-    VM_INLINE float V_CALL v() const
-    {
-        #if YOYO_MATH_SIMD
-        return _mm_cvtss_f32(_mm_shuffle_ps(m, m, _MM_SHUFFLE(1, 1, 1, 1)));
-        #else
-        return m[1];
-        #endif
-    }
-
-	VM_INLINE float2 V_CALL xy() const
-    {
-        #if YOYO_MATH_SIMD
-        return SHUFFLE2(*this, 1, 0);
-        #else
-        return float2(m[0],m[1]);
-        #endif
-    }
-
-    VM_INLINE float2 V_CALL yx() const
-    {
-        #if YOYO_MATH_SIMD
-        return SHUFFLE2(*this, 0, 1);
-        #else
-        return float2(m[1],m[0]);
-        #endif
-    }
-
-	VM_INLINE float2 V_CALL uv() const
-    {
-        #if YOYO_MATH_SIMD
-        return SHUFFLE2(*this, 1, 0);
-        #else
-        return float2(m[0],m[1]);
-        #endif
-    }
-
-    VM_INLINE float2 V_CALL vu() const
-    {
-        #if YOYO_MATH_SIMD
-        return SHUFFLE2(*this, 0, 1);
-        #else
-        return float2(m[1],m[0]);
-        #endif
-    }
+    VM_INLINE float V_CALL u() const;
  
-	VM_INLINE float2data V_CALL tofloat2data()
-	{
-		float2data a;
-#if YOYO_MATH_SIMD
-		a.x = _mm_cvtss_f32(m);
-		a.y = _mm_cvtss_f32(_mm_shuffle_ps(m, m, _MM_SHUFFLE(1, 1, 1, 1)));
-#else
-		a.i[0] = m[0];
-		a.i[1] = m[1];
-#endif
-		return a;
-	}
+    VM_INLINE float V_CALL v() const;
 
-    VM_INLINE void store(float *p) const
-    {
-        #if YOYO_MATH_SIMD
-        p[0] = x(); p[1] = y();
-        #else
-        p[0] = m[0];p[1] = m[1];
-        #endif
-    }
+	VM_INLINE float2 V_CALL xy() const;
 
-    VM_INLINE float* to_array()
-    {
-        #if YOYO_MATH_SIMD
-        float result[2] = { x(),y()}; return result;
-        #else
-        float result[2] = { m[0],m[1]}; return result;
-        #endif
-    }
+    VM_INLINE float2 V_CALL yx() const;
+ 
+	VM_INLINE float2 V_CALL uv() const;
 
-    void setX(float x)
-    {
-        #if YOYO_MATH_SIMD
-        m = _mm_move_ss(m, _mm_set_ss(x));
-        #else
-        m[0] = x;
-        #endif
-    }
+    VM_INLINE float2 V_CALL vu() const;
+ 
+	VM_INLINE float2data V_CALL tofloat2data();
 
-    void V_CALL setY(float y)
-    {
-        #if YOYO_MATH_SIMD
-        __m128 t = _mm_move_ss(m, _mm_set_ss(y));
-        t = _mm_shuffle_ps(t, t, _MM_SHUFFLE(3, 2, 0, 0));
-        m = _mm_move_ss(t, m);
-        #else
-        m[1] = y;
-        #endif
-    }
+    VM_INLINE void store(float *p) const;
 
-	static uint32_t V_CALL size() { return sizeof(float) * 2; }
+    VM_INLINE float* to_array();
 
+    void setX(float x);
+
+    void V_CALL setY(float y);
+	static uint32_t V_CALL size();
 	float4 V_CALL xyxy() const;
-
 };
 
 struct float3
@@ -288,7 +150,242 @@ struct float3
 #endif
 
 	// Constructors.
-	VM_INLINE float3()
+	VM_INLINE float3();
+
+	VM_INLINE explicit V_CALL float3(const float *p);
+	
+	VM_INLINE explicit V_CALL float3(float x);
+
+	VM_INLINE explicit V_CALL float3(int x);
+
+	VM_INLINE explicit V_CALL float3(uint32_t x);
+
+	VM_INLINE explicit V_CALL float3(float x, float y, float z);
+
+	VM_INLINE explicit V_CALL float3(float2 xy, float z);
+	
+	VM_INLINE explicit V_CALL float3(float3data a);
+
+#if YOYO_MATH_SIMD
+	VM_INLINE explicit V_CALL float3(__m128 v);
+#endif
+
+	VM_INLINE float V_CALL x() const;
+
+	VM_INLINE float V_CALL y() const;
+
+	VM_INLINE float V_CALL z() const;
+
+	VM_INLINE float2 V_CALL xy() const;
+    
+#ifdef YOYO_USE_PHYSX_EXT
+    VM_INLINE explicit V_CALL float3(physx::PxVec3 a);
+    VM_INLINE physx::PxVec3 toPhysx();
+#endif
+
+    VM_INLINE float3data V_CALL tofloat3data();
+    
+    VM_INLINE void V_CALL store(float *p) const;
+	float4 V_CALL xyxy() const;
+
+    void V_CALL setX(float x);
+
+    void V_CALL setY(float y);
+
+    void V_CALL setZ(float z);
+
+	VM_INLINE static uint32_t size();
+	
+	VM_INLINE float3 V_CALL xyz() const;
+
+	VM_INLINE float3 V_CALL zyx() const;
+
+	VM_INLINE float3 V_CALL yxz() const;
+
+	VM_INLINE float3 V_CALL yzx() const;
+	
+	VM_INLINE float3 V_CALL zxy() const;
+};
+
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+#ifdef YOYOIMPL
+// Constructors.
+VM_INLINE float2::float2()
+{
+#if YOYO_MATH_SIMD
+    m = _mm_set1_ps(0);
+#else
+    m[0] = 0;
+    m[1] = 0;
+#endif
+}
+VM_INLINE V_CALL float2::float2(const float *p)
+{
+#if YOYO_MATH_SIMD
+    m = _mm_set_ps(p[1], p[1], p[1], p[0]);
+#else
+    m[0] = p[0];
+    m[1] = p[1];
+#endif
+}
+    
+VM_INLINE V_CALL float2::float2(float x)
+{
+#if YOYO_MATH_SIMD
+    m = _mm_set_ps(x, x, x, x);
+#else
+    m[0] = x;
+    m[1] = x;
+#endif
+}
+    
+VM_INLINE V_CALL float2::float2(float x, float y)
+{
+#if YOYO_MATH_SIMD
+    m = _mm_set_ps(y, y, y, x);
+#else
+    m[0] = x;
+    m[1] = y;
+#endif
+}
+    
+//NOTE(Ray):Cant do this compiler complains about ambigious functions signatures.
+//VM_INLINE explicit V_CALL float2(uint32_t x, uint32_t y) { m = _mm_set_ps((float)y, (float)y, (float)y, (float)x); }
+#if YOYO_MATH_SIMD
+VM_INLINE V_CALL float2::float2(__m128 v)
+{
+    m = v;
+}
+#endif
+    
+VM_INLINE float V_CALL float2::x() const
+{
+#if YOYO_MATH_SIMD
+    return _mm_cvtss_f32(m);
+#else
+    return m[0];
+#endif
+}
+
+VM_INLINE float V_CALL float2::y() const
+{
+#if YOYO_MATH_SIMD
+    return _mm_cvtss_f32(_mm_shuffle_ps(m, m, _MM_SHUFFLE(1, 1, 1, 1)));
+#else
+    return m[1];
+#endif
+}
+    
+VM_INLINE float V_CALL float2::u() const
+{
+#if YOYO_MATH_SIMD
+    return _mm_cvtss_f32(m);
+#else
+    return m[0];
+#endif
+}
+
+VM_INLINE float V_CALL float2::v() const
+{
+#if YOYO_MATH_SIMD
+    return _mm_cvtss_f32(_mm_shuffle_ps(m, m, _MM_SHUFFLE(1, 1, 1, 1)));
+#else
+    return m[1];
+#endif
+}
+
+VM_INLINE float2 V_CALL float2::xy() const
+{
+#if YOYO_MATH_SIMD
+    return SHUFFLE2(*this, 1, 0);
+#else
+    return float2(m[0],m[1]);
+#endif
+}
+
+VM_INLINE float2 V_CALL float2::yx() const
+{
+#if YOYO_MATH_SIMD
+    return SHUFFLE2(*this, 0, 1);
+#else
+    return float2(m[1],m[0]);
+#endif
+}
+
+VM_INLINE float2 V_CALL float2::uv() const
+{
+#if YOYO_MATH_SIMD
+    return SHUFFLE2(*this, 1, 0);
+#else
+    return float2(m[0],m[1]);
+#endif
+}
+
+VM_INLINE float2 V_CALL float2::vu() const
+{
+#if YOYO_MATH_SIMD
+    return SHUFFLE2(*this, 0, 1);
+#else
+    return float2(m[1],m[0]);
+#endif
+}
+ 
+VM_INLINE float2data V_CALL float2::tofloat2data()
+{
+    float2data a;
+#if YOYO_MATH_SIMD
+    a.x = _mm_cvtss_f32(m);
+    a.y = _mm_cvtss_f32(_mm_shuffle_ps(m, m, _MM_SHUFFLE(1, 1, 1, 1)));
+#else
+    a.i[0] = m[0];
+    a.i[1] = m[1];
+#endif
+    return a;
+}
+
+VM_INLINE void float2::store(float *p) const
+{
+#if YOYO_MATH_SIMD
+    p[0] = x(); p[1] = y();
+#else
+    p[0] = m[0];p[1] = m[1];
+#endif
+}
+
+VM_INLINE float* float2::to_array()
+{
+#if YOYO_MATH_SIMD
+    float result[2] = { x(),y()}; return result;
+#else
+    float result[2] = { m[0],m[1]}; return result;
+#endif
+}
+
+void float2::setX(float x)
+{
+#if YOYO_MATH_SIMD
+    m = _mm_move_ss(m, _mm_set_ss(x));
+#else
+    m[0] = x;
+#endif
+}
+
+void V_CALL float2::setY(float y)
+{
+#if YOYO_MATH_SIMD
+    __m128 t = _mm_move_ss(m, _mm_set_ss(y));
+    t = _mm_shuffle_ps(t, t, _MM_SHUFFLE(3, 2, 0, 0));
+    m = _mm_move_ss(t, m);
+#else
+    m[1] = y;
+#endif
+}
+
+uint32_t V_CALL float2::size() { return sizeof(float) * 2; }
+
+
+
+VM_INLINE float3::float3()
     {
 #if YOYO_MATH_SIMD
         m = _mm_set1_ps(0.0f);
@@ -298,7 +395,7 @@ struct float3
         m[2] = 0;
 #endif
     }
-	VM_INLINE explicit V_CALL float3(const float *p)
+	VM_INLINE  V_CALL float3::float3(const float *p)
 	{
 #if YOYO_MATH_SIMD
 		m = _mm_set_ps(p[2], p[2], p[1], p[0]);
@@ -309,7 +406,7 @@ struct float3
 #endif
 	}
 	
-	VM_INLINE explicit V_CALL float3(float x)
+	VM_INLINE  V_CALL float3::float3(float x)
 	{
 #if YOYO_MATH_SIMD
 		m = _mm_set_ps(x, x, x, x);
@@ -320,7 +417,7 @@ struct float3
 #endif
 	}
 
-	VM_INLINE explicit V_CALL float3(int x)
+	VM_INLINE  V_CALL float3::float3(int x)
 	{
 		float f_x = (float)x;
 #if YOYO_MATH_SIMD
@@ -332,7 +429,7 @@ struct float3
 #endif
 	}
 
-	VM_INLINE explicit V_CALL float3(uint32_t x)
+	VM_INLINE  V_CALL float3::float3(uint32_t x)
 	{
 		float f_x = (float)x;
 #if YOYO_MATH_SIMD
@@ -344,7 +441,7 @@ struct float3
 #endif
 	}
 
-	VM_INLINE explicit V_CALL float3(float x, float y, float z)
+	VM_INLINE  V_CALL float3::float3(float x, float y, float z)
 	{
 #if YOYO_MATH_SIMD
 		m = _mm_set_ps(y, z, y, x);
@@ -354,7 +451,7 @@ struct float3
 		m[2] = z;
 #endif
 	}
-	VM_INLINE explicit V_CALL float3(float2 xy, float z)
+	VM_INLINE  V_CALL float3::float3(float2 xy, float z)
 	{
 #if YOYO_MATH_SIMD
 		m = _mm_set_ps(z, z, xy.y(), xy.x());
@@ -365,7 +462,7 @@ struct float3
 #endif
 	}
 	
-	VM_INLINE explicit V_CALL float3(float3data a)
+	VM_INLINE  V_CALL float3::float3(float3data a)
 	{
 #if YOYO_MATH_SIMD
 		m = _mm_set_ps(a.z, a.z, a.y, a.x);
@@ -377,13 +474,13 @@ struct float3
 	}
 
 #if YOYO_MATH_SIMD
-	VM_INLINE explicit V_CALL float3(__m128 v)
+VM_INLINE  V_CALL float3::float3(__m128 v)
 	{
 		m = v;
 	}
 #endif
 
-	VM_INLINE float V_CALL x() const
+VM_INLINE float V_CALL float3::x() const
 	{
 #if YOYO_MATH_SIMD
 		return _mm_cvtss_f32(m);
@@ -391,7 +488,7 @@ struct float3
 		return m[0];
 #endif
 	}
-	VM_INLINE float V_CALL y() const
+	VM_INLINE float V_CALL float3::y() const
 	{
 #if YOYO_MATH_SIMD
 		return _mm_cvtss_f32(_mm_shuffle_ps(m, m, _MM_SHUFFLE(1, 1, 1, 1)));
@@ -400,7 +497,7 @@ struct float3
 #endif
 	}
 
-	VM_INLINE float V_CALL z() const
+	VM_INLINE float V_CALL float3::z() const
 	{
 #if YOYO_MATH_SIMD
 		return _mm_cvtss_f32(_mm_shuffle_ps(m, m, _MM_SHUFFLE(2, 2, 2, 2)));
@@ -422,7 +519,7 @@ struct float3
     //VM_INLINE float V_CALL x() const { return _mm_cvtss_f32(m); }
     //VM_INLINE float V_CALL y() const { return _mm_cvtss_f32(_mm_shuffle_ps(m, m, _MM_SHUFFLE(1, 1, 1, 1))); }
     //VM_INLINE float V_CALL z() const { return _mm_cvtss_f32(_mm_shuffle_ps(m, m, _MM_SHUFFLE(2, 2, 2, 2))); }
-	VM_INLINE float2 V_CALL xy() const
+	VM_INLINE float2 V_CALL float3::xy() const
     {
 #if YOYO_MATH_SIMD
 	    return SHUFFLE2(*this,0, 1);
@@ -433,7 +530,7 @@ struct float3
 
     
 #ifdef YOYO_USE_PHYSX_EXT
-    VM_INLINE explicit V_CALL float3(physx::PxVec3 a)
+    VM_INLINE explicit V_CALL float3::float3(physx::PxVec3 a)
 	{
 #if YOYO_MATH_SIMD
 		m = _mm_set_ps(a.z, a.z, a.y, a.x);
@@ -443,10 +540,10 @@ struct float3
 		m[2] = a.z;
 #endif
 	}
-    VM_INLINE physx::PxVec3 toPhysx();
+    VM_INLINE physx::PxVec3 float3::toPhysx();
 #endif
 
-    VM_INLINE float3data V_CALL tofloat3data()
+    VM_INLINE float3data V_CALL float3::tofloat3data()
     {
         float3data a;
 #if YOYO_MATH_SIMD
@@ -461,10 +558,9 @@ struct float3
     	return a;
     }
     
-    VM_INLINE void V_CALL store(float *p) const { p[0] = x(); p[1] = y(); p[2] = z(); }
-	float4 V_CALL xyxy() const;
+    VM_INLINE void V_CALL float3::store(float *p) const { p[0] = x(); p[1] = y(); p[2] = z(); }
 
-    void V_CALL setX(float x)
+    void V_CALL float3::setX(float x)
     {
 #if YOYO_MATH_SIMD
         m = _mm_move_ss(m, _mm_set_ss(x));
@@ -472,7 +568,8 @@ struct float3
 		m[0] = x;
 #endif
     }
-    void V_CALL setY(float y)
+
+    void V_CALL float3::setY(float y)
     {
 #if YOYO_MATH_SIMD
         __m128 t = _mm_move_ss(m, _mm_set_ss(y));
@@ -483,7 +580,7 @@ struct float3
 #endif
     }
 
-    void V_CALL setZ(float z)
+    void V_CALL float3::setZ(float z)
     {
 #if YOYO_MATH_SIMD
     	__m128 t = _mm_move_ss(m, _mm_set_ss(z));
@@ -493,12 +590,10 @@ struct float3
 		m[2] = z;
 #endif
     }
-	VM_INLINE static uint32_t size() { return sizeof(float) * 3; }
-    //VM_INLINE float operator[] (size_t i) const { return m.m128_f32[i]; };
-    //VM_INLINE float& operator[] (size_t i) { return m.m128_f32[i]; };
-    //VM_INLINE float3 float3i(int x, int y, int z) { return float3((float)x, (float)y, (float)z); }
+
+VM_INLINE uint32_t float3::size() { return sizeof(float) * 3; }
 	
-	VM_INLINE float3 V_CALL xyz() const
+	VM_INLINE float3 V_CALL float3::xyz() const
     {
 #if YOYO_MATH_SIMD
 	    return SHUFFLE3(*this, 0, 1, 2);
@@ -506,7 +601,7 @@ struct float3
 		return float3(m[0], m[1], m[2]);
 #endif
     }
-	VM_INLINE float3 V_CALL zyx() const
+	VM_INLINE float3 V_CALL float3::zyx() const
 	{
 #if YOYO_MATH_SIMD
 		return SHUFFLE3(*this, 0, 1, 2);
@@ -514,7 +609,7 @@ struct float3
 		return float3(m[2], m[1], m[0]);
 #endif
 	}
-	VM_INLINE float3 V_CALL yxz() const
+	VM_INLINE float3 V_CALL float3::yxz() const
 	{
 #if YOYO_MATH_SIMD
 		return SHUFFLE3(*this, 0, 1, 2);
@@ -523,7 +618,7 @@ struct float3
 #endif
 	}
 
-	VM_INLINE float3 V_CALL yzx() const
+	VM_INLINE float3 V_CALL float3::yzx() const
     {
 #if YOYO_MATH_SIMD
 	    return SHUFFLE3(*this, 1, 2, 0);
@@ -532,7 +627,7 @@ struct float3
 #endif
     }
 	
-	VM_INLINE float3 V_CALL zxy() const
+	VM_INLINE float3 V_CALL float3::zxy() const
     {
 #if YOYO_MATH_SIMD
 	    return SHUFFLE3(*this, 2, 0, 1);
@@ -540,16 +635,17 @@ struct float3
 		return float3(m[2], m[0], m[1]);
 #endif
     }
-	//VM_INLINE float3 V_CALL xzy() const { return SHUFFLE3(*this, 1, 2, 0); }
 
-	//VM_INLINE float3 V_CALL zyx() const { return SHUFFLE3(*this, 2, 1, 0); }
 
-	//VM_INLINE float3 V_CALL yxz() const { return SHUFFLE3(*this, 1, 0, 2); }
 
-	//VM_INLINE float3 V_CALL yxw() const { return SHUFFLE3(*this, 1, 0, 3); }
-	//VM_INLINE float3 V_CALL wzy() const { return SHUFFLE3(*this, 3, 2, 1); }
-	//VM_INLINE float3 V_CALL zwx() const { return SHUFFLE3(*this, 2, 3, 0); }
-};
+
+
+
+
+
+
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+#endif
 
 struct quaternion;
 
@@ -562,7 +658,269 @@ struct float4
 #endif
 
 	// Constructors.
-    VM_INLINE V_CALL float4()
+    VM_INLINE V_CALL float4();
+
+	// Constructors.
+	VM_INLINE explicit V_CALL float4(const float *p);
+
+	VM_INLINE explicit V_CALL float4(float x);
+
+	VM_INLINE explicit V_CALL float4(float x, float y, float z,float w);
+ 
+	VM_INLINE explicit V_CALL float4(float4data a);
+
+	VM_INLINE explicit V_CALL float4(float3 a, float b);
+
+	VM_INLINE explicit V_CALL float4(float2 a, float2 b);
+
+#if YOYO_MATH_SIMD
+	VM_INLINE explicit V_CALL float4(__m128 v);
+#endif
+
+    VM_INLINE float4data V_CALL tofloat4data();
+
+	VM_INLINE float V_CALL x() const;
+
+	VM_INLINE float V_CALL y() const;
+
+	VM_INLINE float V_CALL z() const;
+
+	VM_INLINE float V_CALL w() const;
+
+	VM_INLINE float V_CALL r() const;
+
+	VM_INLINE float V_CALL g() const;
+
+	VM_INLINE float V_CALL b() const;
+
+	VM_INLINE float V_CALL a() const;
+
+	VM_INLINE float V_CALL left() const;
+
+	VM_INLINE float V_CALL top() const;
+
+	VM_INLINE float V_CALL right() const;
+
+	VM_INLINE float V_CALL bottom() const;
+
+	VM_INLINE float3 V_CALL xyz() const;
+
+	VM_INLINE float3 V_CALL zyx() const;
+
+	VM_INLINE float3 V_CALL yxz() const;
+
+	VM_INLINE float3 V_CALL yzx() const;
+
+	VM_INLINE float3 V_CALL zxy() const;
+
+	VM_INLINE float4 V_CALL xzyw() const;
+
+	VM_INLINE float4 V_CALL zwxy() const;
+
+	VM_INLINE float4 V_CALL yyzz() const;
+
+	VM_INLINE float4 V_CALL wwxx() const;
+
+	VM_INLINE float4 V_CALL wxwx() const;
+
+	VM_INLINE float4 V_CALL zyzy() const;
+
+	VM_INLINE float4 V_CALL yxwz() const;
+
+	VM_INLINE float4 V_CALL yxyx() const;
+
+	VM_INLINE float4 V_CALL xwxw() const;
+
+	VM_INLINE float4 V_CALL xyxy() const;
+
+	VM_INLINE float2 V_CALL xy() const;
+	
+	VM_INLINE float2 V_CALL zw() const;
+	
+	VM_INLINE float2 V_CALL xx() const;
+	
+	VM_INLINE float2 V_CALL yz() const;
+
+	VM_INLINE float2 V_CALL wx() const;
+
+	VM_INLINE float2 V_CALL xz() const;
+
+	VM_INLINE float2 V_CALL yx() const;
+
+	VM_INLINE float2 V_CALL yw() const;
+
+	VM_INLINE float2 V_CALL zx() const;
+
+	VM_INLINE float2 V_CALL zz() const;
+
+	VM_INLINE float2 V_CALL wz() const;
+	
+	VM_INLINE float2 V_CALL wy() const;
+
+#ifdef YOYO_USE_PHYSX_EXT
+	VM_INLINE explicit V_CALL float4(physx::PxVec3 a);
+	VM_INLINE physx::PxVec4 toPhysx();
+#endif
+	//NOTE(Ray):Should avoid using these whenever possible
+    VM_INLINE void V_CALL store(float *p) const;
+
+	void setX(float x);
+	void V_CALL setY(float y);
+	void setZ(float x);
+	void V_CALL setW(float y);
+	static uint32_t size();
+};
+
+typedef float2 bool2;
+VM_INLINE float2 V_CALL operator+ (float2 a, float2 b);
+VM_INLINE float2 V_CALL operator+ (float  a, float2 b);
+VM_INLINE float2 V_CALL operator- (float2 a, float2 b); 
+VM_INLINE float2 V_CALL operator- (float2 a, float b);
+VM_INLINE float2 V_CALL operator- (float  a, float2 b); 
+VM_INLINE float2 V_CALL operator* (float2 a, float2 b); 
+VM_INLINE float2 V_CALL operator* (float2 a, float b);
+VM_INLINE float2 V_CALL operator* (float a, float2 b);
+VM_INLINE float2 V_CALL operator/ (float2 a, float2 b);
+VM_INLINE float2 V_CALL operator/ (float2 a, float b);
+VM_INLINE float2 V_CALL operator/ (float a, float2 b);
+VM_INLINE bool2 V_CALL operator==(float2 a, float2 b);
+VM_INLINE bool2 V_CALL operator!=(float2 a, float2 b); 
+VM_INLINE bool2 V_CALL operator< (float2 a, float2 b);
+VM_INLINE bool2 V_CALL operator> (float2 a, float2 b);
+VM_INLINE bool2 V_CALL operator<=(float2 a, float2 b);
+VM_INLINE bool2 V_CALL operator>=(float2 a, float2 b);
+VM_INLINE float2 V_CALL operator- (float2 a);
+
+VM_INLINE float2& V_CALL operator+= (float2 &a, float2 b);
+VM_INLINE float2& V_CALL operator-= (float2 &a, float2 b);
+VM_INLINE float2& V_CALL operator*= (float2 &a, float2 b);
+VM_INLINE float2& V_CALL operator/= (float2 &a, float2 b);
+VM_INLINE float2& V_CALL operator*= (float2 &a, float b);
+VM_INLINE float2& V_CALL operator/= (float2 &a, float b);
+
+typedef float3 bool3;
+
+VM_INLINE float3 V_CALL operator+ (float3 a, float3 b);
+VM_INLINE float3 V_CALL operator+ (float  a, float3 b);
+VM_INLINE float3 V_CALL operator+ (float3 a, float b);
+VM_INLINE float3 V_CALL operator- (float3 a, float3 b);
+VM_INLINE float3 V_CALL operator- (float3 a, float b);
+VM_INLINE float3 V_CALL operator- (float  a, float3 b);
+VM_INLINE float3 V_CALL operator* (float3 a, float3 b);
+VM_INLINE float3 V_CALL operator* (float3 a, float b);
+VM_INLINE float3 V_CALL operator* (float a, float3 b);
+VM_INLINE float3 V_CALL operator/ (float3 a, float3 b);
+VM_INLINE float3 V_CALL operator/ (float3 a, float b);
+VM_INLINE float3 V_CALL operator/ (float a, float3 b);
+VM_INLINE bool3 V_CALL operator==(float3 a, float3 b);
+VM_INLINE bool3 V_CALL operator!=(float3 a, float3 b);
+VM_INLINE bool3 V_CALL operator< (float3 a, float3 b);
+VM_INLINE bool3 V_CALL operator> (float3 a, float3 b);
+VM_INLINE bool3 V_CALL operator<=(float3 a, float3 b);
+VM_INLINE bool3 V_CALL operator>=(float3 a, float3 b);
+VM_INLINE bool3 V_CALL operator- (float3 a);
+
+//VM_INLINE float3 V_CALL operator+ (float3 a, float3 b) { a.m = _mm_add_ps(a.m, b.m); return a; }
+//VM_INLINE float3 V_CALL operator+ (float3 a, float b) { a.m = _mm_add_ps(a.m, _mm_set1_ps(b)); return a; }
+//VM_INLINE float3 V_CALL operator+ (float  a, float3 b) { b.m = _mm_add_ps( _mm_set1_ps(a),b.m); return b; }
+
+//VM_INLINE float3 V_CALL operator- (float3 a, float3 b) { a.m = _mm_sub_ps(a.m, b.m); return a; }
+//VM_INLINE float3 V_CALL operator- (float3 a, float b) { a.m = _mm_sub_ps(a.m, _mm_set1_ps(b)); return a; }
+//VM_INLINE float3 V_CALL operator- (float  a, float3 b) { b.m = _mm_sub_ps( _mm_set1_ps(a),b.m); return b; }
+
+//VM_INLINE float3 V_CALL operator* (float3 a, float3 b) { a.m = _mm_mul_ps(a.m, b.m); return a; }
+//VM_INLINE float3 V_CALL operator* (float3 a, float b) { a.m = _mm_mul_ps(a.m, _mm_set1_ps(b)); return a; }
+//VM_INLINE float3 V_CALL operator* (float a, float3 b) { b.m = _mm_mul_ps(_mm_set1_ps(a), b.m); return b; }
+
+//VM_INLINE float3 V_CALL operator/ (float3 a, float3 b) { a.m = _mm_div_ps(a.m, b.m); return a; }
+//VM_INLINE float3 V_CALL operator/ (float3 a, float b) { a.m = _mm_div_ps(a.m, _mm_set1_ps(b)); return a; }
+//VM_INLINE float3 V_CALL operator/ (float a, float3 b) { b.m = _mm_div_ps(_mm_set1_ps(a), b.m); return b; }
+
+VM_INLINE float3& V_CALL operator+= (float3 &a, float3 b);
+VM_INLINE float3& V_CALL operator-= (float3 &a, float3 b);
+VM_INLINE float3& V_CALL operator*= (float3 &a, float3 b);
+VM_INLINE float3& V_CALL operator/= (float3 &a, float3 b);
+VM_INLINE float3& V_CALL operator*= (float3 &a, float b);
+VM_INLINE float3& V_CALL operator/= (float3 &a, float b);
+
+//VM_INLINE bool3 V_CALL operator==(float3 a, float3 b) { a.m = _mm_cmpeq_ps(a.m, b.m); return a; }
+//VM_INLINE bool3 V_CALL operator!=(float3 a, float3 b) { a.m = _mm_cmpneq_ps(a.m, b.m); return a; }
+////VM_INLINE bool3 V_CALL operator< (float3 a, float3 b) { a.m = _mm_cmplt_ps(a.m, b.m); return a; }
+//VM_INLINE bool3 V_CALL operator> (float3 a, float3 b) { a.m = _mm_cmpgt_ps(a.m, b.m); return a; }
+//VM_INLINE bool3 V_CALL operator<=(float3 a, float3 b) { a.m = _mm_cmple_ps(a.m, b.m); return a; }
+//VM_INLINE bool3 V_CALL operator>=(float3 a, float3 b) { a.m = _mm_cmpge_ps(a.m, b.m); return a; }
+//VM_INLINE float3 V_CALL operator- (float3 a) { return float3(_mm_setzero_ps()) - a; }
+//VM_INLINE float3 abs(float3 v) { v.m = _mm_andnot_ps(vsignbits, v.m); return v; }
+// Returns a 3-bit code where bit0..bit2 is X..Z
+#if 0
+VM_INLINE unsigned V_CALL mask(float3 v)
+{
+	return _mm_movemask_ps(v.m) & 7;
+}
+// Once we have a comparison, we can branch based on its results:
+VM_INLINE bool V_CALL any(bool3 v) { return mask(v) != 0; }
+VM_INLINE bool V_CALL all(bool3 v) { return mask(v) == 7; }
+#endif
+
+typedef float4 bool4;
+
+VM_INLINE float4 V_CALL operator+ (float4 a, float4 b);
+VM_INLINE float4 V_CALL operator+ (float  a, float4 b);
+VM_INLINE float4 V_CALL operator+ (float4 a, float b);
+VM_INLINE float4 V_CALL operator- (float4 a, float4 b);
+VM_INLINE float4 V_CALL operator- (float4 a, float b);
+VM_INLINE float4 V_CALL operator- (float  a, float4 b);
+VM_INLINE float4 V_CALL operator* (float4 a, float4 b);
+VM_INLINE float4 V_CALL operator* (float4 a, float b);
+VM_INLINE float4 V_CALL operator* (float a, float4 b);
+VM_INLINE float4 V_CALL operator/ (float4 a, float4 b);
+VM_INLINE float4 V_CALL operator/ (float4 a, float b);
+VM_INLINE float4 V_CALL operator/ (float a, float4 b);
+VM_INLINE bool4 V_CALL operator==(float4 a, float4 b);
+VM_INLINE bool4 V_CALL operator!=(float4 a, float4 b);
+VM_INLINE bool4 V_CALL operator< (float4 a, float4 b);
+VM_INLINE bool4 V_CALL operator> (float4 a, float4 b);
+VM_INLINE bool4 V_CALL operator<=(float4 a, float4 b);
+VM_INLINE bool4 V_CALL operator>=(float4 a, float4 b);
+VM_INLINE bool4 V_CALL operator- (float4 a);
+
+//VM_INLINE float4 V_CALL operator+ (float4 a, float4 b) { a.m = _mm_add_ps(a.m, b.m); return a; }
+//VM_INLINE float4 V_CALL operator+ (float4 a, float b) { a.m = _mm_add_ps(a.m, _mm_set1_ps(b)); return a; }
+//VM_INLINE float4 V_CALL operator+ (float  a, float4 b) { b.m = _mm_add_ps( _mm_set1_ps(a),b.m); return b; }
+
+//VM_INLINE float4 V_CALL operator- (float4 a, float4 b) { a.m = _mm_sub_ps(a.m, b.m); return a; }
+//VM_INLINE float4 V_CALL operator- (float4 a, float b) { a.m = _mm_sub_ps(a.m, _mm_set1_ps(b)); return a; }
+//VM_INLINE float4 V_CALL operator- (float  a, float4 b) { b.m = _mm_sub_ps( _mm_set1_ps(a),b.m); return b; }
+
+//VM_INLINE float4 V_CALL operator* (float4 a, float4 b) { a.m = _mm_mul_ps(a.m, b.m); return a; }
+//VM_INLINE float4 V_CALL operator* (float4 a, float b) { a.m = _mm_mul_ps(a.m, _mm_set1_ps(b)); return a; }
+//VM_INLINE float4 V_CALL operator* (float a, float4 b) { b.m = _mm_mul_ps(_mm_set1_ps(a), b.m); return b; }
+
+//VM_INLINE float4 V_CALL operator/ (float4 a, float4 b) { a.m = _mm_div_ps(a.m, b.m); return a; }
+//VM_INLINE float4 V_CALL operator/ (float4 a, float b) { a.m = _mm_div_ps(a.m, _mm_set1_ps(b)); return a; }
+//VM_INLINE float4 V_CALL operator/ (float a, float4 b) { b.m = _mm_div_ps(_mm_set1_ps(a), b.m); return b; }
+
+VM_INLINE float4& V_CALL operator+= (float4 &a, float4 b);
+VM_INLINE float4& V_CALL operator-= (float4 &a, float4 b);
+
+VM_INLINE float4& V_CALL operator*= (float4 &a, float4 b);
+VM_INLINE float4& V_CALL operator*= (float4 &a, float b);
+
+VM_INLINE float4& V_CALL operator/= (float4 &a, float4 b);
+VM_INLINE float4& V_CALL operator/= (float4 &a, float b);
+
+//VM_INLINE bool4 V_CALL operator==(float4 a, float4 b) { a.m = _mm_cmpeq_ps(a.m, b.m); return a; }
+//VM_INLINE bool4 V_CALL operator!=(float4 a, float4 b) { a.m = _mm_cmpneq_ps(a.m, b.m); return a; }
+//VM_INLINE bool4 V_CALL operator< (float4 a, float4 b) { a.m = _mm_cmplt_ps(a.m, b.m); return a; }
+//VM_INLINE bool4 V_CALL operator> (float4 a, float4 b) { a.m = _mm_cmpgt_ps(a.m, b.m); return a; }
+//VM_INLINE bool4 V_CALL operator<=(float4 a, float4 b) { a.m = _mm_cmple_ps(a.m, b.m); return a; }
+//VM_INLINE bool4 V_CALL operator>=(float4 a, float4 b) { a.m = _mm_cmpge_ps(a.m, b.m); return a; }
+//VM_INLINE float4 V_CALL operator- (float4 a) { return float4(_mm_setzero_ps()) - a; }
+
+#ifdef YOYOIMPL
+
+// Constructors.
+VM_INLINE V_CALL float4::float4()
     {
 #if YOYO_MATH_SIMD
         m = _mm_set1_ps(0.0f);
@@ -575,7 +933,7 @@ struct float4
     }
 
 	// Constructors.
-	VM_INLINE explicit V_CALL float4(const float *p)
+	VM_INLINE  V_CALL float4::float4(const float *p)
 	{
 #if YOYO_MATH_SIMD
 		m = _mm_set_ps(p[3], p[2], p[1], p[0]);
@@ -587,7 +945,7 @@ struct float4
 #endif
 	}
 
-	VM_INLINE explicit V_CALL float4(float x)
+	VM_INLINE  V_CALL float4::float4(float x)
 	{
 #if YOYO_MATH_SIMD
 		m = _mm_set_ps(x, x, x, x);
@@ -599,7 +957,7 @@ struct float4
 #endif
 	}
 
-	VM_INLINE explicit V_CALL float4(float x, float y, float z,float w)
+	VM_INLINE  V_CALL float4::float4(float x, float y, float z,float w)
 	{
 #if YOYO_MATH_SIMD
 		m = _mm_set_ps(w, z, y, x);
@@ -611,7 +969,7 @@ struct float4
 #endif
 	}
 
-	VM_INLINE explicit V_CALL float4(float4data a)
+	VM_INLINE  V_CALL float4::float4(float4data a)
 	{
 #if YOYO_MATH_SIMD
 		m = _mm_set_ps(a.w, a.z, a.y, a.x);
@@ -622,7 +980,8 @@ struct float4
 		m[3] = a.w;
 #endif
 	}
-	VM_INLINE explicit V_CALL float4(float3 a, float b)
+
+VM_INLINE  V_CALL float4::float4(float3 a, float b)
     {
 #if YOYO_MATH_SIMD
 	    m = _mm_set_ps(b, a.z(), a.y(), a.x());
@@ -633,7 +992,8 @@ struct float4
 		m[3] = b;
 #endif
     }
-	VM_INLINE explicit V_CALL float4(float2 a, float2 b)
+
+VM_INLINE  V_CALL float4::float4(float2 a, float2 b)
     {
 #if YOYO_MATH_SIMD
 	    m = _mm_set_ps(b.y(), b.x(), a.y(), a.x());
@@ -649,13 +1009,13 @@ struct float4
     //VM_INLINE explicit V_CALL float4(float x, float y, float z,float w) { m = _mm_set_ps(w, z, y, x); }
     //VM_INLINE explicit V_CALL float4(float x) { m = _mm_set_ps(x, x, x, x); }
 #if YOYO_MATH_SIMD
-	VM_INLINE explicit V_CALL float4(__m128 v) { m = v; }
+	VM_INLINE  V_CALL float4::float4(__m128 v) { m = v; }
 #endif
 
 	//VM_INLINE explicit V_CALL float4(float3 a,float b){m = _mm_set_ps(b,a.z(),a.y(),a.x());}
     //VM_INLINE explicit V_CALL float4(float2 a,float2 b){m = _mm_set_ps(b.y(),b.x(),a.y(),a.x());}
 
-    VM_INLINE float4data V_CALL tofloat4data()
+    VM_INLINE float4data V_CALL float4::tofloat4data()
     {
 #if YOYO_MATH_SIMD
         float4data a;
@@ -673,7 +1033,7 @@ struct float4
     	return a;
     }
 
-	VM_INLINE float V_CALL x() const
+	VM_INLINE float V_CALL float4::x() const
 	{
 #if YOYO_MATH_SIMD
 		return _mm_cvtss_f32(m);
@@ -681,7 +1041,8 @@ struct float4
 		return m[0];
 #endif
 	}
-	VM_INLINE float V_CALL y() const
+
+VM_INLINE float V_CALL float4::y() const
 	{
 #if YOYO_MATH_SIMD
 		return _mm_cvtss_f32(_mm_shuffle_ps(m, m, _MM_SHUFFLE(1, 1, 1, 1)));
@@ -690,7 +1051,7 @@ struct float4
 #endif
 	}
 
-	VM_INLINE float V_CALL z() const
+	VM_INLINE float V_CALL float4::z() const
 	{
 #if YOYO_MATH_SIMD
 		return _mm_cvtss_f32(_mm_shuffle_ps(m, m, _MM_SHUFFLE(2, 2, 2, 2)));
@@ -698,7 +1059,8 @@ struct float4
 		return m[2];
 #endif
 	}
-	VM_INLINE float V_CALL w() const
+
+VM_INLINE float V_CALL float4::w() const
 	{
 #if YOYO_MATH_SIMD
 		return _mm_cvtss_f32(_mm_shuffle_ps(m, m, _MM_SHUFFLE(3,3, 3, 3)));
@@ -707,7 +1069,7 @@ struct float4
 #endif
 	}
 
-	VM_INLINE float V_CALL r() const
+	VM_INLINE float V_CALL float4::r() const
 	{
 #if YOYO_MATH_SIMD
 		return _mm_cvtss_f32(m);
@@ -715,7 +1077,8 @@ struct float4
 		return m[0];
 #endif
 	}
-	VM_INLINE float V_CALL g() const
+
+VM_INLINE float V_CALL float4::g() const
 	{
 #if YOYO_MATH_SIMD
 		return _mm_cvtss_f32(_mm_shuffle_ps(m, m, _MM_SHUFFLE(1, 1, 1, 1)));
@@ -724,7 +1087,7 @@ struct float4
 #endif
 	}
 
-	VM_INLINE float V_CALL b() const
+	VM_INLINE float V_CALL float4::b() const
 	{
 #if YOYO_MATH_SIMD
 		return _mm_cvtss_f32(_mm_shuffle_ps(m, m, _MM_SHUFFLE(2, 2, 2, 2)));
@@ -732,7 +1095,8 @@ struct float4
 		return m[2];
 #endif
 	}
-	VM_INLINE float V_CALL a() const
+
+VM_INLINE float V_CALL float4::a() const
 	{
 #if YOYO_MATH_SIMD
 		return _mm_cvtss_f32(_mm_shuffle_ps(m, m, _MM_SHUFFLE(3, 3, 3, 3)));
@@ -741,7 +1105,7 @@ struct float4
 #endif
 	}
 
-	VM_INLINE float V_CALL left() const
+	VM_INLINE float V_CALL float4::left() const
 	{
 #if YOYO_MATH_SIMD
 		return _mm_cvtss_f32(m);
@@ -749,7 +1113,8 @@ struct float4
 		return m[0];
 #endif
 	}
-	VM_INLINE float V_CALL top() const
+
+VM_INLINE float V_CALL float4::top() const
 	{
 #if YOYO_MATH_SIMD
 		return _mm_cvtss_f32(_mm_shuffle_ps(m, m, _MM_SHUFFLE(1, 1, 1, 1)));
@@ -758,7 +1123,7 @@ struct float4
 #endif
 	}
 
-	VM_INLINE float V_CALL right() const
+	VM_INLINE float V_CALL float4::right() const
 	{
 #if YOYO_MATH_SIMD
 		return _mm_cvtss_f32(_mm_shuffle_ps(m, m, _MM_SHUFFLE(2, 2, 2, 2)));
@@ -766,7 +1131,8 @@ struct float4
 		return m[2];
 #endif
 	}
-	VM_INLINE float V_CALL bottom() const
+
+VM_INLINE float V_CALL float4::bottom() const
 	{
 #if YOYO_MATH_SIMD
 		return _mm_cvtss_f32(_mm_shuffle_ps(m, m, _MM_SHUFFLE(3, 3, 3, 3)));
@@ -774,22 +1140,8 @@ struct float4
 		return m[3];
 #endif
 	}
-//    VM_INLINE float V_CALL x() const { return _mm_cvtss_f32(m); }
-//    VM_INLINE float V_CALL y() const { return _mm_cvtss_f32(_mm_shuffle_ps(m, m, _MM_SHUFFLE(1, 1, 1, 1))); }
-//    VM_INLINE float V_CALL z() const { return _mm_cvtss_f32(_mm_shuffle_ps(m, m, _MM_SHUFFLE(2, 2, 2, 2))); }
-//    VM_INLINE float V_CALL w() const { return _mm_cvtss_f32(_mm_shuffle_ps(m, m, _MM_SHUFFLE(3, 3, 3, 3))); }
 
-//	VM_INLINE float V_CALL r() const { return _mm_cvtss_f32(m); }
-//	VM_INLINE float V_CALL g() const { return _mm_cvtss_f32(_mm_shuffle_ps(m, m, _MM_SHUFFLE(1, 1, 1, 1))); }
-//	VM_INLINE float V_CALL b() const { return _mm_cvtss_f32(_mm_shuffle_ps(m, m, _MM_SHUFFLE(2, 2, 2, 2))); }
-//	VM_INLINE float V_CALL a() const { return _mm_cvtss_f32(_mm_shuffle_ps(m, m, _MM_SHUFFLE(3, 3, 3, 3))); }
-
-//	VM_INLINE float V_CALL left() const { return _mm_cvtss_f32(m); }
-//	VM_INLINE float V_CALL right() const { return _mm_cvtss_f32(_mm_shuffle_ps(m, m, _MM_SHUFFLE(1, 1, 1, 1))); }
-//	VM_INLINE float V_CALL top() const { return _mm_cvtss_f32(_mm_shuffle_ps(m, m, _MM_SHUFFLE(2, 2, 2, 2))); }
-//	VM_INLINE float V_CALL bottom() const { return _mm_cvtss_f32(_mm_shuffle_ps(m, m, _MM_SHUFFLE(3, 3, 3, 3))); }
-
-	VM_INLINE float3 V_CALL xyz() const
+VM_INLINE float3 V_CALL float4::xyz() const
 	{
 #if YOYO_MATH_SIMD
 		return SHUFFLE3(*this, 0, 1, 2);
@@ -797,7 +1149,8 @@ struct float4
 		return float3(m[0], m[1], m[2]);
 #endif
 	}
-	VM_INLINE float3 V_CALL zyx() const
+
+VM_INLINE float3 V_CALL float4::zyx() const
 	{
 #if YOYO_MATH_SIMD
 		return SHUFFLE3(*this, 0, 1, 2);
@@ -806,7 +1159,7 @@ struct float4
 #endif
 	}
 
-	VM_INLINE float3 V_CALL yxz() const
+	VM_INLINE float3 V_CALL float4::yxz() const
 	{
 #if YOYO_MATH_SIMD
 		return SHUFFLE3(*this, 0, 1, 2);
@@ -815,7 +1168,7 @@ struct float4
 #endif
 	}
 
-	VM_INLINE float3 V_CALL yzx() const
+	VM_INLINE float3 V_CALL float4::yzx() const
 	{
 #if YOYO_MATH_SIMD
 		return SHUFFLE3(*this, 1, 2, 0);
@@ -824,7 +1177,7 @@ struct float4
 #endif
 	}
 
-	VM_INLINE float3 V_CALL zxy() const
+	VM_INLINE float3 V_CALL float4::zxy() const
 	{
 #if YOYO_MATH_SIMD
 		return SHUFFLE3(*this, 2, 0, 1);
@@ -833,33 +1186,7 @@ struct float4
 #endif
 	}
 
-#if 0
-    VM_INLINE float3 V_CALL xyz() const { return SHUFFLE3(*this, 0, 1, 2); }
-	VM_INLINE float3 V_CALL xzy() const { return SHUFFLE3(*this, 1, 2, 0); }
-	
-	VM_INLINE float3 V_CALL zxy() const { return SHUFFLE3(*this, 2, 0, 1); }
-	VM_INLINE float3 V_CALL zyx() const { return SHUFFLE3(*this, 2, 1, 0); }
-
-	VM_INLINE float3 V_CALL yzx() const { return SHUFFLE3(*this, 1, 2, 0); }
-	VM_INLINE float3 V_CALL yxz() const { return SHUFFLE3(*this, 1, 0, 2); }
-
-	VM_INLINE float3 V_CALL yxw() const { return SHUFFLE3(*this, 1, 0, 3); }
-	VM_INLINE float3 V_CALL wzy() const { return SHUFFLE3(*this, 3, 2, 1); }
-	VM_INLINE float3 V_CALL zwx() const { return SHUFFLE3(*this, 2, 3, 0); }
-
-    VM_INLINE float4 V_CALL xyzw() const { return SHUFFLE4(*this, 0, 1, 2, 3); }
-    VM_INLINE float4 V_CALL yzxz() const { return SHUFFLE4(*this, 1, 2, 0, 2); }
-    VM_INLINE float4 V_CALL zxyz() const { return SHUFFLE4(*this, 2, 0, 1, 2); }
-    VM_INLINE float4 V_CALL zxyy() const { return SHUFFLE4(*this, 2, 0, 1, 1); }
-    VM_INLINE float4 V_CALL yzxy() const { return SHUFFLE4(*this, 1, 2, 0, 1); }
-    VM_INLINE float4 V_CALL wwwx() const { return SHUFFLE4(*this, 3, 3, 3, 0); }
-    VM_INLINE float4 V_CALL xyzx() const { return SHUFFLE4(*this, 0, 1, 2, 0); }
-    VM_INLINE float4 V_CALL wwww() const { return SHUFFLE4(*this, 3, 3, 3, 3); }
-    VM_INLINE float4 V_CALL yzxw() const { return SHUFFLE4(*this, 1, 2, 0, 3); }
-    VM_INLINE float4 V_CALL zxyw() const { return SHUFFLE4(*this, 2, 0, 1, 3); }
-#endif
-
-	VM_INLINE float4 V_CALL xzyw() const
+VM_INLINE float4 V_CALL float4::xzyw() const
 	{
 #if YOYO_MATH_SIMD
 		return SHUFFLE4(*this, 0, 1, 2, 3);
@@ -868,7 +1195,7 @@ struct float4
 #endif
 	}
 
-	VM_INLINE float4 V_CALL zwxy() const
+	VM_INLINE float4 V_CALL float4::zwxy() const
 	{
 #if YOYO_MATH_SIMD
 		return SHUFFLE4(*this, 2, 3, 0, 1);
@@ -876,7 +1203,8 @@ struct float4
 		return float4(m[2], m[3], m[0], m[1]);
 #endif
 	}
-	VM_INLINE float4 V_CALL yyzz() const
+
+	VM_INLINE float4 V_CALL float4::yyzz() const
 	{
 #if YOYO_MATH_SIMD
 		return SHUFFLE4(*this, 1, 1, 2, 2);
@@ -884,7 +1212,8 @@ struct float4
 		return float4(m[1], m[1], m[2], m[2]);
 #endif
 	}
-	VM_INLINE float4 V_CALL wwxx() const
+
+VM_INLINE float4 V_CALL float4::wwxx() const
 	{
 #if YOYO_MATH_SIMD
 		return SHUFFLE4(*this, 3, 3, 0, 0);
@@ -893,7 +1222,7 @@ struct float4
 #endif
 	}
 
-	VM_INLINE float4 V_CALL wxwx() const
+	VM_INLINE float4 V_CALL float4::wxwx() const
 	{
 #if YOYO_MATH_SIMD
 		return SHUFFLE4(*this, 3, 0, 3, 0);
@@ -902,7 +1231,7 @@ struct float4
 #endif
 	}
 
-	VM_INLINE float4 V_CALL zyzy() const
+	VM_INLINE float4 V_CALL float4::zyzy() const
 	{
 #if YOYO_MATH_SIMD
 		return SHUFFLE4(*this, 2, 1, 2, 1);
@@ -911,7 +1240,7 @@ struct float4
 #endif
 	}
 
-	VM_INLINE float4 V_CALL yxwz() const
+	VM_INLINE float4 V_CALL float4::yxwz() const
 	{
 #if YOYO_MATH_SIMD
 		return SHUFFLE4(*this, 1, 0, 3, 2);
@@ -920,7 +1249,7 @@ struct float4
 #endif
 	}
 
-	VM_INLINE float4 V_CALL yxyx() const
+	VM_INLINE float4 V_CALL float4::yxyx() const
 	{
 #if YOYO_MATH_SIMD
 		return SHUFFLE4(*this, 1, 0, 1, 0);
@@ -929,8 +1258,7 @@ struct float4
 #endif
 	}
 
-
-	VM_INLINE float4 V_CALL xwxw() const
+VM_INLINE float4 V_CALL float4::xwxw() const
 	{
 #if YOYO_MATH_SIMD
 		return SHUFFLE4(*this, 0, 3, 0, 3);
@@ -940,7 +1268,7 @@ struct float4
 	}
 	
 
-	VM_INLINE float4 V_CALL xyxy() const
+	VM_INLINE float4 V_CALL float4::xyxy() const
     {
 #if YOYO_MATH_SIMD
 	    return SHUFFLE4(*this, 0, 1, 0, 1);
@@ -949,7 +1277,7 @@ struct float4
 #endif
     }
 
-	VM_INLINE float2 V_CALL xy() const
+	VM_INLINE float2 V_CALL float4::xy() const
     {
 #if YOYO_USE_SIMD
         return SHUFFLE2(*this,0, 1);
@@ -958,7 +1286,7 @@ struct float4
 #endif
     }
 	
-	VM_INLINE float2 V_CALL zw() const
+	VM_INLINE float2 V_CALL float4::zw() const
 	{
 #if YOYO_USE_SIMD
 		return SHUFFLE2(*this, 2, 3);
@@ -967,7 +1295,7 @@ struct float4
 #endif
 	}
 	
-	VM_INLINE float2 V_CALL xx() const
+	VM_INLINE float2 V_CALL float4::xx() const
 	{
 #if YOYO_USE_SIMD
 		return SHUFFLE2(*this, 0, 0);
@@ -976,7 +1304,7 @@ struct float4
 #endif
 	}
 	
-	VM_INLINE float2 V_CALL yz() const
+	VM_INLINE float2 V_CALL float4::yz() const
 	{
 #if YOYO_USE_SIMD
 		return SHUFFLE2(*this, 1, 2);
@@ -985,7 +1313,7 @@ struct float4
 #endif
 	}
 
-	VM_INLINE float2 V_CALL wx() const
+	VM_INLINE float2 V_CALL float4::wx() const
 	{
 #if YOYO_USE_SIMD
 		return SHUFFLE2(*this, 3, 0);
@@ -994,7 +1322,7 @@ struct float4
 #endif
 	}
 
-	VM_INLINE float2 V_CALL xz() const
+	VM_INLINE float2 V_CALL float4::xz() const
 	{
 #if YOYO_USE_SIMD
 		return SHUFFLE2(*this, 0, 2);
@@ -1003,7 +1331,7 @@ struct float4
 #endif
 	}
 
-	VM_INLINE float2 V_CALL yx() const
+	VM_INLINE float2 V_CALL float4::yx() const
 	{
 #if YOYO_USE_SIMD
 		return SHUFFLE2(*this, 1, 0);
@@ -1012,7 +1340,7 @@ struct float4
 #endif
 	}
 
-	VM_INLINE float2 V_CALL yw() const
+	VM_INLINE float2 V_CALL float4::yw() const
 	{
 #if YOYO_USE_SIMD
 		return SHUFFLE2(*this, 1, 3);
@@ -1021,7 +1349,7 @@ struct float4
 #endif
 	}
 
-	VM_INLINE float2 V_CALL zx() const
+	VM_INLINE float2 V_CALL float4::zx() const
 	{
 #if YOYO_USE_SIMD
 		return SHUFFLE2(*this, 2, 0);
@@ -1030,7 +1358,7 @@ struct float4
 #endif
 	}
 
-	VM_INLINE float2 V_CALL zz() const
+	VM_INLINE float2 V_CALL float4::zz() const
 	{
 #if YOYO_USE_SIMD
 		return SHUFFLE2(*this, 2, 2);
@@ -1039,7 +1367,7 @@ struct float4
 #endif
 	}
 
-	VM_INLINE float2 V_CALL wz() const
+	VM_INLINE float2 V_CALL float4::wz() const
 	{
 #if YOYO_USE_SIMD
 		return SHUFFLE2(*this, 3, 2);
@@ -1048,7 +1376,7 @@ struct float4
 #endif
 	}
 	
-	VM_INLINE float2 V_CALL wy() const
+	VM_INLINE float2 V_CALL float4::wy() const
 	{
 #if YOYO_USE_SIMD
 		return SHUFFLE2(*this, 3, 1);
@@ -1056,23 +1384,9 @@ struct float4
         return float2(m[3], m[1]);
 #endif
 	}
-	
-#if 0
-    VM_INLINE float2 V_CALL xy() const { return SHUFFLE2(*this, 0, 1); }
-    VM_INLINE float2 V_CALL zw() const { return SHUFFLE2(*this, 2, 3); }
-    VM_INLINE float2 V_CALL xx() const { return SHUFFLE2(*this, 0, 0); }
-    VM_INLINE float2 V_CALL yz() const { return SHUFFLE2(*this, 1, 2); }
-    VM_INLINE float2 V_CALL wx() const { return SHUFFLE2(*this, 3, 0); }
-    VM_INLINE float2 V_CALL xz() const { return SHUFFLE2(*this, 0, 2); }
-    VM_INLINE float2 V_CALL yx() const { return SHUFFLE2(*this, 1, 0); }
-    VM_INLINE float2 V_CALL yw() const { return SHUFFLE2(*this, 1, 3); }
-    VM_INLINE float2 V_CALL zx() const { return SHUFFLE2(*this, 2, 0); }
-    VM_INLINE float2 V_CALL zz() const { return SHUFFLE2(*this, 2, 2); }
-    VM_INLINE float2 V_CALL wz() const { return SHUFFLE2(*this, 3, 2); }
-    VM_INLINE float2 V_CALL wy() const { return SHUFFLE2(*this, 3, 1); }
-#endif
+
 #ifdef YOYO_USE_PHYSX_EXT
-	VM_INLINE explicit V_CALL float4(physx::PxVec3 a)
+VM_INLINE explicit V_CALL float4::float4(physx::PxVec3 a)
     {
 #if YOYO_MATH_SIMD
 	    m = _mm_set_ps(a.z, a.z, a.y, a.x);
@@ -1083,13 +1397,13 @@ struct float4
 		m[3] = 0;
 #endif
     }
-	VM_INLINE physx::PxVec4 toPhysx();
+
 #endif
 	//NOTE(Ray):Should avoid using these whenever possible
 
-    VM_INLINE void V_CALL store(float *p) const { p[0] = x(); p[1] = y(); p[2] = z(); p[3] = w(); }
+VM_INLINE void V_CALL float4::store(float *p) const { p[0] = x(); p[1] = y(); p[2] = z(); p[3] = w(); }
 
-	void setX(float x)
+void float4::setX(float x)
 	{
 #if YOYO_MATH_SIMD
 		m = _mm_move_ss(m, _mm_set_ss(x));
@@ -1098,7 +1412,7 @@ struct float4
 #endif
 	}
 
-	void V_CALL setY(float y)
+void V_CALL float4::setY(float y)
 	{
 #if YOYO_MATH_SIMD
 		__m128 t = _mm_move_ss(m, _mm_set_ss(y));
@@ -1109,7 +1423,7 @@ struct float4
 #endif
 	}
 
-	void setZ(float x)
+void float4::setZ(float x)
 	{
 #if YOYO_MATH_SIMD
         __m128 t = _mm_move_ss(m, _mm_set_ss(z()));
@@ -1120,7 +1434,7 @@ struct float4
 #endif
 	}
 
-	void V_CALL setW(float y)
+void V_CALL float4::setW(float y)
 	{
 #if YOYO_MATH_SIMD
         __m128 t = _mm_move_ss(m, _mm_set_ss(w()));
@@ -1131,8 +1445,7 @@ struct float4
 #endif
 	}
 
-	static uint32_t size() { return sizeof(float) * 4; }
-};
+uint32_t float4::size() { return sizeof(float) * 4; }
 
 VM_INLINE float4 V_CALL float2::xyxy() const
 {
@@ -1152,7 +1465,8 @@ VM_INLINE float4 V_CALL float3::xyxy() const
 #endif
 }
 
-typedef float2 bool2;
+
+//OPERATORS
 VM_INLINE float2 V_CALL operator+ (float2 a, float2 b)
 {
 #if YOYO_MATH_SIMD
@@ -1352,20 +1666,7 @@ VM_INLINE float2 V_CALL operator- (float2 a)
 
 }
 
-//VM_INLINE float2 V_CALL operator+ (float2 a, float b) { a.m = _mm_add_ps(a.m, _mm_set1_ps(b)); return a; }
-//VM_INLINE float2 V_CALL operator+ (float  a, float2 b) { b.m = _mm_add_ps( _mm_set1_ps(a),b.m); return b; }
 
-//VM_INLINE float2 V_CALL operator- (float2 a, float2 b) { a.m = _mm_sub_ps(a.m, b.m); return a; }
-//VM_INLINE float2 V_CALL operator- (float2 a, float b) { a.m = _mm_sub_ps(a.m, _mm_set1_ps(b)); return a; }
-//VM_INLINE float2 V_CALL operator- (float  a, float2 b) { b.m = _mm_sub_ps( _mm_set1_ps(a),b.m); return b; }
-
-//VM_INLINE float2 V_CALL operator* (float2 a, float2 b) { a.m = _mm_mul_ps(a.m, b.m); return a; }
-//VM_INLINE float2 V_CALL operator* (float2 a, float b) { a.m = _mm_mul_ps(a.m, _mm_set1_ps(b)); return a; }
-//VM_INLINE float2 V_CALL operator* (float a, float2 b) { b.m = _mm_mul_ps(_mm_set1_ps(a), b.m); return b; }
-
-//VM_INLINE float2 V_CALL operator/ (float2 a, float2 b) { a.m = _mm_div_ps(a.m, b.m); return a; }
-//VM_INLINE float2 V_CALL operator/ (float2 a, float b) { a.m = _mm_div_ps(a.m, _mm_set1_ps(b)); return a; }
-//VM_INLINE float2 V_CALL operator/ (float a, float2 b) { b.m = _mm_div_ps(_mm_set1_ps(a), b.m); return b; }
 
 VM_INLINE float2& V_CALL operator+= (float2 &a, float2 b) { a = a + b; return a; }
 VM_INLINE float2& V_CALL operator-= (float2 &a, float2 b) { a = a - b; return a; }
@@ -1374,23 +1675,6 @@ VM_INLINE float2& V_CALL operator/= (float2 &a, float2 b) { a = a / b; return a;
 VM_INLINE float2& V_CALL operator*= (float2 &a, float b) { a = a * b; return a; }
 VM_INLINE float2& V_CALL operator/= (float2 &a, float b) { a = a / b; return a; }
 
-//VM_INLINE bool2 V_CALL operator==(float2 a, float2 b) { a.m = _mm_cmpeq_ps(a.m, b.m); return a; }
-//VM_INLINE bool2 V_CALL operator!=(float2 a, float2 b) { a.m = _mm_cmpneq_ps(a.m, b.m); return a; }
-//VM_INLINE bool2 V_CALL operator< (float2 a, float2 b) { a.m = _mm_cmplt_ps(a.m, b.m); return a; }
-//VM_INLINE bool2 V_CALL operator> (float2 a, float2 b) { a.m = _mm_cmpgt_ps(a.m, b.m); return a; }
-//VM_INLINE bool2 V_CALL operator<=(float2 a, float2 b) { a.m = _mm_cmple_ps(a.m, b.m); return a; }
-//VM_INLINE bool2 V_CALL operator>=(float2 a, float2 b) { a.m = _mm_cmpge_ps(a.m, b.m); return a; }
-//VM_INLINE float2 V_CALL operator- (float2 a) { return float2(_mm_setzero_ps()) - a; }
-//VM_INLINE float2 abs(float2 v) { v.m = _mm_andnot_ps(vsignbits, v.m); return v; }
-// Returns a 3-bit code where bit0..bit2 is X..Z
-
-#if 0
-VM_INLINE unsigned V_CALL mask(float2 v) { return _mm_movemask_ps(v.m) & 7; }
-
-// Once we have a comparison, we can branch based on its results:
-VM_INLINE bool V_CALL any(bool2 v) { return mask(v) != 0; }
-VM_INLINE bool V_CALL all(bool2 v) { return mask(v) == 7; }
-#endif
 
 typedef float3 bool3;
 
@@ -1947,11 +2231,128 @@ VM_INLINE float4& V_CALL operator/= (float4 &a, float b) { a = a / b; return a; 
 //VM_INLINE bool4 V_CALL operator>=(float4 a, float4 b) { a.m = _mm_cmpge_ps(a.m, b.m); return a; }
 //VM_INLINE float4 V_CALL operator- (float4 a) { return float4(_mm_setzero_ps()) - a; }
 
+
+#endif///////YOYOYIMPL
+/*
+//VM_INLINE bool2 V_CALL operator==(float2 a, float2 b) { a.m = _mm_cmpeq_ps(a.m, b.m); return a; }
+//VM_INLINE bool2 V_CALL operator!=(float2 a, float2 b) { a.m = _mm_cmpneq_ps(a.m, b.m); return a; }
+//VM_INLINE bool2 V_CALL operator< (float2 a, float2 b) { a.m = _mm_cmplt_ps(a.m, b.m); return a; }
+//VM_INLINE bool2 V_CALL operator> (float2 a, float2 b) { a.m = _mm_cmpgt_ps(a.m, b.m); return a; }
+//VM_INLINE bool2 V_CALL operator<=(float2 a, float2 b) { a.m = _mm_cmple_ps(a.m, b.m); return a; }
+//VM_INLINE bool2 V_CALL operator>=(float2 a, float2 b) { a.m = _mm_cmpge_ps(a.m, b.m); return a; }
+//VM_INLINE float2 V_CALL operator- (float2 a) { return float2(_mm_setzero_ps()) - a; }
+//VM_INLINE float2 abs(float2 v) { v.m = _mm_andnot_ps(vsignbits, v.m); return v; }
+// Returns a 3-bit code where bit0..bit2 is X..Z
+
+#if 0
+VM_INLINE unsigned V_CALL mask(float2 v) { return _mm_movemask_ps(v.m) & 7; }
+
+// Once we have a comparison, we can branch based on its results:
+VM_INLINE bool V_CALL any(bool2 v) { return mask(v) != 0; }
+VM_INLINE bool V_CALL all(bool2 v) { return mask(v) == 7; }
+#endif
+*/
+
 #if 0
 VM_INLINE unsigned V_CALL mask(float4 v) { return _mm_movemask_ps(v.m) & 7; }
 VM_INLINE bool V_CALL any(bool4 v) { return mask(v) != 0; }
 VM_INLINE bool V_CALL all(bool4 v) { return mask(v) == 7; }
 #endif
+
+
+//TODO(Ray):To slow later rework this using simd masking and comparisions perhaps will be faster maybe not
+VM_INLINE float V_CALL safe_ratio_zero(float a, float b);
+VM_INLINE float2 V_CALL safe_ratio2_zero(float2 a, float2 b);
+VM_INLINE float3 V_CALL safe_ratio3_zero(float3 a, float3 b);
+VM_INLINE float4 V_CALL safe_ratio4_zero(float4 a, float4 b);
+
+//TODO(Ray):To slow later rework this using simd masking and comparisions perhaps will be faster maybe not
+VM_INLINE float safe_ratio_one(float a, float b);
+VM_INLINE float2 safe_ratio2_one(float2 a, float2 b);
+VM_INLINE float3 safe_ratio3_one(float3 a, float3 b);
+VM_INLINE float4 safe_ratio4_one(float4 a, float4 b);
+
+
+//HLSL INT TYPES
+typedef uint32_t uint;
+struct uint2
+{
+    uint x;
+    uint y;
+	VM_INLINE explicit V_CALL uint2(uint a);
+	VM_INLINE explicit V_CALL uint2(uint a, uint b, uint c);
+    VM_INLINE explicit V_CALL uint2(float2 a);
+    VM_INLINE explicit V_CALL uint2(float a,float b);
+};
+
+struct uint3
+{
+    uint x;
+    uint y;
+    uint z;
+	VM_INLINE explicit V_CALL uint3(uint a);
+	VM_INLINE explicit V_CALL uint3(uint a,uint b,uint c);
+    VM_INLINE explicit V_CALL uint3(float3 a);
+    VM_INLINE explicit V_CALL uint3(float a,float b,float c);
+};
+
+struct uint4
+{
+    uint x;
+    uint y;
+    uint z;
+    uint w;
+	VM_INLINE explicit V_CALL uint4(uint a);
+	VM_INLINE explicit V_CALL uint4(uint a, uint b, uint c,uint d);
+    VM_INLINE explicit V_CALL uint4(float4 a);
+    VM_INLINE explicit V_CALL uint4(float a,float b,float c,float d);
+};
+
+#if 0
+VM_INLINE uint2 V_CALL operator & (uint2 lhs, uint2 rhs);
+VM_INLINE uint2 V_CALL operator & (uint2 lhs, uint rhs);
+VM_INLINE uint2 V_CALL operator & (uint lhs, uint2 rhs);
+#endif
+
+VM_INLINE uint3 V_CALL operator & (uint3 lhs, uint3 rhs);
+VM_INLINE uint3 V_CALL operator & (uint3 lhs, uint rhs);
+VM_INLINE uint3 V_CALL operator & (uint lhs, uint3 rhs);
+
+VM_INLINE uint3 V_CALL operator ^ (uint3 lhs, uint3 rhs);
+VM_INLINE uint3 V_CALL operator ^ (uint3 lhs, uint rhs);
+VM_INLINE uint3 V_CALL operator ^ (uint lhs, uint3 rhs);
+
+VM_INLINE uint4 V_CALL operator & (uint4 lhs, uint4 rhs);
+VM_INLINE uint4 V_CALL operator & (uint4 lhs, uint rhs);
+VM_INLINE uint4 V_CALL operator & (uint lhs, uint4 rhs);
+VM_INLINE bool2 V_CALL operator > (uint2 lhs, uint2 rhs);
+VM_INLINE bool2 V_CALL operator > (uint2 lhs, uint rhs);
+VM_INLINE bool2 V_CALL operator > (uint lhs, uint2 rhs);
+
+VM_INLINE bool3 V_CALL operator > (uint3 lhs, uint3 rhs);
+VM_INLINE bool3 V_CALL operator > (uint3 lhs, uint rhs);
+VM_INLINE bool3 V_CALL operator > (uint lhs, uint3 rhs);
+
+VM_INLINE bool4 V_CALL operator > (uint4 lhs, uint4 rhs);
+VM_INLINE bool4 V_CALL operator > (uint4 lhs, uint rhs);
+VM_INLINE bool4 V_CALL operator > (uint lhs, uint4 rhs);
+
+#if 0
+//HLSL Functions
+VM_INLINE float2 V_CALL minimum(float2 a, float2 b);
+VM_INLINE float2 V_CALL maximum(float2 a, float2 b);
+
+VM_INLINE float3 V_CALL minimum(float3 a, float3 b);
+VM_INLINE float3 V_CALL maximum(float3 a, float3 b);
+
+
+VM_INLINE float V_CALL hmin(float3 v);
+VM_INLINE float V_CALL hmax(float3 v);
+VM_INLINE float4 V_CALL minimum(float4 a, float4 b);
+VM_INLINE float4 V_CALL maximum(float4 a, float4 b);
+#endif
+
+#ifdef YOYOIMPL
 
 //TODO(Ray):To slow later rework this using simd masking and comparisions perhaps will be faster maybe not
 VM_INLINE float V_CALL safe_ratio_zero(float a, float b) { if (a == 0.0f || b == 0.0f) { return 0.0f; } else { return a / b; } }
@@ -1964,38 +2365,22 @@ VM_INLINE float safe_ratio_one(float a, float b) { if (a == 0.0f || b == 0.0f) {
 VM_INLINE float2 safe_ratio2_one(float2 a, float2 b) { a.setX(safe_ratio_one(a.x(), b.x())); a.setY(safe_ratio_one(a.y(), b.y())); return a; }
 VM_INLINE float3 safe_ratio3_one(float3 a, float3 b) { float2 thea = safe_ratio2_one(a.xy(), b.xy()); float theab = safe_ratio_one(a.z(), b.z()); return float3(thea, theab); }
 VM_INLINE float4 safe_ratio4_one(float4 a, float4 b) { float3 thea = safe_ratio3_one(a.xyz(), b.xyz()); float w = safe_ratio_one(a.w(), b.w()); return float4(thea, w); }
-//HLSL INT TYPES
-typedef uint32_t uint;
-struct uint2
-{
-    uint x;
-    uint y;
-	VM_INLINE explicit V_CALL uint2(uint a) { this->x = a; this->y = a;}
-	VM_INLINE explicit V_CALL uint2(uint a, uint b, uint c) { this->x = a; this->y = b; }
-    VM_INLINE explicit V_CALL uint2(float2 a){this->x = (uint)a.x();this->y = (uint)a.y();}
-    VM_INLINE explicit V_CALL uint2(float a,float b){this->x = (uint)a;this->y = (uint)b;}
-};
-struct uint3
-{
-    uint x;
-    uint y;
-    uint z;
-	VM_INLINE explicit V_CALL uint3(uint a) { this->x = a; this->y = a; this->z = a; }
-	VM_INLINE explicit V_CALL uint3(uint a,uint b,uint c) { this->x = a; this->y = b; this->z = c; }
-    VM_INLINE explicit V_CALL uint3(float3 a){this->x = (uint)a.x();this->y = (uint)a.y();this->z = (uint)a.z();}
-    VM_INLINE explicit V_CALL uint3(float a,float b,float c){this->x = (uint)a;this->y = (uint)b;this->z = (uint)c;}
-};
-struct uint4
-{
-    uint x;
-    uint y;
-    uint z;
-    uint w;
-	VM_INLINE explicit V_CALL uint4(uint a) { this->x = a; this->y = a; this->z = a; this->w = a; }
-	VM_INLINE explicit V_CALL uint4(uint a, uint b, uint c,uint d) { this->x = a; this->y = b; this->z = c; this->w = d; }
-    VM_INLINE explicit V_CALL uint4(float4 a){this->x = (uint)a.x();this->y = (uint)a.y();this->z = (uint)a.z();this->w = (uint)a.w();}
-    VM_INLINE explicit V_CALL uint4(float a,float b,float c,float d){this->x = (uint)a;this->y = (uint)b;this->z = (uint)c;this->w = (uint)d;}
-};
+
+VM_INLINE  V_CALL uint2::uint2(uint a) { this->x = a; this->y = a;}
+VM_INLINE  V_CALL uint2::uint2(uint a, uint b, uint c) { this->x = a; this->y = b; }
+VM_INLINE  V_CALL uint2::uint2(float2 a){this->x = (uint)a.x();this->y = (uint)a.y();}
+VM_INLINE  V_CALL uint2::uint2(float a,float b){this->x = (uint)a;this->y = (uint)b;}
+
+VM_INLINE  V_CALL uint3::uint3(uint a) { this->x = a; this->y = a; this->z = a; }
+VM_INLINE  V_CALL uint3::uint3(uint a,uint b,uint c) { this->x = a; this->y = b; this->z = c; }
+VM_INLINE  V_CALL uint3::uint3(float3 a){this->x = (uint)a.x();this->y = (uint)a.y();this->z = (uint)a.z();}
+VM_INLINE  V_CALL uint3::uint3(float a,float b,float c){this->x = (uint)a;this->y = (uint)b;this->z = (uint)c;}
+
+VM_INLINE  V_CALL uint4::uint4(uint a) { this->x = a; this->y = a; this->z = a; this->w = a; }
+VM_INLINE  V_CALL uint4::uint4(uint a, uint b, uint c,uint d) { this->x = a; this->y = b; this->z = c; this->w = d; }
+VM_INLINE  V_CALL uint4::uint4(float4 a){this->x = (uint)a.x();this->y = (uint)a.y();this->z = (uint)a.z();this->w = (uint)a.w();}
+VM_INLINE  V_CALL uint4::uint4(float a,float b,float c,float d){this->x = (uint)a;this->y = (uint)b;this->z = (uint)c;this->w = (uint)d;}
+
 #if 0
 VM_INLINE uint2 V_CALL operator & (uint2 lhs, uint2 rhs) { return uint2 (lhs.x & rhs.x, lhs.y & rhs.y); }
 VM_INLINE uint2 V_CALL operator & (uint2 lhs, uint rhs)  { return uint2 (lhs.x & rhs, lhs.y & rhs); }
@@ -2024,6 +2409,8 @@ VM_INLINE bool3 V_CALL operator > (uint lhs, uint3 rhs)  { return bool3 (lhs > r
 VM_INLINE bool4 V_CALL operator > (uint4 lhs, uint4 rhs) { return bool4 (lhs.x > rhs.x, lhs.y > rhs.y,lhs.z > rhs.z,lhs.w > rhs.w); }
 VM_INLINE bool4 V_CALL operator > (uint4 lhs, uint rhs)  { return bool4 (lhs.x > rhs, lhs.y > rhs,lhs.z > rhs, lhs.w > rhs); }
 VM_INLINE bool4 V_CALL operator > (uint lhs, uint4 rhs)  { return bool4 (lhs > rhs.x, lhs > rhs.y,lhs > rhs.z,lhs > rhs.w); }
+
+
 #if 0
 //HLSL Functions
 VM_INLINE float2 V_CALL minimum(float2 a, float2 b) { a.m = _mm_min_ps(a.m, b.m); return a; }
@@ -2046,8 +2433,281 @@ VM_INLINE float V_CALL hmax(float3 v)
 
 VM_INLINE float4 V_CALL minimum(float4 a, float4 b) { a.m = _mm_min_ps(a.m, b.m); return a; }
 VM_INLINE float4 V_CALL maximum(float4 a, float4 b) { a.m = _mm_max_ps(a.m, b.m); return a; }
+#endif
 
 #endif
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+VM_INLINE float3 V_CALL cross(float3 a, float3 b);
+
+//NOTE(Ray):using fmin here reevaluate ...
+VM_INLINE float V_CALL sum(float2 v);
+VM_INLINE float V_CALL sum(float3 v);
+VM_INLINE float V_CALL sum(float4 v);
+
+VM_INLINE float V_CALL dot(float2 a, float2 b);
+VM_INLINE float V_CALL dot(float3 a, float3 b);
+VM_INLINE float V_CALL dot(float4 a, float4 b);
+
+VM_INLINE float V_CALL length(float2 v);
+VM_INLINE float V_CALL length(float3 v);
+VM_INLINE float V_CALL length(float4 v);
+
+VM_INLINE float2 V_CALL normalize(float2 v);
+VM_INLINE float3 V_CALL normalize(float3 v);
+VM_INLINE float4 V_CALL normalize(float4 v);
+
+VM_INLINE float  V_CALL clamp(float  x, float  a, float  b);
+#if 0
+VM_INLINE float2 V_CALL clamp(float2 t, float2 a, float2 b);
+VM_INLINE float3 V_CALL clamp(float3 t, float3 a, float3 b);
+VM_INLINE float4 V_CALL clamp(float4 t, float4 a, float4 b);
+#endif
+
+VM_INLINE float V_CALL lengthSq(float2 v);
+VM_INLINE float V_CALL lengthSq(float3 v);
+VM_INLINE float V_CALL lengthSq(float4 v);
+
+VM_INLINE float V_CALL  lerp(float  a, float  b, float t);
+VM_INLINE float2 V_CALL lerp(float2 a, float2 b, float t);
+VM_INLINE float3 V_CALL lerp(float3 a, float3 b, float t);
+VM_INLINE float4 V_CALL lerp(float4 a, float4 b, float t);
+
+VM_INLINE float V_CALL distance(float3 a, float3 b);
+VM_INLINE float V_CALL power(float a, float p);
+
+VM_INLINE float V_CALL  sine(float  x);
+VM_INLINE float2 V_CALL sine(float2 x);
+VM_INLINE float3 V_CALL sine(float3 x);
+VM_INLINE float4 V_CALL sine(float4 x);
+
+VM_INLINE float V_CALL  cosine(float  x);
+VM_INLINE float2 V_CALL cosine(float2 x);
+VM_INLINE float3 V_CALL cosine(float3 x);
+VM_INLINE float4 V_CALL cosine(float4 x);
+
+VM_INLINE void V_CALL sincos(float  x,float*  s,float*  c);
+VM_INLINE void V_CALL sincos(float2 x,float2* s,float2* c);
+VM_INLINE void V_CALL sincos(float3 x,float3* s,float3* c);
+VM_INLINE void V_CALL sincos(float4 x,float4* s,float4* c);
+
+VM_INLINE float  V_CALL sqroot(float a);;
+VM_INLINE float2 V_CALL sqroot(float2 a);
+VM_INLINE float3 V_CALL sqroot(float3 a);
+VM_INLINE float4 V_CALL sqroot(float4 a);
+
+VM_INLINE float V_CALL  rsqrt(float a);
+VM_INLINE float2 V_CALL rsqrt(float2 a);
+VM_INLINE float3 V_CALL rsqrt(float3 a);
+VM_INLINE float4 V_CALL rsqrt(float4 a);
+
+VM_INLINE float V_CALL  abso(float x);
+VM_INLINE float2 V_CALL abso(float2 x);
+VM_INLINE float3 V_CALL abso(float3 x);
+VM_INLINE float4 V_CALL abso(float4 x);
+
+//NOTE(Ray);:Are these really useful.  Shoul return bool answer for each component.
+VM_INLINE bool V_CALL  isfinite(float x);
+VM_INLINE bool2 V_CALL isfinite(float2 x);
+VM_INLINE bool3 V_CALL isfinite(float3 x);
+VM_INLINE bool4 V_CALL isfinite(float4 x);
+
+VM_INLINE bool  V_CALL isinf(float x);
+VM_INLINE bool2 V_CALL isinf(float2 x);
+VM_INLINE bool3 V_CALL isinf(float3 x);
+VM_INLINE bool4 V_CALL isinf(float4 x);
+
+VM_INLINE uint  V_CALL asuint(float x);
+VM_INLINE uint2 V_CALL asuint(float2 x);
+VM_INLINE uint3 V_CALL asuint(float3 x);
+VM_INLINE uint4 V_CALL asuint(float4 x);
+
+VM_INLINE float  V_CALL asfloat(uint x);
+VM_INLINE float2 V_CALL asfloat(uint2 x);
+VM_INLINE float3 V_CALL asfloat(uint3 x);
+VM_INLINE float4 V_CALL asfloat(uint4 x);
+
+VM_INLINE bool  V_CALL isnan(float x);
+
+#if 0
+VM_INLINE bool2 V_CALL isnan(float2 x);
+#endif
+
+VM_INLINE bool3 V_CALL isnan(float3 x);
+VM_INLINE bool4 V_CALL isnan(float4 x);
+
+VM_INLINE float2 V_CALL lerp(float2 x, float2 y, float2 s);
+VM_INLINE float3 V_CALL lerp(float3 x, float3 y, float3 s);
+VM_INLINE float4 V_CALL lerp(float4 x, float4 y, float4 s);
+
+VM_INLINE float  V_CALL unlerp(float  a, float  b, float  x);
+VM_INLINE float2 V_CALL unlerp(float2 a, float2 b, float2 x);
+VM_INLINE float3 V_CALL unlerp(float3 a, float3 b, float3 x);
+VM_INLINE float4 V_CALL unlerp(float4 a, float4 b, float4 x);
+
+VM_INLINE float  V_CALL remap(float  a, float  b, float  c, float  d, float  x);
+VM_INLINE float2 V_CALL remap(float2 a, float2 b, float2 c, float2 d, float2 x);
+VM_INLINE float3 V_CALL remap(float3 a, float3 b, float3 c, float3 d, float3 x);
+VM_INLINE float4 V_CALL remap(float4 a, float4 b, float4 c, float4 d, float4 x);
+
+VM_INLINE float  V_CALL mad(float  a, float  b, float  c);
+VM_INLINE float2 V_CALL mad(float2 a, float2 b, float2 c);
+VM_INLINE float3 V_CALL mad(float3 a, float3 b, float3 c);
+VM_INLINE float4 V_CALL mad(float4 a, float4 b, float4 c);
+
+VM_INLINE float  V_CALL saturate(float  x);
+
+#if 0
+VM_INLINE float2 V_CALL saturate(float2 x);
+VM_INLINE float3 V_CALL saturate(float3 x);
+VM_INLINE float4 V_CALL saturate(float4 x);
+#endif
+
+VM_INLINE float  V_CALL tangent(float  x);
+VM_INLINE float2 V_CALL tangent(float2 x);
+VM_INLINE float3 V_CALL tangent(float3 x);
+VM_INLINE float4 V_CALL tangent(float4 x);
+
+VM_INLINE float  V_CALL tanhy(float  x);
+VM_INLINE float2 V_CALL tanhy(float2 x);
+VM_INLINE float3 V_CALL tanhy(float3 x);
+VM_INLINE float4 V_CALL tanhy(float4 x);
+
+//VM_INLINE float  atan(float  x); noexcept { return (float);atan(x);; }
+VM_INLINE float2 V_CALL atan(float2 x);
+VM_INLINE float3 V_CALL atan(float3 x);
+VM_INLINE float4 V_CALL atan(float4 x);
+
+//VM_INLINE float  atan2(float y,  float x); noexcept  { return (float);atan2(y, x);; }
+VM_INLINE float2 V_CALL atan2(float2 y, float2 x);
+VM_INLINE float3 V_CALL atan2(float3 y, float3 x);
+VM_INLINE float4 V_CALL atan2(float4 y, float4 x);
+
+//VM_INLINE float  cos(float  x); noexcept { return cos(x);; }
+VM_INLINE float2 V_CALL cos(float2 x);
+VM_INLINE float3 V_CALL cos(float3 x);
+VM_INLINE float4 V_CALL cos(float4 x);
+
+//VM_INLINE float  cosh(float  x); noexcept { return (float);cosh(x);; }
+VM_INLINE float2 V_CALL cosh(float2 x);
+VM_INLINE float3 V_CALL cosh(float3 x);
+VM_INLINE float4 V_CALL cosh(float4 x);
+
+//VM_INLINE float  acos(float  x); noexcept { return (float);acos((float);x);; }
+VM_INLINE float2 V_CALL acos(float2 x);
+VM_INLINE float3 V_CALL acos(float3 x);
+VM_INLINE float4 V_CALL acos(float4 x);
+
+//VM_INLINE float  sin(float  x); noexcept { return (float);sin((float);x);; }
+VM_INLINE float2 V_CALL sin(float2 x);
+VM_INLINE float3 V_CALL sin(float3 x);
+VM_INLINE float4 V_CALL sin(float4 x);
+
+//VM_INLINE float  sinh(float  x); { return (float);sinh((float);x);; }
+VM_INLINE float2 V_CALL sinh(float2 x);
+VM_INLINE float3 V_CALL sinh(float3 x);
+VM_INLINE float4 V_CALL sinh(float4 x);
+
+//VM_INLINE float  asin(float x);  { return (float);asin((float);x);; }
+VM_INLINE float2 V_CALL asin(float2 x);
+VM_INLINE float3 V_CALL asin(float3 x);
+VM_INLINE float4 V_CALL asin(float4 x);
+
+//VM_INLINE float floor(float x); { return (float);floor((float);x);; }
+VM_INLINE float2 V_CALL floor(float2 x);
+VM_INLINE float3 V_CALL floor(float3 x);
+VM_INLINE float4 V_CALL floor(float4 x);
+
+//VM_INLINE float ceil(float x); { return (float);ceil((float);x);; }
+VM_INLINE float2 V_CALL ceil(float2 x);
+VM_INLINE float3 V_CALL ceil(float3 x);
+VM_INLINE float4 V_CALL ceil(float4 x);
+
+//VM_INLINE float  round(float x); { return (float);round((float);x);; }
+VM_INLINE float2 V_CALL round(float2 x);
+VM_INLINE float3 V_CALL round(float3 x);
+VM_INLINE float4 V_CALL round(float4 x);
+
+//VM_INLINE float trunc(float x); { return (float);trunc((float);x);; }
+VM_INLINE float2 V_CALL trunc(float2 x);
+VM_INLINE float3 V_CALL trunc(float3 x);
+VM_INLINE float4 V_CALL trunc(float4 x);
+
+VM_INLINE float V_CALL frac(float x);
+VM_INLINE float2 V_CALL frac(float2 x);
+VM_INLINE float3 V_CALL frac(float3 x);
+VM_INLINE float4 V_CALL frac(float4 x);
+
+VM_INLINE float V_CALL rcp(float x);
+VM_INLINE float2 V_CALL rcp(float2 x);
+VM_INLINE float3 V_CALL rcp(float3 x);
+VM_INLINE float4 V_CALL rcp(float4 x);
+
+VM_INLINE float V_CALL sign(float x);
+VM_INLINE float2 V_CALL sign(float2 x);
+VM_INLINE float3 V_CALL sign(float3 x);
+VM_INLINE float4 V_CALL sign(float4 x);
+
+//VM_INLINE float pow(float x, float y); { return (float);pow((float);x, (float);y);; }
+VM_INLINE float2 V_CALL pow(float2 x, float2 y);
+VM_INLINE float3 V_CALL pow(float3 x, float3 y);
+VM_INLINE float4 V_CALL pow(float4 x, float4 y);
+
+//VM_INLINE float exp(float x); { return (float);exp((float);x);; }
+VM_INLINE float2 V_CALL exp(float2 x);
+VM_INLINE float3 V_CALL exp(float3 x);
+VM_INLINE float4 V_CALL exp(float4 x);
+
+//VM_INLINE float exp2(float x); { return (float);pow(2.0f, (float);x);; }
+VM_INLINE float2 V_CALL exp2(float2 x);
+VM_INLINE float3 V_CALL exp2(float3 x);
+VM_INLINE float4 V_CALL exp2(float4 x);
+
+
+//VM_INLINE float fmod(float x, float y); { return fmod(x,y);; }
+VM_INLINE float2 V_CALL fmod(float2 x, float2 y);
+VM_INLINE float3 V_CALL fmod(float3 x, float3 y);
+VM_INLINE float4 V_CALL fmod(float4 x, float4 y);
+
+VM_INLINE float V_CALL distance(float x, float y);
+VM_INLINE float V_CALL distance(float2 x, float2 y);
+
+VM_INLINE float V_CALL distance(float4 x, float4 y);
+
+VM_INLINE float V_CALL smoothstep(float a, float b, float x);
+#if 0
+VM_INLINE float2 V_CALL smoothstep(float2 a, float2 b, float2 x);
+VM_INLINE float3 V_CALL smoothstep(float3 a, float3 b, float3 x);
+VM_INLINE float4 V_CALL smoothstep(float4 a, float4 b, float4 x);
+#endif
+
+
+VM_INLINE float  V_CALL select(float  a, float  b, bool c);
+VM_INLINE float2 V_CALL select(float2 a, float2 b, bool c);
+VM_INLINE float3 V_CALL select(float3 a, float3 b, bool c);
+VM_INLINE float4 V_CALL select(float4 a, float4 b, bool c);
+
+VM_INLINE float2 V_CALL reflect(float2 i, float2 n);
+VM_INLINE float3 V_CALL reflect(float3 i, float3 n);
+VM_INLINE float4 V_CALL reflect(float4 i, float4 n);
+
+VM_INLINE float2 V_CALL refract(float2 i, float2 n, float eta);
+VM_INLINE float3 V_CALL refract(float3 i, float3 n, float eta);
+VM_INLINE float4 V_CALL refract(float4 i, float4 n, float eta);
+
+VM_INLINE float V_CALL radians(float x);
+VM_INLINE float2 V_CALL radians(float2 x);
+VM_INLINE float3 V_CALL radians(float3 x);
+VM_INLINE float4 V_CALL radians(float4 x);
+
+VM_INLINE float V_CALL degrees(float x);
+VM_INLINE float2 V_CALL degrees(float2 x);
+VM_INLINE float3 V_CALL degrees(float3 x);
+VM_INLINE float4 V_CALL degrees(float4 x);
+
+#ifdef YOYOIMPL
+
 VM_INLINE float3 V_CALL cross(float3 a, float3 b)
 {
 	return float3(a.y() * b.z() - a.z() * b.y(),
@@ -2352,24 +3012,20 @@ VM_INLINE float V_CALL degrees(float x) { return x * 57.295779513f; }
 VM_INLINE float2 V_CALL degrees(float2 x) { return x * 57.295779513f; }
 VM_INLINE float3 V_CALL degrees(float3 x) { return x * 57.295779513f; }
 VM_INLINE float4 V_CALL degrees(float4 x) { return x * 57.295779513f; }
- 
+#endif///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
 struct float3x3
 {
     float4 c0;
     float4 c1;
     float4 c2;
-    VM_INLINE V_CALL float3x3() {}
-    VM_INLINE explicit V_CALL float3x3(float a, float b, float c) { this->c0.setX(a);this->c1.setY(b);this->c2.setZ(c);}
-    VM_INLINE explicit V_CALL float3x3(float3 c0, float3 c1, float3 c2) { this->c0 = float4(c0,0);this->c1 = float4(c1,0);this->c2 = float4(c2,0);}
+    VM_INLINE V_CALL float3x3();
+    VM_INLINE explicit V_CALL float3x3(float a, float b, float c);
+    VM_INLINE explicit V_CALL float3x3(float3 c0, float3 c1, float3 c2);
     VM_INLINE explicit V_CALL float3x3(float m00, float m01, float m02,
                                        float m10, float m11, float m12, 
-                                       float m20, float m21, float m22)
-    {
-        this->c0 = float4(m00, m01, m02, 0);
-        this->c1 = float4(m10, m11, m12, 0);
-        this->c2 = float4(m20, m21, m22, 0);
-    }
-	VM_INLINE static uint32_t size() { return sizeof(float) * 9; }
+                                       float m20, float m21, float m22);
+	VM_INLINE static uint32_t size();
 	V_CALL float3x3(quaternion rotation);
 };
 
@@ -2379,46 +3035,88 @@ struct float4x4
     float4 c1;
     float4 c2;
     float4 c3;
-    VM_INLINE V_CALL float4x4() {}
-	VM_INLINE explicit V_CALL float4x4(float a, float b, float c, float d)
-    {
-        this->c0 = float4(0.0f); this->c0.setX(a); 
-        this->c1 = float4(0.0f); this->c1.setY(b);
-		this->c2 = float4(0.0f); this->c2.setZ(c); 
-		this->c3 = float4(0.0f); this->c3.setW(d);
-    }
-    VM_INLINE explicit V_CALL float4x4(float4 c0, float4 c1, float4 c2,float4 c3) { this->c0 = c0;this->c1 = c1;this->c2 = c2;this->c3 = c3; }
+    VM_INLINE V_CALL float4x4();
+	VM_INLINE explicit V_CALL float4x4(float a, float b, float c, float d);
+    VM_INLINE explicit V_CALL float4x4(float4 c0, float4 c1, float4 c2,float4 c3);
     VM_INLINE explicit V_CALL float4x4(float m00, float m01, float m02, float m03,
                                 float m10, float m11, float m12, float m13,
                                 float m20, float m21, float m22, float m23,
-                                float m30, float m31, float m32, float m33)
-    { 
-        this->c0 = float4(m00, m01, m02, m03);
-        this->c1 = float4(m10, m11, m12, m13);
-        this->c2 = float4(m20, m21, m22, m23);
-        this->c3 = float4(m30, m31, m32, m33);
-    }
-
-    VM_INLINE explicit V_CALL float4x4(float3x3 rotation, float3 translation)
-    {
-        c0 = (rotation.c0);
-        c1 = (rotation.c1);
-        c2 = (rotation.c2);
-        c3 = float4(translation,1.0f);
-    }
-	VM_INLINE static uint32_t size() { return sizeof(float) * 16; }
-    VM_INLINE static float4x4 V_CALL identity() { return float4x4(1.0f, 0.0f, 0.0f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f, 0.0f, 0.0f, 1.0f); };
-    VM_INLINE static float4x4 V_CALL zero() { return float4x4(0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f); }
-
+                                       float m30, float m31, float m32, float m33);
+    VM_INLINE explicit V_CALL float4x4(float3x3 rotation, float3 translation);
+	VM_INLINE static uint32_t size();
+    VM_INLINE static float4x4 V_CALL identity();
+    VM_INLINE static float4x4 V_CALL zero();
 	V_CALL float4x4(quaternion rotation,float3 translation);
 };
 
-/*
-YoyoAString YoyoFloat4x4ToString()
-        {
-            return string.Format("float4x4({0}f, {1}f, {2}f, {3}f,  {4}f, {5}f, {6}f, {7}f,  {8}f, {9}f, {10}f, {11}f,  {12}f, {13}f, {14}f, {15}f)", c0.x, c1.x, c2.x, c3.x, c0.y, c1.y, c2.y, c3.y, c0.z, c1.z, c2.z, c3.z, c0.w, c1.w, c2.w, c3.w);
-        }
-*/
+//mul
+// float4x4 V_CALL operator * (float4x4 lhs, float4x4 rhs) { return float4x4 (lhs.c0 * rhs.c0, lhs.c1 * rhs.c1, lhs.c2 * rhs.c2, lhs.c3 * rhs.c3); }
+float4x4 V_CALL operator * (float4x4 lhs, float rhs);
+float4x4 V_CALL operator * (float lhs, float4x4 rhs);
+
+// add
+VM_INLINE float4x4 V_CALL operator + (float4x4 lhs, float4x4 rhs);
+VM_INLINE float4x4 V_CALL operator + (float4x4 lhs, float rhs);
+VM_INLINE float4x4 V_CALL operator + (float lhs, float4x4 rhs);
+
+//sub
+VM_INLINE float4x4 V_CALL operator - (float4x4 lhs, float4x4 rhs);
+VM_INLINE float4x4 V_CALL operator - (float4x4 lhs, float rhs);
+VM_INLINE float4x4 V_CALL operator - (float lhs, float4x4 rhs);
+
+//div
+VM_INLINE float4x4 V_CALL operator / (float4x4 lhs, float4x4 rhs);
+VM_INLINE float4x4 V_CALL operator / (float4x4 lhs, float rhs);
+VM_INLINE float4x4 V_CALL operator / (float lhs, float4x4 rhs);
+
+#ifdef YOYOIMPL////////////////////////////////////////////////////////////////////////////////////////////////
+
+VM_INLINE V_CALL float3x3::float3x3() {}
+VM_INLINE V_CALL float3x3::float3x3(float a, float b, float c) { this->c0.setX(a);this->c1.setY(b);this->c2.setZ(c);}
+VM_INLINE V_CALL float3x3::float3x3(float3 c0, float3 c1, float3 c2) { this->c0 = float4(c0,0);this->c1 = float4(c1,0);this->c2 = float4(c2,0);}
+VM_INLINE V_CALL float3x3::float3x3(float m00, float m01, float m02,
+                                    float m10, float m11, float m12, 
+                                    float m20, float m21, float m22)
+{
+    this->c0 = float4(m00, m01, m02, 0);
+    this->c1 = float4(m10, m11, m12, 0);
+    this->c2 = float4(m20, m21, m22, 0);
+}
+VM_INLINE uint32_t float3x3::size() { return sizeof(float) * 9; }
+
+VM_INLINE V_CALL float4x4::float4x4() {}
+
+VM_INLINE  V_CALL float4x4::float4x4(float a, float b, float c, float d)
+{
+    this->c0 = float4(0.0f); this->c0.setX(a); 
+    this->c1 = float4(0.0f); this->c1.setY(b);
+    this->c2 = float4(0.0f); this->c2.setZ(c); 
+    this->c3 = float4(0.0f); this->c3.setW(d);
+}
+
+VM_INLINE  V_CALL float4x4::float4x4(float4 c0, float4 c1, float4 c2,float4 c3) { this->c0 = c0;this->c1 = c1;this->c2 = c2;this->c3 = c3; }
+VM_INLINE V_CALL float4x4::float4x4(float m00, float m01, float m02, float m03,
+                                    float m10, float m11, float m12, float m13,
+                                    float m20, float m21, float m22, float m23,
+                                    float m30, float m31, float m32, float m33)
+{ 
+    this->c0 = float4(m00, m01, m02, m03);
+    this->c1 = float4(m10, m11, m12, m13);
+    this->c2 = float4(m20, m21, m22, m23);
+    this->c3 = float4(m30, m31, m32, m33);
+}
+
+VM_INLINE V_CALL float4x4::float4x4(float3x3 rotation, float3 translation)
+{
+    c0 = (rotation.c0);
+    c1 = (rotation.c1);
+    c2 = (rotation.c2);
+    c3 = float4(translation,1.0f);
+}
+VM_INLINE  uint32_t float4x4::size() { return sizeof(float) * 16; }
+VM_INLINE  float4x4 V_CALL float4x4::identity() { return float4x4(1.0f, 0.0f, 0.0f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f, 0.0f, 0.0f, 1.0f); };
+VM_INLINE  float4x4 V_CALL float4x4::zero() { return float4x4(0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f); }
+
 
 //mul
 // float4x4 V_CALL operator * (float4x4 lhs, float4x4 rhs) { return float4x4 (lhs.c0 * rhs.c0, lhs.c1 * rhs.c1, lhs.c2 * rhs.c2, lhs.c3 * rhs.c3); }
@@ -2440,6 +3138,25 @@ VM_INLINE float4x4 V_CALL operator / (float4x4 lhs, float4x4 rhs) { return float
 VM_INLINE float4x4 V_CALL operator / (float4x4 lhs, float rhs) { return float4x4 (lhs.c0 / rhs, lhs.c1 / rhs, lhs.c2 / rhs, lhs.c3 / rhs); }
 VM_INLINE float4x4 V_CALL operator / (float lhs, float4x4 rhs) { return float4x4 (lhs / rhs.c0, lhs / rhs.c1, lhs / rhs.c2, lhs / rhs.c3); }
 
+#endif ///YOYOYIMPL////////////////////////////////////////////////////////////////////////////////////////////////
+/*
+YoyoAString YoyoFloat4x4ToString()
+        {
+            return string.Format("float4x4({0}f, {1}f, {2}f, {3}f,  {4}f, {5}f, {6}f, {7}f,  {8}f, {9}f, {10}f, {11}f,  {12}f, {13}f, {14}f, {15}f)", c0.x, c1.x, c2.x, c3.x, c0.y, c1.y, c2.y, c3.y, c0.z, c1.z, c2.z, c3.z, c0.w, c1.w, c2.w, c3.w);
+        }
+*/
+
+float4x4 V_CALL mul(float4x4 a, float4x4 b);
+
+float4 V_CALL operator*(float4 a, float4x4 b);
+
+float4 V_CALL mul(float4 a, float4x4 b);
+
+VM_INLINE float4 V_CALL operator*(float4x4 a, float4 b);
+
+VM_INLINE float4 V_CALL mul(float4x4 a, float4 b);
+
+#ifdef YOYOIMPL
 float4x4 V_CALL mul(float4x4 a, float4x4 b)
 {
 	return float4x4(
@@ -2485,14 +3202,10 @@ VM_INLINE float4 V_CALL mul(float4x4 a, float4 b)
 	return a * b;
 }
 
-//mod
-//VM_INLINE float4x4 operator % (float4x4 lhs, float4x4 rhs) { return new float4x4 (lhs.c0 % rhs.c0, lhs.c1 % rhs.c1, lhs.c2 % rhs.c2, lhs.c3 % rhs.c3); }
-//VM_INLINE float4x4 operator % (float4x4 lhs, float rhs) { return new float4x4 (lhs.c0 % rhs, lhs.c1 % rhs, lhs.c2 % rhs, lhs.c3 % rhs); }
-//VM_INLINE float4x4 operator % (float lhs, float4x4 rhs) { return new float4x4 (lhs % rhs.c0, lhs % rhs.c1, lhs % rhs.c2, lhs % rhs.c3); }
-//inc
-//VM_INLINE float4x4 operator ++ (float4x4 val) { return new float4x4 (++val.c0, ++val.c1, ++val.c2, ++val.c3); }
-//dec
-//VM_INLINE float4x4 operator -- (float4x4 val) { return new float4x4 (--val.c0, --val.c1, --val.c2, --val.c3); }
+#endif////////////yOYOYOYIMPL////////////yOYOYOYIMPL////////////yOYOYOYIMPL////////////yOYOYOYIMPL////////////yOYOYOYIMPL
+
+
+
 
 struct quaternion
 {
@@ -2502,8 +3215,100 @@ struct quaternion
 	float m[4];
 #endif
     // Constructors.
-    VM_INLINE V_CALL quaternion() {}
-    VM_INLINE explicit V_CALL quaternion(const float *p)
+    VM_INLINE V_CALL quaternion();
+    VM_INLINE explicit V_CALL quaternion(const float *p);
+	VM_INLINE explicit V_CALL quaternion(float x);
+	VM_INLINE explicit V_CALL quaternion(float4 a);
+	VM_INLINE explicit V_CALL quaternion(float x, float y, float z, float w);
+	VM_INLINE explicit V_CALL quaternion(quaterniondata a);
+	VM_INLINE explicit V_CALL quaternion(float3 a, float b);
+	VM_INLINE explicit V_CALL quaternion(float2 a, float2 b);
+    //VM_INLINE explicit V_CALL quaternion(float x, float y, float z,float w) { m = _mm_set_ps(w, z, y, x); }
+    //VM_INLINE explicit V_CALL quaternion(float4 x) { m = _mm_set_ps(x.w(), x.z(), x.y(), x.x()); }
+	//VM_INLINE explicit V_CALL quaternion(quaterniondata a) { m = _mm_set_ps(a.w, a.z, a.y, a.x); }
+    //VM_INLINE explicit V_CALL quaternion(float x) { m = _mm_set_ps(x, x, x, x); }
+    //VM_INLINE explicit V_CALL quaternion(__m128 v) { m = v; }
+    //VM_INLINE explicit V_CALL quaternion(float3 a,float b){m = _mm_set_ps(a.x(),a.y(),a.x(),b);}
+    //VM_INLINE explicit V_CALL quaternion(float2 a,float2 b){m = _mm_set_ps(a.x(),a.y(),b.x(),b.y());}
+
+ 	VM_INLINE quaterniondata toquaterniondata();
+//The matrix must be orthonormal.
+    VM_INLINE explicit V_CALL quaternion(float3x3 m);
+	VM_INLINE static float4 tofloat4(quaternion q);
+
+#ifdef YOYO_USE_PHYSX_EXT
+	VM_INLINE explicit V_CALL quaternion(physx::PxQuat a);
+	VM_INLINE physx::PxQuat toPhysx();
+#endif
+        // Construct unit quaternion from rigid-transformation matrix. The matrix must be orthonormal.
+	VM_INLINE static uint32_t size();
+    V_CALL quaternion(float4x4 m);
+	VM_INLINE float V_CALL x() const;
+	VM_INLINE float V_CALL y() const;
+	VM_INLINE float V_CALL z() const;
+	VM_INLINE float V_CALL w() const;
+
+    //VM_INLINE float V_CALL x() const { return _mm_cvtss_f32(m); }
+    //VM_INLINE float V_CALL y() const { return _mm_cvtss_f32(_mm_shuffle_ps(m, m, _MM_SHUFFLE(1, 1, 1, 1))); }
+    //VM_INLINE float V_CALL z() const { return _mm_cvtss_f32(_mm_shuffle_ps(m, m, _MM_SHUFFLE(2, 2, 2, 2))); }
+    //VM_INLINE float V_CALL w() const { return _mm_cvtss_f32(_mm_shuffle_ps(m, m, _MM_SHUFFLE(3, 3, 3, 3))); }
+
+	VM_INLINE float3 V_CALL xyz() const;
+	VM_INLINE float3 V_CALL zyx() const;
+	VM_INLINE float3 V_CALL yxz() const;
+	VM_INLINE float3 V_CALL yzx() const;
+
+	VM_INLINE float3 V_CALL zxy() const;
+	
+ 	VM_INLINE float4 V_CALL xyzw() const;
+#if 0
+    //VM_INLINE float3 V_CALL xyz() const { return SHUFFLE3(*this, 0, 1, 2); }
+    VM_INLINE float4 V_CALL xyzw() const;
+    VM_INLINE float4 V_CALL yzxz() const;
+    VM_INLINE float4 V_CALL zxyz() const;
+    VM_INLINE float4 V_CALL zxyy() const;
+    VM_INLINE float4 V_CALL yzxy() const;
+    VM_INLINE float4 V_CALL wwwx() const;
+    VM_INLINE float4 V_CALL xyzx() const;
+    VM_INLINE float4 V_CALL wwww() const;
+    VM_INLINE float4 V_CALL yzxw() const;
+    VM_INLINE float4 V_CALL zxyw() const;
+    VM_INLINE float2 V_CALL xy() const;
+    VM_INLINE float2 V_CALL zw() const;
+
+    VM_INLINE float2 V_CALL xx() const;
+    VM_INLINE float2 V_CALL yz() const;
+    VM_INLINE float2 V_CALL wx() const;
+    VM_INLINE float2 V_CALL xz() const;
+    VM_INLINE float2 V_CALL yx() const;
+    VM_INLINE float2 V_CALL yw() const;
+    VM_INLINE float2 V_CALL zx() const;
+    VM_INLINE float2 V_CALL zz() const;
+    VM_INLINE float2 V_CALL wz() const;
+    VM_INLINE float2 V_CALL wy() const;
+#endif
+	//TODO(Ray):Try not to use these as much as possible.
+#if WINDOWS
+	//VM_INLINE float V_CALL operator[] (size_t i) const { return m.m128_f32[i]; };
+	//VM_INLINE float& V_CALL operator[] (size_t i) { return m.m128_f32[i]; };
+#else
+#endif
+	
+ 	VM_INLINE void V_CALL store(float *p) const;
+    VM_INLINE quaternion  static V_CALL identity();
+	void setX(float x);
+	void V_CALL setY(float y);
+	void setZ(float z);
+	void V_CALL setW(float w); 	
+	static quaternion V_CALL look_rotation(float3 forward, float3 up);
+
+};
+
+#ifdef YOYOIMPL
+
+    // Constructors.
+    VM_INLINE V_CALL quaternion::quaternion() {}
+    VM_INLINE V_CALL quaternion::quaternion(const float *p)
     {
 #if YOYO_MATH_SIMD
 	    m = _mm_set_ps(p[3], p[2], p[1], p[0]);
@@ -2514,7 +3319,8 @@ struct quaternion
 		m[3] = p[3];
 #endif
     }
-	VM_INLINE explicit V_CALL quaternion(float x)
+
+	VM_INLINE V_CALL quaternion::quaternion(float x)
 	{
 #if YOYO_MATH_SIMD
 		m = _mm_set_ps(x, x, x, x);
@@ -2525,7 +3331,8 @@ struct quaternion
 		m[3] = x;
 #endif
 	}
-	VM_INLINE explicit V_CALL quaternion(float4 a)
+
+	VM_INLINE  V_CALL quaternion::quaternion(float4 a)
 	{
 #if YOYO_MATH_SIMD
 		m = _mm_set_ps(a.x(), a.y(), a.z(), a.w());
@@ -2536,7 +3343,8 @@ struct quaternion
 		m[3] = a.m[3];
 #endif
 	}
-	VM_INLINE explicit V_CALL quaternion(float x, float y, float z, float w)
+
+	VM_INLINE V_CALL quaternion::quaternion(float x, float y, float z, float w)
 	{
 #if YOYO_MATH_SIMD
 		m = _mm_set_ps(w, z, y, x);
@@ -2548,7 +3356,7 @@ struct quaternion
 #endif
 	}
 
-	VM_INLINE explicit V_CALL quaternion(quaterniondata a)
+	VM_INLINE V_CALL quaternion::quaternion(quaterniondata a)
 	{
 #if YOYO_MATH_SIMD
 		m = _mm_set_ps(a.w, a.z, a.y, a.x);
@@ -2559,7 +3367,8 @@ struct quaternion
 		m[3] = a.w;
 #endif
 	}
-	VM_INLINE explicit V_CALL quaternion(float3 a, float b)
+
+	VM_INLINE V_CALL quaternion::quaternion(float3 a, float b)
 	{
 #if YOYO_MATH_SIMD
 		m = _mm_set_ps(b, a.z(), a.y(), a.x());
@@ -2570,7 +3379,8 @@ struct quaternion
 		m[3] = b;
 #endif
 	}
-	VM_INLINE explicit V_CALL quaternion(float2 a, float2 b)
+
+    VM_INLINE V_CALL quaternion::quaternion(float2 a, float2 b)
 	{
 #if YOYO_MATH_SIMD
 		m = _mm_set_ps(b.y(), b.x(), a.y(), a.x());
@@ -2581,6 +3391,7 @@ struct quaternion
 		m[3] = b.m[1];
 #endif
 	}
+
     //VM_INLINE explicit V_CALL quaternion(float x, float y, float z,float w) { m = _mm_set_ps(w, z, y, x); }
     //VM_INLINE explicit V_CALL quaternion(float4 x) { m = _mm_set_ps(x.w(), x.z(), x.y(), x.x()); }
 	//VM_INLINE explicit V_CALL quaternion(quaterniondata a) { m = _mm_set_ps(a.w, a.z, a.y, a.x); }
@@ -2589,7 +3400,7 @@ struct quaternion
     //VM_INLINE explicit V_CALL quaternion(float3 a,float b){m = _mm_set_ps(a.x(),a.y(),a.x(),b);}
     //VM_INLINE explicit V_CALL quaternion(float2 a,float2 b){m = _mm_set_ps(a.x(),a.y(),b.x(),b.y());}
 
- 	VM_INLINE quaterniondata toquaterniondata()
+ 	VM_INLINE quaterniondata quaternion::toquaterniondata()
     {
 #if YOYO_MATH_SIMD
 		quaterniondata a;
@@ -2607,7 +3418,7 @@ struct quaternion
 		return a;
     }
 //The matrix must be orthonormal.
-    VM_INLINE explicit V_CALL quaternion(float3x3 m)
+    VM_INLINE V_CALL quaternion::quaternion(float3x3 m)
     {
         quaternion value;
         float4 u = m.c0;
@@ -2676,10 +3487,11 @@ struct quaternion
 		this->m[3] = q.x();
 #endif
     }
-	VM_INLINE static float4 tofloat4(quaternion q) { return float4(q.m);}
+
+	VM_INLINE float4 quaternion::tofloat4(quaternion q) { return float4(q.m);}
 
 #ifdef YOYO_USE_PHYSX_EXT
-	VM_INLINE explicit V_CALL quaternion(physx::PxQuat a)
+	VM_INLINE V_CALL quaternion::quaternion(physx::PxQuat a)
     {
 #if YOYO_MATH_SIMD
 	    m = _mm_set_ps(a.w, a.z, a.y, a.x);
@@ -2691,11 +3503,11 @@ struct quaternion
 #endif
     }
 
-	VM_INLINE physx::PxQuat toPhysx();
+//	VM_INLINE physx::PxQuat toPhysx();
 #endif
         // Construct unit quaternion from rigid-transformation matrix. The matrix must be orthonormal.
-	VM_INLINE static uint32_t size() { return sizeof(float) * 4; }
-    V_CALL quaternion(float4x4 m)
+	VM_INLINE uint32_t quaternion::size() { return sizeof(float) * 4; }
+    V_CALL quaternion::quaternion(float4x4 m)
     {
 		float3x3 in_mat;
 		in_mat.c0 = m.c0;
@@ -2737,7 +3549,7 @@ struct quaternion
 #endif
     }
 
-	VM_INLINE float V_CALL x() const
+	VM_INLINE float V_CALL quaternion::x() const
 	{
 #if YOYO_MATH_SIMD
 		return _mm_cvtss_f32(m);
@@ -2745,7 +3557,8 @@ struct quaternion
 		return m[0];
 #endif
 	}
-	VM_INLINE float V_CALL y() const
+
+	VM_INLINE float V_CALL quaternion::y() const
 	{
 #if YOYO_MATH_SIMD
 		return _mm_cvtss_f32(_mm_shuffle_ps(m, m, _MM_SHUFFLE(1, 1, 1, 1)));
@@ -2754,7 +3567,7 @@ struct quaternion
 #endif
 	}
 
-	VM_INLINE float V_CALL z() const
+	VM_INLINE float V_CALL quaternion::z() const
 	{
 #if YOYO_MATH_SIMD
 		return _mm_cvtss_f32(_mm_shuffle_ps(m, m, _MM_SHUFFLE(2, 2, 2, 2)));
@@ -2762,7 +3575,8 @@ struct quaternion
 		return m[2];
 #endif
 	}
-	VM_INLINE float V_CALL w() const
+    
+	VM_INLINE float V_CALL quaternion::w() const
 	{
 #if YOYO_MATH_SIMD
 		return _mm_cvtss_f32(_mm_shuffle_ps(m, m, _MM_SHUFFLE(3, 3, 3, 3)));
@@ -2776,7 +3590,7 @@ struct quaternion
     //VM_INLINE float V_CALL z() const { return _mm_cvtss_f32(_mm_shuffle_ps(m, m, _MM_SHUFFLE(2, 2, 2, 2))); }
     //VM_INLINE float V_CALL w() const { return _mm_cvtss_f32(_mm_shuffle_ps(m, m, _MM_SHUFFLE(3, 3, 3, 3))); }
 
-	VM_INLINE float3 V_CALL xyz() const
+	VM_INLINE float3 V_CALL quaternion::xyz() const
 	{
 #if YOYO_MATH_SIMD
 		return SHUFFLE3(*this, 0, 1, 2);
@@ -2784,7 +3598,8 @@ struct quaternion
 		return float3(m[0], m[1], m[2]);
 #endif
 	}
-	VM_INLINE float3 V_CALL zyx() const
+
+	VM_INLINE float3 V_CALL quaternion::zyx() const
 	{
 #if YOYO_MATH_SIMD
 		return SHUFFLE3(*this, 0, 1, 2);
@@ -2793,7 +3608,7 @@ struct quaternion
 #endif
 	}
 
-	VM_INLINE float3 V_CALL yxz() const
+	VM_INLINE float3 V_CALL quaternion::yxz() const
 	{
 #if YOYO_MATH_SIMD
 		return SHUFFLE3(*this, 0, 1, 2);
@@ -2802,7 +3617,7 @@ struct quaternion
 #endif
 	}
 
-	VM_INLINE float3 V_CALL yzx() const
+	VM_INLINE float3 V_CALL quaternion::yzx() const
 	{
 #if YOYO_MATH_SIMD
 		return SHUFFLE3(*this, 1, 2, 0);
@@ -2811,7 +3626,7 @@ struct quaternion
 #endif
 	}
 
-	VM_INLINE float3 V_CALL zxy() const
+	VM_INLINE float3 V_CALL quaternion::zxy() const
 	{
 #if YOYO_MATH_SIMD
 		return SHUFFLE3(*this, 2, 0, 1);
@@ -2820,7 +3635,7 @@ struct quaternion
 #endif
 	}
 	
- 	VM_INLINE float4 V_CALL xyzw() const
+ 	VM_INLINE float4 V_CALL quaternion::xyzw() const
 	{
 #if YOYO_MATH_SIMD
 		return SHUFFLE4(*this, 0, 1, 2, 3);
@@ -2862,10 +3677,10 @@ struct quaternion
 #else
 #endif
 	
- 	VM_INLINE void V_CALL store(float *p) const { p[0] = x(); p[1] = y(); p[2] = z(); p[3] = w(); }
-    VM_INLINE quaternion  static V_CALL identity(){return quaternion(0,0,0,1);}
+ 	VM_INLINE void V_CALL quaternion::store(float *p) const { p[0] = x(); p[1] = y(); p[2] = z(); p[3] = w(); }
+    VM_INLINE quaternion  V_CALL quaternion::identity(){return quaternion(0,0,0,1);}
 
-	void setX(float x)
+	void quaternion::setX(float x)
 	{
 #if YOYO_MATH_SIMD
 		m = _mm_move_ss(m, _mm_set_ss(x));
@@ -2874,7 +3689,7 @@ struct quaternion
 #endif
 	}
 
-	void V_CALL setY(float y)
+	void V_CALL quaternion::setY(float y)
 	{
 #if YOYO_MATH_SIMD
 		__m128 t = _mm_move_ss(m, _mm_set_ss(y));
@@ -2885,7 +3700,7 @@ struct quaternion
 #endif
 	}
 
-	void setZ(float z)
+	void quaternion::setZ(float z)
 	{
 #if YOYO_MATH_SIMD
 		__m128 t = _mm_move_ss(m, _mm_set_ss(z));
@@ -2896,7 +3711,7 @@ struct quaternion
 #endif
 	}
 
-	void V_CALL setW(float w)
+	void V_CALL quaternion::setW(float w)
 	{
 #if YOYO_MATH_SIMD
 		__m128 t = _mm_move_ss(m, _mm_set_ss(w));
@@ -2906,14 +3721,24 @@ struct quaternion
 		m[3] = w;
 #endif
 	}
- 	
-	static quaternion V_CALL look_rotation(float3 forward, float3 up);
-	
-    //VM_INLINE float3 float3i(int x, int y, int z) { return float3((float)x, (float)y, (float)z); }
-};
+
+#endif
+//mod
+//VM_INLINE float4x4 operator % (float4x4 lhs, float4x4 rhs) { return new float4x4 (lhs.c0 % rhs.c0, lhs.c1 % rhs.c1, lhs.c2 % rhs.c2, lhs.c3 % rhs.c3); }
+//VM_INLINE float4x4 operator % (float4x4 lhs, float rhs) { return new float4x4 (lhs.c0 % rhs, lhs.c1 % rhs, lhs.c2 % rhs, lhs.c3 % rhs); }
+//VM_INLINE float4x4 operator % (float lhs, float4x4 rhs) { return new float4x4 (lhs % rhs.c0, lhs % rhs.c1, lhs % rhs.c2, lhs % rhs.c3); }
+//inc
+//VM_INLINE float4x4 operator ++ (float4x4 val) { return new float4x4 (++val.c0, ++val.c1, ++val.c2, ++val.c3); }
+//dec
+//VM_INLINE float4x4 operator -- (float4x4 val) { return new float4x4 (--val.c0, --val.c1, --val.c2, --val.c3); }
 
 typedef quaternion boolq;
 
+quaternion V_CALL mul(quaternion q1, quaternion q2);
+VM_INLINE quaternion V_CALL operator* (quaternion a, quaternion b);
+VM_INLINE quaternion& V_CALL operator*= (quaternion &a, quaternion b);
+
+#ifdef YOYOIMPL/////////////
  quaternion V_CALL mul(quaternion q1, quaternion q2)
 {
 	
@@ -2925,9 +3750,9 @@ typedef quaternion boolq;
 	);
     //return quaternion(a.wwww() * b.xyzw() + (a.xyzx() * b.wwwx() + a.yzxy() * b.zxyy()) * float4(1.0f, 1.0f, 1.0f, -1.0f) - a.zxyz() * b.yzxz());
 }
-
 VM_INLINE quaternion V_CALL operator* (quaternion a, quaternion b) { a = mul(a,b); return a; }
 VM_INLINE quaternion& V_CALL operator*= (quaternion &a, quaternion b) {a = a * b; return a; }
+#endif/////////////////
 
 #if 0
 //VM_INLINE quaternion abs(quaternion v) { v.m = _mm_andnot_ps(vsignbits, v.m); return v; }
@@ -2940,19 +3765,67 @@ VM_INLINE bool V_CALL all(boolq v) { return mask(v) == 7; }
 
 //TODO(Rays):Quaternion normalize needs more rigor.
 //NOTE(Ray):Going back to the dumb but working quaternion normalization.
+inline quaternion normalize(quaternion Q);
+
+VM_INLINE float V_CALL dot(quaternion a, quaternion b);
+VM_INLINE float V_CALL length(quaternion q);
+VM_INLINE float V_CALL lengthsq(quaternion q);
+quaternion V_CALL conjugate(quaternion q);
+
+float3 V_CALL rotate(quaternion q, float3 dir);
+
+quaternion V_CALL nlerp(quaternion q1, quaternion q2, float t);
+
+quaternion V_CALL inverse(quaternion q);
+
+quaternion V_CALL slerp(quaternion q1, quaternion q2, float t);
+
+quaternion V_CALL axis_angle(float3 axis, float angle);
+
+//quaternion V_CALL quaternion::look_rotation(float3 forward, float3 up);
+
+//V_CALL float3x3::float3x3(quaternion rotation);
+
+float3x3 V_CALL transpose(float3x3 v);
+
+//V_CALL float4x4::float4x4(quaternion rotation,float3 translation);
+
+float4x4 V_CALL scale(float s);
+
+float4x4 V_CALL scale(float x, float y, float z);
+
+float4x4 V_CALL scale(float3 scales);
+
+float4x4 V_CALL translate(float3 vector);
+
+float3x3 V_CALL look_rotation(float3 forward, float3 up);
+
+float4x4 V_CALL look_at(float3 eye, float3 target, float3 up);
+
+VM_INLINE float3 V_CALL rotate(float4x4 a, float3 b);
+
+VM_INLINE float3 V_CALL transform(float4x4 a, float3 b);
+
+float4x4 V_CALL transpose(float4x4 v);
+
+VM_INLINE float4 V_CALL movelh(float4 a,float4 b);
+
+VM_INLINE float4 V_CALL movehl(float4 a,float4 b);
+
+//////Begin 
+static float4 HorizontalAdd(float4 a, float4 b);
+
+#ifdef YOYOIMPL/////////////
+//TODO(Rays):Quaternion normalize needs more rigor.
+//NOTE(Ray):Going back to the dumb but working quaternion normalization.
 inline quaternion normalize(quaternion Q)
 {
-	f32 Root = sqrt(Q.x() * Q.x() + Q.y() * Q.y() + Q.z() * Q.z() + Q.w() * Q.w());
+	float Root = sqrt(Q.x() * Q.x() + Q.y() * Q.y() + Q.z() * Q.z() + Q.w() * Q.w());
 	Q = quaternion(Q.xyzw() / Root);
 	return Q;
 }
-/*
-VM_INLINE quaternion V_CALL normalize(quaternion q){
- 	float4 x = q.xyzw();
-	return quaternion(rsqrt(dot(x, x)) * x);
-}
-//VM_INLINE quaternion V_CALL normalize(quaternion v) { return quaternion(v.xyzw() * (safe_ratio_zero(1.0f , length(v.xyzw())))); }
-*/
+
+
 VM_INLINE float V_CALL dot(quaternion a, quaternion b){return dot(a.xyzw(), b.xyzw());}
 VM_INLINE float V_CALL length(quaternion q){return sqrt(dot(q.xyzw(), q.xyzw()));}
 VM_INLINE float V_CALL lengthsq(quaternion q){return dot(q.xyzw(), q.xyzw());}
@@ -3231,6 +4104,8 @@ static float4 HorizontalAdd(float4 a, float4 b)
 	float w = b.z() + b.w();
 	return float4(x, y, z, w);
 }
+#endif//YOYOYIMPL/////////////////////////////////////////
+
 ///NOTE(RAY):This algorithm was ripped from this article
 //https://lxjk.github.io/2017/09/03/Fast-4x4-Matrix-Inverse-with-SSE-SIMD-Explained.html
 
@@ -3250,6 +4125,59 @@ static float4 HorizontalAdd(float4 a, float4 b)
 // special shuffle
 #define VecShuffle_0101(vec1, vec2)        _mm_movelh_ps(vec1, vec2)
 #define VecShuffle_2323(vec1, vec2)        _mm_movehl_ps(vec2, vec1)
+
+#if YOYO_MATH_SIMD
+// for row major matrix
+// we use __m128 to represent 2x2 matrix as A = | A0  A1 |
+//                                              | A2  A3 |
+// 2x2 row major Matrix multiply A*B
+VM_INLINE __m128 Mat2Mul(__m128 vec1, __m128 vec2);
+// 2x2 row major Matrix adjugate multiply (A#)*B
+VM_INLINE __m128 Mat2AdjMul(__m128 vec1, __m128 vec2);
+// 2x2 row major Matrix multiply adjugate A*(B#)
+VM_INLINE __m128 Mat2MulAdj(__m128 vec1, __m128 vec2);
+
+#else
+
+VM_INLINE float4 Mat2Mul(float4 vec1, float4 vec2);
+
+VM_INLINE float4 Mat2AdjMul(float4 vec1, float4 vec2);
+
+VM_INLINE float4 Mat2MulAdj(float4 vec1, float4 vec2);
+
+#endif
+float4x4 V_CALL inverse(float4x4 in_matrix);
+
+float4x4 V_CALL init_pers_proj_matrix(float2 buffer_dim, float fov_y = 68.0f, float2 far_near = float2(0.5f, 1000.0f));
+
+float4x4 V_CALL init_ortho_proj_matrix(float2 size, float near_clip_plane = 0.1f, float far_clip_plane = 1000.0f);
+
+float4x4 V_CALL init_screen_space_matrix(float2 buffer_dim);
+
+float4x4 V_CALL set_matrix(float3 p,quaternion r,float3 s);
+
+float3 V_CALL world_local_p(float4x4 m,float3 a);
+
+float3 V_CALL local_world_p(float4x4 m,float3 a);
+
+VM_INLINE float V_CALL mul(float2 x);
+float3 V_CALL mul(quaternion q, float3 dir);
+
+float3 V_CALL forward(quaternion q);
+
+float3 V_CALL up(quaternion q);
+
+float3 V_CALL right(quaternion q);
+
+float3 V_CALL project_on_plane(float3 v, float3 plane_normal);
+
+float4x4 V_CALL set_camera_view(float3 p, float3 d, float3 u);
+
+float3 V_CALL screen_to_world_point(float4x4 projection_matrix,float4x4 cam_matrix,float2 buffer_dim, float2 screen_xy, float z_depth);
+
+float2 V_CALL world_to_screen_point(float4x4 projection_matrix,float4x4 camera_matrix,float2 buffer_dim, float3 p);
+
+#ifdef YOYOIMPL
 
 #if YOYO_MATH_SIMD
 // for row major matrix
@@ -3280,6 +4208,7 @@ VM_INLINE __m128 Mat2MulAdj(__m128 vec1, __m128 vec2)
                _mm_mul_ps(VecSwizzle(vec1, 1,0,3,2), VecSwizzle(vec2, 2,1,2,1)));
 }
 #else
+
 VM_INLINE float4 Mat2Mul(float4 vec1, float4 vec2)
 {
     float4 a = vec1 * vec2.xwxw();
@@ -3301,6 +4230,7 @@ VM_INLINE float4 Mat2MulAdj(float4 vec1, float4 vec2)
     return (a - b);
 }
 #endif
+
 // Inverse function is the same no matter column major or row major
 // this version treats it as row major
 float4x4 V_CALL inverse(float4x4 in_matrix)
@@ -3450,7 +4380,7 @@ float4x4 V_CALL inverse(float4x4 in_matrix)
 }
 //END INVERSE
 
-float4x4 V_CALL init_pers_proj_matrix(float2 buffer_dim, float fov_y = 68.0f, float2 far_near = float2(0.5f, 1000.0f))
+float4x4 V_CALL init_pers_proj_matrix(float2 buffer_dim, float fov_y , float2 far_near)
 {
     float near_clip_plane = far_near.x();//0.5f;
     float far_clip_plane = far_near.y();//1000.0f;
@@ -3478,7 +4408,7 @@ float4x4 V_CALL init_pers_proj_matrix(float2 buffer_dim, float fov_y = 68.0f, fl
 	return result;
 }
 
-float4x4 V_CALL init_ortho_proj_matrix(float2 size, float near_clip_plane = 0.1f, float far_clip_plane = 1000.0f)
+float4x4 V_CALL init_ortho_proj_matrix(float2 size, float near_clip_plane , float far_clip_plane)
 {
 	float r = size.x();
 	float l = -r;
@@ -3522,12 +4452,15 @@ float3 V_CALL world_local_p(float4x4 m,float3 a)
     return (m * float4(a,1)).xyz();
 }
 
+VM_INLINE float V_CALL mul(float2 x);
+
 VM_INLINE float V_CALL mul(float2 x)
 {
 	return x.x() * x.y();
 }
 
- float3 V_CALL mul(quaternion q, float3 dir)
+
+float3 V_CALL mul(quaternion q, float3 dir)
 {
 	float3 qv = q.xyz();
 	float3 t = 2 * cross(dir,qv);
@@ -3603,6 +4536,8 @@ VM_INLINE float V_CALL mul(float2 x)
 //	Result.y = NDC.y * buffer_dim.y / NDC.z;
 	return Result;
 }
+
+#endif//YOYOIMPL
  /*
   *	function GetBias(time,bias)
 {
@@ -3617,3 +4552,5 @@ function GetGain(time,gain)
     return GetBias(time * 2.0 - 1.0,1.0 - gain)/2.0 + 0.5;
 }
   */
+#define YOYO_MATH_H
+#endif

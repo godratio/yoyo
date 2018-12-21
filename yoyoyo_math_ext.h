@@ -1,4 +1,5 @@
 #pragma once
+#if !defined(YOYO_MATH_EXT_H)
 
 #include "yoyoyo_math.h"
 
@@ -18,12 +19,87 @@ struct ObjectTransform
     bool is_free = true;
 };
 
-static float4x4 float4x4Serialize(float4x4 m)
+struct YoyoRay
+{
+	float3 Origin;
+	float3 Dir;
+};
+
+ float4x4 float4x4Serialize(float4x4 m);
+
+ ObjectTransform ObjectTransformSerialize(ObjectTransform* ot);
+//NOTE(Ray):These are convienent methods for those using yoyoyo data formats for abstractions
+
+ float4x4 V_CALL YoyoSetTransformMatrix(ObjectTransform* ot);
+
+ float3 V_CALL YoyoWorldPToLocalP(ObjectTransform* ot,float3 a);
+
+ float3 V_CALL YoyoLocalToWorldP(ObjectTransform* ot,float3 a);
+
+ void V_CALL YoyoUpdateLocalaxis(ObjectTransform* ot);
+
+ void V_CALL YoyoUpdateMatrix(ObjectTransform* ot);
+
+ void V_CALL YoyoUpdateObjectTransform(ObjectTransform* ot);
+
+ void InitObjectTranform(ObjectTransform* ot);
+
+float4x4 V_CALL YoyoSetCameraView(ObjectTransform* ot);
+
+float3 V_CALL YoyoTransformDir(float4x4 a, float3 b);
+
+float3 V_CALL YoyoTransformP(float4x4 a, float3 b);
+
+//Physics
+bool V_CALL YoyoIntersectSegmentTriangle(float3 p, float3 q, float3 a, float3 b, float3 c, float3 np,
+                                         float* u, float* v, float* w, float* t, float3* hit_point, float3* calc_n);
+
+ YoyoRay YoyoRaycastFromScreen(float4x4 projection_matrix,float4x4 camera_matrix, float2 buffer_dim, float2 mouse_p);
+
+#ifdef YOYO_USE_PHYSX_EXT
+//PHsyx extensions
+physx::PxVec3 float3::toPhysx();
+physx::PxVec4 float4::toPhysx();
+physx::PxQuat quaternion::toPhysx();
+#endif
+
+/*
+float3 YoyoScreenToWorldPoint(RenderCommandList* list, float2 buffer_dim, float2 screen_xy, float z_depth)
+{
+	return screen_to_world_point(list->projection_matrix,list->cam_matrix,buffer_dim,screen_xy,z_depth);
+}
+
+float3[] GetScreenRect(RenderCommandList* list,float2 buffer_dim)
+{
+	float ZD = 0.0f;
+
+	float3 WPLL = ScreenToWorldPoint(list,
+		buffer_dim,Float2(0, 0), ZD);
+
+	float3 WPLR = ScreenToWorldPoint(list,buffer_dim,
+		Float2(buffer_dim.x, 0), ZD);
+
+	float3 WPUL = ScreenToWorldPoint(list,buffer_dim,
+		Float2(0, buffer_dim.y), ZD);
+
+	float3 WPUR = ScreenToWorldPoint(list,buffer_dim,
+		Float2(buffer_dim.x, buffer_dim.y), ZD);
+
+	rectangle3 Result = { WPLL,WPLR,WPUL,WPUR };
+	return Result;
+}
+
+
+*/
+
+#ifdef YOYOIMPL
+
+ float4x4 float4x4Serialize(float4x4 m)
 {
 	return float4x4(float4(m.c0.m), float4(m.c1.m), float4(m.c2.m), float4(m.c3.m));
 }
 
-static ObjectTransform ObjectTransformSerialize(ObjectTransform* ot)
+ ObjectTransform ObjectTransformSerialize(ObjectTransform* ot)
 {
 	ObjectTransform new_ot = {};
 	new_ot.p = float3(ot->p.m);
@@ -37,41 +113,41 @@ static ObjectTransform ObjectTransformSerialize(ObjectTransform* ot)
 }
 
 //NOTE(Ray):These are convienent methods for those using yoyoyo data formats for abstractions
-static float4x4 V_CALL YoyoSetTransformMatrix(ObjectTransform* ot)
+ float4x4 V_CALL YoyoSetTransformMatrix(ObjectTransform* ot)
 {
 	ot->m = set_matrix(ot->p,ot->r,ot->s);
 	return ot->m;
 }
 
-static float3 V_CALL YoyoWorldPToLocalP(ObjectTransform* ot,float3 a)
+ float3 V_CALL YoyoWorldPToLocalP(ObjectTransform* ot,float3 a)
 {
 	return world_local_p(YoyoSetTransformMatrix(ot),a);
 }
 
-static float3 V_CALL YoyoLocalToWorldP(ObjectTransform* ot,float3 a)
+ float3 V_CALL YoyoLocalToWorldP(ObjectTransform* ot,float3 a)
 {
 	return local_world_p(YoyoSetTransformMatrix(ot),a);
 }
 
-static void V_CALL YoyoUpdateLocalaxis(ObjectTransform* ot)
+ void V_CALL YoyoUpdateLocalaxis(ObjectTransform* ot)
 {
 	ot->up = up(ot->r);
 	ot->right = right(ot->r);
 	ot->forward = forward(ot->r);
 }
 
-static void V_CALL YoyoUpdateMatrix(ObjectTransform* ot)
+ void V_CALL YoyoUpdateMatrix(ObjectTransform* ot)
 {
 	ot->m = YoyoSetTransformMatrix(ot);
 }
 
-static void V_CALL YoyoUpdateObjectTransform(ObjectTransform* ot)
+ void V_CALL YoyoUpdateObjectTransform(ObjectTransform* ot)
 {
 	YoyoUpdateLocalaxis(ot);
 	YoyoUpdateMatrix(ot);
 }
 
- static void InitObjectTranform(ObjectTransform* ot)
+  void InitObjectTranform(ObjectTransform* ot)
  {
      ot->r = quaternion::look_rotation(float3(0,1,0),float3(0,0,1));
 	 ot->s = float3(1);
@@ -143,13 +219,7 @@ bool V_CALL YoyoIntersectSegmentTriangle(float3 p, float3 q, float3 a, float3 b,
 	return 1;
 }
 
-struct YoyoRay
-{
-	float3 Origin;
-	float3 Dir;
-};
-
-static YoyoRay YoyoRaycastFromScreen(float4x4 projection_matrix,float4x4 camera_matrix, float2 buffer_dim, float2 mouse_p)
+ YoyoRay YoyoRaycastFromScreen(float4x4 projection_matrix,float4x4 camera_matrix, float2 buffer_dim, float2 mouse_p)
 {
 	float3 DP = screen_to_world_point(projection_matrix, camera_matrix, buffer_dim, mouse_p, 0);
 	float3 DPEnd = screen_to_world_point(projection_matrix, camera_matrix, buffer_dim, mouse_p, 1.0f);
@@ -212,4 +282,6 @@ float3[] GetScreenRect(RenderCommandList* list,float2 buffer_dim)
 */
 
 
-
+#endif
+#define YOYO_MATH_EXT_H
+#endif

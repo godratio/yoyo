@@ -2,7 +2,7 @@
 
 //TODO(Ray):Move memory from api to yoyoyoyo
 #include <stdint.h>
-//#include <cstring>
+#include <string.h>
 
 struct YoyoVector
 {
