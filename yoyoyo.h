@@ -3,8 +3,8 @@
 //TODO(Ray):Move this dependence from here to yoyomemory
 #include "../api/api_include.h"
 
-#include "meow_hash/meow_intrinsics.h"
-#include "meow_hash/meow_hash.h"
+#include "meow_hash_yoyo/meow_intrinsics.h"
+#include "meow_hash_yoyo/meow_hash.h"
 
 #define Assert(Expression) if(!(Expression)){*(int *)0 = 0;};
 #define ArrayCount(Array) sizeof(Array) / sizeof((Array)[0])
