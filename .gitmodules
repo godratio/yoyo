@@ -1,6 +1,6 @@
 [submodule "Catch2"]
 	path = Catch2
 	url = https://github.com/catchorg/Catch2.git
-[submodule "meow_hash"]
-	path = meow_hash
-	url = https://github.com/cmuratori/meow_hash.git
+[submodule "meow_hash_yoyo"]
+	path = meow_hash_yoyo
+	url = https://github.com/godratio/meow_hash.git
