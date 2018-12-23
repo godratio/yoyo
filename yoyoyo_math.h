@@ -181,6 +181,8 @@ struct float3
 #ifdef YOYO_USE_PHYSX_EXT
     VM_INLINE explicit V_CALL float3(physx::PxVec3 a);
     VM_INLINE physx::PxVec3 toPhysx();
+    //PHsyx extensions
+    //physx::PxVec3 toPhysx();
 #endif
 
     VM_INLINE float3data V_CALL tofloat3data();
@@ -530,7 +532,7 @@ VM_INLINE float V_CALL float3::x() const
 
     
 #ifdef YOYO_USE_PHYSX_EXT
-    VM_INLINE explicit V_CALL float3::float3(physx::PxVec3 a)
+    VM_INLINE  V_CALL float3::float3(physx::PxVec3 a)
 	{
 #if YOYO_MATH_SIMD
 		m = _mm_set_ps(a.z, a.z, a.y, a.x);
@@ -540,7 +542,7 @@ VM_INLINE float V_CALL float3::x() const
 		m[2] = a.z;
 #endif
 	}
-    VM_INLINE physx::PxVec3 float3::toPhysx();
+
 #endif
 
     VM_INLINE float3data V_CALL float3::tofloat3data()
@@ -1386,7 +1388,7 @@ VM_INLINE float4 V_CALL float4::xwxw() const
 	}
 
 #ifdef YOYO_USE_PHYSX_EXT
-VM_INLINE explicit V_CALL float4::float4(physx::PxVec3 a)
+VM_INLINE V_CALL float4::float4(physx::PxVec3 a)
     {
 #if YOYO_MATH_SIMD
 	    m = _mm_set_ps(a.z, a.z, a.y, a.x);
