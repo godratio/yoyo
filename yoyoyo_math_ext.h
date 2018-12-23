@@ -56,12 +56,6 @@ bool V_CALL YoyoIntersectSegmentTriangle(float3 p, float3 q, float3 a, float3 b,
 
  YoyoRay YoyoRaycastFromScreen(float4x4 projection_matrix,float4x4 camera_matrix, float2 buffer_dim, float2 mouse_p);
 
-#ifdef YOYO_USE_PHYSX_EXT
-//PHsyx extensions
-physx::PxVec3 float3::toPhysx();
-physx::PxVec4 float4::toPhysx();
-physx::PxQuat quaternion::toPhysx();
-#endif
 
 /*
 float3 YoyoScreenToWorldPoint(RenderCommandList* list, float2 buffer_dim, float2 screen_xy, float z_depth)
