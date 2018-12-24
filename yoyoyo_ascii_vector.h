@@ -105,14 +105,13 @@ static uint32_t YoyoPushBack_(YoyoVector* vector, void* element, bool copy = tru
     Assert(vector && element);
     Assert(vector->pushable);
 	Assert(vector->start_at == -1);//You must have forget to reset the vector or are trying to resize during iteration.
-
+/*
     //TODO(Ray):Test this. This is not working properly I believe.  Havent used it.
     //check if we have space if not resize to create it.
     if(vector->max_size < vector->unit_size * (vector->count + 1))
     {
 		float resize_ratio = 1.0f;
 		if (vector->count > 1)resize_ratio = vector->resize_ratio;
-
 		uint32_t new_size = vector->max_size + (vector->max_size * resize_ratio);
 		uint8_t* temp_ptr = (uint8_t*)vector->mem_arena->base;
 		vector->base = vector->mem_arena->base = PlatformAllocateMemory(new_size);
@@ -121,13 +120,14 @@ static uint32_t YoyoPushBack_(YoyoVector* vector, void* element, bool copy = tru
 		vector->max_size = new_size;
 		PlatformDeAllocateMemory(temp_ptr, vector->total_size);
     }
+ */
     partition_push_params mem_params = DefaultPartitionParams();
     mem_params.Flags = PartitionFlag_None;
     //TODO(ray):have some protection here to make sure we are added in the right type.
     //TODO(Ray):Might be better to allow for compile time switch to memcpy.
     uint8_t *ptr = (uint8_t*)PushSize(vector->mem_arena, vector->unit_size,mem_params);
-    if (copy)
-    {
+//    if (copy)
+//    {
         uint32_t byte_count = vector->unit_size;
         uint32_t index = 0;
         while (index < byte_count)
@@ -135,11 +135,11 @@ static uint32_t YoyoPushBack_(YoyoVector* vector, void* element, bool copy = tru
             *ptr++ = *((uint8_t*)element + index);
             index++;
         }
-    }
-    else
-    {
-        ptr = (uint8_t*)element;
-    }
+//    }
+//    else
+//    {
+//        ptr = (uint8_t*)element;
+//    }
     
     vector->total_size += vector->unit_size;
     uint32_t result_index = vector->count++;
