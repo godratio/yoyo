@@ -126,8 +126,8 @@ static uint32_t YoyoPushBack_(YoyoVector* vector, void* element, bool copy = tru
     //TODO(ray):have some protection here to make sure we are added in the right type.
     //TODO(Ray):Might be better to allow for compile time switch to memcpy.
     uint8_t *ptr = (uint8_t*)PushSize(vector->mem_arena, vector->unit_size,mem_params);
-//    if (copy)
-//    {
+    if (copy)
+    {
         uint32_t byte_count = vector->unit_size;
         uint32_t index = 0;
         while (index < byte_count)
@@ -135,11 +135,11 @@ static uint32_t YoyoPushBack_(YoyoVector* vector, void* element, bool copy = tru
             *ptr++ = *((uint8_t*)element + index);
             index++;
         }
-//    }
-//    else
-//    {
-//        ptr = (uint8_t*)element;
-//    }
+    }
+    else
+    {
+        ptr = (uint8_t*)element;
+    }
     
     vector->total_size += vector->unit_size;
     uint32_t result_index = vector->count++;
