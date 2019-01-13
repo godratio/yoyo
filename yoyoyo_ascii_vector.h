@@ -15,7 +15,7 @@ struct YoyoVector
 	uint32_t at_index;
 	int32_t start_at;
 	uint32_t** free_list;
-    MemoryArena* mem_arena;
+    MemoryArena mem_arena;
     bool pushable;
 	float resize_ratio;//0.1 10% 1 100% default is 50% or 1/2 resizing
 	bool allow_resize;
@@ -42,21 +42,21 @@ static YoyoVector YoyoInitVector_(uint32_t start_size, uint32_t unit_size, bool 
     result.start_at = -1;
     result.pushable = true;
     //TODO(ray): change this to get memory froma a pre allocated partition.
-    void* starting_memory = PlatformAllocateMemory(result.max_size);
-    MemoryArena* partition = (MemoryArena*)starting_memory;
-    AllocatePartition(partition, result.max_size,partition+sizeof(MemoryArena*));
-    
-    result.mem_arena = partition;
+    //void* starting_memory = PlatformAllocateMemory(result.max_size);
+    //MemoryArena* partition = (MemoryArena*)starting_memory;
+    //AllocatePartition(partition, result.max_size,partition+sizeof(MemoryArena*));
+    void* base = PlatformAllocateMemory(result.max_size);
+    AllocatePartition(&result.mem_arena, result.max_size,base);
     if(pre_empt)
     {
         result.count = start_size;
-        PushSize(partition,result.max_size);
+        PushSize(&result.mem_arena,result.max_size);
     }
     else
     {
         result.count = 0;
     }
-    result.base = partition->base;
+    result.base = result.mem_arena.base;
     return result;
 }
 
@@ -64,7 +64,7 @@ static void YoyoClearVector(YoyoVector *vector)
 {
 	Assert(vector);
     vector->pushable = true;
-	vector->mem_arena->used = 0;
+    vector->mem_arena.used = 0;
 	vector->count = 0;
 	vector->at_index = 0;
 	vector->start_at = -1;
@@ -78,7 +78,7 @@ static void YoyoFreeVectorMem(YoyoVector *vector)
         vector->pushable = true;
 		vector->total_size = 0;
 		vector->total_count = 0;
-		PlatformDeAllocateMemory(vector->mem_arena->base, vector->mem_arena->size);
+        PlatformDeAllocateMemory(vector->mem_arena.base, vector->mem_arena.size);
 		vector->base = nullptr;
 	}
 }
@@ -91,6 +91,13 @@ static void YoyoFreeVectorMem(YoyoVector *vector)
 #define YoyoPushBackVoidPtr(vector, element) YoyoPushBack_(vector,(void*)&(*(u8*)element),true);
 #define YoyoPushBackCopy(vector, element, copy) YoyoPushBack_(vector,(void*)&element,copy);
 #define YoyoPushBackPtrCopy(vector, element, copy) YoyoPushBack_(vector,(void*)&element,copy);
+
+#define YoyoStretchPushBack(vector, element) YoyoStretchPushBack_(vector,(void*)&element,true);
+#define YoyoStretchPushBackPtr(vector, element) YoyoStretchPushBack_(vector,(void*)element,true);
+#define YoyoStretchPushBackVoidPtr(vector, element) YoyoStretchPushBack_(vector,(void*)&(*(u8*)element),true);
+#define YoyoStretchPushBackCopy(vector, element, copy) YoyoStretchPushBack_(vector,(void*)&element,copy);
+#define YoyoStretchPushBackPtrCopy(vector, element, copy) YoyoStretchPushBack_(vector,(void*)&element,copy);
+
 //NOTE(ray):If you use SetVectorElement Pushes will no longer work properly.
 /**
  * \brief Push an element of a vector.  
@@ -105,27 +112,12 @@ static uint32_t YoyoPushBack_(YoyoVector* vector, void* element, bool copy = tru
     Assert(vector && element);
     Assert(vector->pushable);
 	Assert(vector->start_at == -1);//You must have forget to reset the vector or are trying to resize during iteration.
-/*
-    //TODO(Ray):Test this. This is not working properly I believe.  Havent used it.
-    //check if we have space if not resize to create it.
-    if(vector->max_size < vector->unit_size * (vector->count + 1))
-    {
-		float resize_ratio = 1.0f;
-		if (vector->count > 1)resize_ratio = vector->resize_ratio;
-		uint32_t new_size = vector->max_size + (vector->max_size * resize_ratio);
-		uint8_t* temp_ptr = (uint8_t*)vector->mem_arena->base;
-		vector->base = vector->mem_arena->base = PlatformAllocateMemory(new_size);
-		vector->mem_arena->size = new_size;
-		memcpy(vector->base, (void*)temp_ptr, vector->total_size);
-		vector->max_size = new_size;
-		PlatformDeAllocateMemory(temp_ptr, vector->total_size);
-    }
- */
+    
     partition_push_params mem_params = DefaultPartitionParams();
     mem_params.Flags = PartitionFlag_None;
     //TODO(ray):have some protection here to make sure we are added in the right type.
     //TODO(Ray):Might be better to allow for compile time switch to memcpy.
-    uint8_t *ptr = (uint8_t*)PushSize(vector->mem_arena, vector->unit_size,mem_params);
+    uint8_t *ptr = (uint8_t*)PushSize(&vector->mem_arena, vector->unit_size,mem_params);
     if (copy)
     {
         uint32_t byte_count = vector->unit_size;
@@ -146,6 +138,33 @@ static uint32_t YoyoPushBack_(YoyoVector* vector, void* element, bool copy = tru
     return result_index;
 }
 
+static uint32_t YoyoStretchPushBack_(YoyoVector* vector, void* element, bool copy = true,bool clear = false)
+{
+    Assert(vector && element);
+    Assert(vector->pushable);
+	Assert(vector->start_at == -1);//You must have forget to reset the vector or are trying to resize during iteration.
+
+    //Execute the resize of the  buffer 
+    if(vector->max_size <= vector->unit_size * (vector->count) && vector->count >= 1)
+    {
+		float resize_ratio = vector->resize_ratio;
+        //TODO(Ray):Check about min and max implementation in yoyomath
+        float new_count = fmax(round(vector->count * vector->resize_ratio),1);
+		uint32_t new_size = vector->max_size + (vector->unit_size * new_count);
+        uint8_t* temp_ptr = (uint8_t*)vector->mem_arena.base;
+		vector->base = PlatformAllocateMemory(new_size);
+        vector->mem_arena.base = vector->base;
+        
+        vector->mem_arena.size = new_size;
+		memcpy(vector->base, (void*)temp_ptr, vector->total_size);
+		vector->max_size = new_size;
+		PlatformDeAllocateMemory(temp_ptr, vector->total_size);
+        
+    }
+    
+    //Than we do the push back as normal
+    return YoyoPushBack_(vector,element,copy,clear);
+}
 //NOTE(Ray):Why are type and vector reversed between the push and access api methods!?!?!?! fix that.
 //NOTE(Ray):We purposely have no bounds checking here its your responsibility.
 //TODO(Ray):Implement a bounds check version of this function for when it might be good to have one.
@@ -221,7 +240,7 @@ static void* YoyoSetVectorElement(YoyoVector* vector, uint32_t element_index, vo
 #define YoyoPushAndCastEmptyVectorElement(type,vector) (type*)YoyoPushEmptyVectorElement_(vector)
 static void* YoyoPushEmptyVectorElement_(YoyoVector* vector)
 {
-	uint8_t *ptr = (uint8_t*)PushSize(vector->mem_arena, vector->unit_size);
+    uint8_t *ptr = (uint8_t*)PushSize(&vector->mem_arena, vector->unit_size);
 	vector->total_size += vector->unit_size;
 	vector->count++;
 	return (void*)ptr;
@@ -232,7 +251,7 @@ static void* YoyoPopAndPeekVectorElement_(YoyoVector* vector)
 {
 	Assert(vector);
 	void* Result = YoyoGetVectorElement_(vector, vector->count);
-	vector->mem_arena->used -= vector->unit_size;
+    vector->mem_arena.used -= vector->unit_size;
 	vector->total_size -= vector->unit_size;
 	vector->count--;
 	return Result;
@@ -241,7 +260,7 @@ static void* YoyoPopAndPeekVectorElement_(YoyoVector* vector)
 static void YoyoPopVectorElement(YoyoVector* vector)
 {
 	Assert(vector);
-	vector->mem_arena->used -= vector->unit_size;
+    vector->mem_arena.used -= vector->unit_size;
 	vector->total_size -= vector->unit_size;
 	vector->count--;
 }
