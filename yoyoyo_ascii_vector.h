@@ -190,7 +190,7 @@ static void* YoyoGetVectorElement_(YoyoVector* vector, uint32_t index)
 static void* YoyoGetVectorElementAnyIndex_(YoyoVector* vector, uint32_t index)
 {
     Assert(vector);
-    if (index < 0 || index > vector->total_count - 1)return 0;
+    //if (index < 0 || index >= vector->total_count - 1)return 0;
     //TODO(Ray):May want to think about this. Need to give a hint to the client code.
     return  (uint8_t*)vector->base + (index * vector->unit_size);;
 }
