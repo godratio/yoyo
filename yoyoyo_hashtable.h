@@ -99,6 +99,24 @@ static void* YoyoGetElementByHash_(YoyoHashTable* h_table,void* in,uint64_t size
 	return result;
 }
 
+#define YoyoGetElementByIndex(Type,table,index) (Type*)YoyoGetElementByIndex_(table,index)
+static void* YoyoGetElementByIndex_(YoyoHashTable* h_table,uint64_t index)
+{
+	void* result;
+	YoyoHashKeyEntry* e = YoyoGetVectorElementAnyIndex(YoyoHashKeyEntry,&h_table->keys,index);
+	if(e->collision_count == 0)
+	{
+ 		YoyoHashValueEntry* ve = YoyoGetVectorElementAnyIndex(YoyoHashValueEntry,&h_table->values, index);
+		result = ve->value;
+	}
+	else
+	{
+		//Do string comparisons on key values till we get the proper entry.
+        Assert(false);//for now assert if we have collision.s
+	}
+	return result;
+}
+
 static bool YoyoHashContains(YoyoHashTable* h_table,void* key,uint64_t size)
 {
 	uint64_t hash_index = YoyoHashFunction(h_table,key,size);
