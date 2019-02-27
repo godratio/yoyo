@@ -172,7 +172,7 @@ static uint32_t YoyoStretchPushBack_(YoyoVector* vector, void* element, bool cop
 #define YoyoGetVectorElement(type,vector,index) (type*)YoyoGetVectorElement_(vector,index)
 #define YoyoGetVectorFirst(type,vector) (type*)YoyoGetVectorElement_(vector,0)
 //NOTE(Ray):This is no good? Why get vector last instead of peek and why -1 and one noe sounds like a bug!!
-#define YoyoGetVectorLast(type,vector) (type*)YoyoGetVectorElement_(vector,vector.count)
+//#define YoyoGetVectorLast(type,vector)  (type*)YoyoGetVectorElement_(vector,vector.count - 1)
 //NOTE(Ray):Peek is prefferred at the moment.
 #define YoyoPeekVectorElement(type,vector) (type*)YoyoGetVectorElement_(vector,*vector.count-1)
 //#define YoyoIteraterPeekVector(type,vector) (type*)YoyoIterateVectorElement_(vector,*vector.at_index)
