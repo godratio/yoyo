@@ -181,7 +181,7 @@ static uint32_t YoyoStretchPushBack_(YoyoVector* vector, void* element, bool cop
 static void* YoyoGetVectorElement_(YoyoVector* vector, uint32_t index)
 {
 	Assert(vector);
-	if (index < 0 || index > vector->count - 1)return 0;
+	if (index > vector->count - 1 || vector->count == 0)return 0;
 	//TODO(Ray):May want to think about this. Need to give a hint to the client code.
 	return  (uint8_t*)vector->base + (index * vector->unit_size);;
 }
