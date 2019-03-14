@@ -64,6 +64,7 @@ static void YoyoClearVector(YoyoVector *vector)
 	Assert(vector);
     vector->pushable = true;
     vector->mem_arena.used = 0;
+    vector->total_size = 0;
 	vector->count = 0;
 	vector->at_index = 0;
 	vector->start_at = -1;
