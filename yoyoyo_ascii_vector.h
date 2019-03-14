@@ -8,7 +8,6 @@ struct YoyoVector
 {
     void* base;
 	uint32_t total_size;
-	uint32_t max_size;
 	uint32_t unit_size;
 	uint32_t count;
 	uint32_t total_count;
@@ -31,7 +30,7 @@ static YoyoVector YoyoInitVector_(uint32_t start_size, uint32_t unit_size, bool 
     Assert(unit_size > 0);
     
     YoyoVector result;
-	result.max_size = start_size * unit_size;
+	uint32_t start_alloc_size = start_size * unit_size;
     result.total_size = 0;
     result.unit_size = unit_size;
     result.total_count = start_size;
@@ -42,15 +41,15 @@ static YoyoVector YoyoInitVector_(uint32_t start_size, uint32_t unit_size, bool 
     result.start_at = -1;
     result.pushable = true;
     //TODO(ray): change this to get memory froma a pre allocated partition.
-    //void* starting_memory = PlatformAllocateMemory(result.max_size);
+    //void* starting_memory = PlatformAllocateMemory(start_alloc_size);
     //MemoryArena* partition = (MemoryArena*)starting_memory;
-    //AllocatePartition(partition, result.max_size,partition+sizeof(MemoryArena*));
-    void* base = PlatformAllocateMemory(result.max_size);
-    AllocatePartition(&result.mem_arena, result.max_size,base);
+    //AllocatePartition(partition, start_alloc_size,partition+sizeof(MemoryArena*));
+    void* base = PlatformAllocateMemory(start_alloc_size);
+    AllocatePartition(&result.mem_arena, start_alloc_size,base);
     if(pre_empt)
     {
         result.count = start_size;
-        PushSize(&result.mem_arena,result.max_size);
+        PushSize(&result.mem_arena,start_alloc_size);
     }
     else
     {
@@ -145,21 +144,24 @@ static uint32_t YoyoStretchPushBack_(YoyoVector* vector, void* element, bool cop
 	Assert(vector->start_at == -1);//You must have forget to reset the vector or are trying to resize during iteration.
 
     //Execute the resize of the  buffer 
-    if(vector->max_size <= vector->unit_size * (vector->count) && vector->count >= 1)
+    if(vector->mem_arena.size <= vector->unit_size * (vector->count) && vector->count >= 1)
     {
+        uint32_t old_size = vector->mem_arena.size;
 		float resize_ratio = vector->resize_ratio;
         //TODO(Ray):Check about min and max implementation in yoyomath
+        //TODO(Ray):Make sure we are on the propery byte boundary.
         float new_count = fmax(round(vector->count * vector->resize_ratio),1);
-		uint32_t new_size = vector->max_size + (vector->unit_size * new_count);
-        uint8_t* temp_ptr = (uint8_t*)vector->mem_arena.base;
+		uint32_t new_size = vector->mem_arena.size + (vector->unit_size * new_count);
+        uint8_t* old_base_ptr = (uint8_t*)vector->mem_arena.base;
+        
 		vector->base = PlatformAllocateMemory(new_size);
+
         vector->mem_arena.base = vector->base;
-        
         vector->mem_arena.size = new_size;
-		memcpy(vector->base, (void*)temp_ptr, vector->total_size);
-		vector->max_size = new_size;
-		PlatformDeAllocateMemory(temp_ptr, vector->total_size);
         
+		memcpy(vector->base, (void*)old_base_ptr, vector->total_size);
+
+		PlatformDeAllocateMemory(old_base_ptr, old_size);
     }
     
     //Than we do the push back as normal
