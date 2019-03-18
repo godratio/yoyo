@@ -13,23 +13,28 @@ struct YoyoVector
 	uint32_t total_count;
 	uint32_t at_index;
 	int32_t start_at;
-	uint32_t** free_list;
     MemoryArena mem_arena;
     bool pushable;
 	float resize_ratio;//0.1 10% 1 100% default is 50% or 1/2 resizing
 	bool allow_resize;
+    uint32_t alignment_offset;
 };
 
 //BEGIN VECTOR LIFECYCLE
 #define YoyoInitVector(start_size,type,pre_empt) YoyoInitVector_(start_size,sizeof(type),pre_empt)
+#define YoyoInitVectorWithAligment(start_size,size,pre_empt,alignment) YoyoInitVector_(start_size,size,pre_empt,alignment)
 #define YoyoInitVectorSize(start_size,size,pre_empt) YoyoInitVector_(start_size,size,pre_empt)
-static YoyoVector YoyoInitVector_(uint32_t start_size, uint32_t unit_size, bool pre_empt = false)
+//NOTE(Ray):Default alignment is 8 for 64 bit systems which is all we care about.
+//the alignemnt options is mainly for adding the ability to store simd datatypes.
+static YoyoVector YoyoInitVector_(uint32_t start_size, uint32_t unit_size, bool pre_empt = false,uint32_t alignment = 8)
 {
     //TIMED_BLOCK();
     Assert(start_size > 0);
     Assert(unit_size > 0);
     
     YoyoVector result;
+    //uint32_t rem = unit_size + unit_size % 16;
+    //unit_size += rem;
 	uint32_t start_alloc_size = start_size * unit_size;
     result.total_size = 0;
     result.unit_size = unit_size;
@@ -41,9 +46,6 @@ static YoyoVector YoyoInitVector_(uint32_t start_size, uint32_t unit_size, bool 
     result.start_at = -1;
     result.pushable = true;
     //TODO(ray): change this to get memory froma a pre allocated partition.
-    //void* starting_memory = PlatformAllocateMemory(start_alloc_size);
-    //MemoryArena* partition = (MemoryArena*)starting_memory;
-    //AllocatePartition(partition, start_alloc_size,partition+sizeof(MemoryArena*));
     void* base = PlatformAllocateMemory(start_alloc_size);
     AllocatePartition(&result.mem_arena, start_alloc_size,base);
     if(pre_empt)
@@ -55,7 +57,23 @@ static YoyoVector YoyoInitVector_(uint32_t start_size, uint32_t unit_size, bool 
     {
         result.count = 0;
     }
+//TODO(Ray):Get alignment offset of elements at the beginning as long as we have a multiple of 2
+    //calculating the offset should only happen once and that needs to be our indexing otherwise
+    //bad things will happen.
     result.base = result.mem_arena.base;
+    
+    //memory_index alignment = 8;
+    MemoryArena temp = {};
+    temp.used = unit_size;
+    temp.base = result.mem_arena.base;
+    temp.size = start_alloc_size;
+    memory_index offset = GetAlignmentOffset(&temp,alignment);
+    result.alignment_offset = offset;
+    result.unit_size = unit_size + offset;
+    //All 64 bit systems should be giving us addresses at 8 byte boundaries.
+    //Furthermore the compilers all should be inserting padding to any structs so that we only are accessing memory on 8 byte
+    //boundaries if for any reason this does not hold true we need to know right away.
+    Assert(offset == 0);
     return result;
 }
 
@@ -115,9 +133,12 @@ static uint32_t YoyoPushBack_(YoyoVector* vector, void* element, bool copy = tru
     
     partition_push_params mem_params = DefaultPartitionParams();
     mem_params.Flags = PartitionFlag_None;
+    mem_params.Alignment = 16;
+//    memory_index prev_size = vector->mem_arena.used;
+    
     //TODO(ray):have some protection here to make sure we are added in the right type.
     //TODO(Ray):Might be better to allow for compile time switch to memcpy.
-    uint8_t *ptr = (uint8_t*)PushSize(&vector->mem_arena, vector->unit_size,mem_params);
+    uint8_t *ptr = (uint8_t*)PushSize(&vector->mem_arena, (memory_index)vector->unit_size,mem_params);
     if (copy)
     {
         uint32_t byte_count = vector->unit_size;
@@ -133,7 +154,8 @@ static uint32_t YoyoPushBack_(YoyoVector* vector, void* element, bool copy = tru
         ptr = (uint8_t*)element;
     }
     
-    vector->total_size += vector->unit_size;
+    vector->total_size = vector->mem_arena.used;// - prev_size;
+//    vector->total_size += vector->unit_size;
     uint32_t result_index = vector->count++;
     return result_index;
 }
@@ -144,15 +166,17 @@ static uint32_t YoyoStretchPushBack_(YoyoVector* vector, void* element, bool cop
     Assert(vector->pushable);
 	Assert(vector->start_at == -1);//You must have forget to reset the vector or are trying to resize during iteration.
 
+    //memory_index offset = GetAlignmentOffset(&vector->mem_arena, 0);
+    //offset = 0;
     //Execute the resize of the  buffer 
-    if(vector->mem_arena.size <= vector->unit_size * (vector->count) && vector->count >= 1)
+    if(vector->mem_arena.size <= (vector->unit_size) * (vector->count + 1))
     {
         uint32_t old_size = vector->mem_arena.size;
 		float resize_ratio = vector->resize_ratio;
         //TODO(Ray):Check about min and max implementation in yoyomath
         //TODO(Ray):Make sure we are on the propery byte boundary.
         float new_count = fmax(round(vector->count * vector->resize_ratio),1);
-		uint32_t new_size = vector->mem_arena.size + (vector->unit_size * new_count);
+		uint32_t new_size = vector->mem_arena.size + ((vector->unit_size) * new_count);
         uint8_t* old_base_ptr = (uint8_t*)vector->mem_arena.base;
         
 		vector->base = PlatformAllocateMemory(new_size);
@@ -163,6 +187,17 @@ static uint32_t YoyoStretchPushBack_(YoyoVector* vector, void* element, bool cop
 		memcpy(vector->base, (void*)old_base_ptr, vector->total_size);
 
 		PlatformDeAllocateMemory(old_base_ptr, old_size);
+        
+        memory_index alignment = 8;
+        MemoryArena temp = {};
+        temp.used = vector->mem_arena.used;
+        temp.base = vector->mem_arena.base;
+        temp.size = vector->mem_arena.size;
+        memory_index offset = GetAlignmentOffset(&temp,alignment);
+        //All 64 bit systems should be giving us addresses at 8 byte boundaries.
+        //Furthermore the compilers all should be inserting padding to any structs so that we only are accessing memory on 8 byte
+        //boundaries if for any reason this does not hold true we need to know right away.
+        Assert(offset == 0);
     }
     
     //Than we do the push back as normal
