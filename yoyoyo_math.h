@@ -8,13 +8,14 @@
 #elif WINDOWS
 #include <intrin.h>
 #endif
-//TODO(Ray):look up proper define for compilers 
+//TODO(Ray):look up proper define for compilers
+//NOTE(RAY)://TODO(Ray):I dont think we are getting any benefit form __vectorcall in scalar mode so disabling of now
 #if WINDOWS
 #define VM_INLINE   __forceinline
-#define V_CALL __vectorcall
+#define V_CALL //__vectorcall
 #else
 #define VM_INLINE __attribute__((always_inline))
-#define V_CALL __vectorcall
+#define V_CALL //__vectorcall
 #endif
 
 #define M_PI        3.14159265358979323846f
