@@ -1807,9 +1807,9 @@ VM_INLINE float3 V_CALL operator/ (float3 a, float b)
 #if YOYO_MATH_SIMD
 	a.m = _mm_div_ps(a.m, _mm_set1_ps(b));
 #else
-	a.m[0] = a.m[0] * b;
-	a.m[1] = a.m[1] * b;
-	a.m[2] = a.m[2] * b;
+	a.m[0] = a.m[0] / b;
+	a.m[1] = a.m[1] / b;
+	a.m[2] = a.m[2] / b;
 #endif
 	return a;
 }
