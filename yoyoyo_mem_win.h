@@ -1,3 +1,5 @@
+#if 0
+
 #pragma once
 #include <Windows.h>
 
@@ -29,3 +31,4 @@ Win32DeAllocateMemory(void* mem, size_t size)
 	);
 }
 
+#endif

@@ -4,7 +4,7 @@
 #include <Windows.h>
 #include "yoyo_file.h"
 #include "yoyoyo_mem_win.h"
-static char* DataDir = "/../../data/";
+static char* DataDir = (char*)"/../../data/";
 
 enum YoyoDirectoryType
 {

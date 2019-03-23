@@ -1,3 +1,4 @@
+#if 0
 #pragma once
 #include "yoyoyo_memory.h"
 #define MAX_FILENAME_LENGTH 50
@@ -427,3 +428,4 @@ APIDEF void YoyoAppendStringAndAdvance(YoyoAString* front, YoyoAString back, Mem
 }
 
 
+#endif

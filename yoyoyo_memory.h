@@ -1,3 +1,5 @@
+#if 0
+
 #pragma once
 #include <cstdint>
 #include <stddef.h>
@@ -290,3 +292,4 @@ PushCharString(MemoryArena *Partition, char *CharString)
 }
 
 
+#endif
