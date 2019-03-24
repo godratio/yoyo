@@ -1,8 +1,11 @@
 #if !defined(YOYO_MATH_H)
 
 #include <stdint.h>
+#if OSX || IOS
 #include <math.h>
-
+#elif WINDOWS
+#include <cmath>
+#endif
 #if OSX
 #include <x86intrin.h>
 #elif WINDOWS

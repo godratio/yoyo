@@ -127,7 +127,7 @@ namespace SceneObjectCode
 			Assert(false);
 			return;
 		}
-    	SceneObjectBuffer new_buff;
+		SceneObjectBuffer new_buff = {};
     	*buffer = new_buff;
     	buffer->buffer = YoyoInitVector(size,SceneObject,false);
 		buffer->buffer.allow_resize = false;
@@ -346,7 +346,7 @@ namespace SceneCode
 			Assert(false);
 			return;
         }
-		SceneBuffer buff;
+		SceneBuffer buff = {};
 		*buffer = buff;
     	buffer->buffer = YoyoInitVector(size, Scene,false);
     }
