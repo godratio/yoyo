@@ -13,10 +13,14 @@
 #endif
 //TODO(Ray):look up proper define for compilers
 //NOTE(RAY)://TODO(Ray):I dont think we are getting any benefit form __vectorcall in scalar mode so disabling of now
-#if WINDOWS
-#define VM_INLINE   __forceinline
-#define V_CALL //__vectorcall
+#if WINDOWS //MSVC
+#if YOYOIMPL
+#define VM_INLINE __declspec(dllexport) __forceinline
 #else
+#define VM_INLINE __forceinline
+#endif
+#define V_CALL //__vectorcall
+#else //XCODE CLANG
 #define VM_INLINE __attribute__((always_inline))
 #define V_CALL //__vectorcall
 #endif
@@ -141,7 +145,7 @@ struct float2
 
     void V_CALL setY(float y);
 	static uint32_t V_CALL size();
-	float4 V_CALL xyxy() const;
+	VM_INLINE float4 V_CALL xyxy() const;
 };
 
 struct float3
@@ -192,7 +196,7 @@ struct float3
     VM_INLINE float3data V_CALL tofloat3data();
     
     VM_INLINE void V_CALL store(float *p) const;
-	float4 V_CALL xyxy() const;
+	VM_INLINE float4 V_CALL xyxy() const;
 
     void V_CALL setX(float x);
 
@@ -414,12 +418,13 @@ VM_INLINE float3::float3()
 	
 	VM_INLINE  V_CALL float3::float3(float x)
 	{
+		float f_x = x;
 #if YOYO_MATH_SIMD
 		m = _mm_set_ps(x, x, x, x);
 #else
-		m[0] = x;
-		m[1] = x;
-		m[2] = x;
+		m[0] = f_x;
+		m[1] = f_x;
+		m[2] = f_x;
 #endif
 	}
 
