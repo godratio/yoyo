@@ -8,7 +8,7 @@ struct YoyoVector
 {
     void* base;
 	uint32_t total_size;
-	uint32_t unit_size;
+	uint64_t unit_size;
 	uint32_t count;
 	uint32_t total_count;
 	uint32_t at_index;
