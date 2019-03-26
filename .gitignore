@@ -24,3 +24,5 @@ Yoyoyo\.vcxproj\.filters
 Yoyoyo\.vcxproj\.user
 
 \.#yoyo_vector_free_list\.h
+
+\.#yoyoyo_hashtable\.h

@@ -1,18 +1,28 @@
+//TODOs
+//1. ToArray calls
+//TODO(Ray):NOTE(Ray):They are currently returning off the stack return to those and rethink later.
+//2. 
+//TODO(Ray):look up proper define for compilers
+//3.
+//NOTE(RAY)://TODO(Ray):I dont think we are getting any benefit form __vectorcall in scalar mode so disabling of now
+
 #if !defined(YOYO_MATH_H)
 
 #include <stdint.h>
+
 #if OSX || IOS
 #include <math.h>
 #elif WINDOWS
 #include <cmath>
 #endif
+
 #if OSX
 #include <x86intrin.h>
 #elif WINDOWS
 #include <intrin.h>
 #endif
-//TODO(Ray):look up proper define for compilers
-//NOTE(RAY)://TODO(Ray):I dont think we are getting any benefit form __vectorcall in scalar mode so disabling of now
+
+//NOTE(Ray):There is a declspec on the impl path so that in MSVC all functiosn are properly exported
 #if WINDOWS //MSVC
 #if YOYOIMPL
 #define VM_INLINE __declspec(dllexport) __forceinline
@@ -25,7 +35,10 @@
 #define V_CALL //__vectorcall
 #endif
 
+#ifndef M_PI 
 #define M_PI        3.14159265358979323846f
+#endif
+
 #define M_TAO       6.28318530717f
 
 #define DEG2RAD   M_PI/(float)180
@@ -37,10 +50,21 @@
 //#define DEG2RAD(_a) ((_a)*M_PI/180.0f)
 //#define RAD2DEG(_a) ((_a)*180.0f/M_PI)
 #define U16MAX 65535
+
+#ifndef INT_MIN
 #define INT_MIN     (-2147483647 - 1)
+#endif
+
+#ifndef INT_MAX
 #define INT_MAX     2147483647
-#define U32MAX      ((u32)-1)
+#endif
+
+#ifndef FLX_MAX
 #define FLT_MAX     3.402823466e+38F
+#endif
+
+#define U32MAX      ((u32)-1)
+
 //#define FLT_MIN     -FLT_MAX
 #define POSITIVE_INFINITY  INFINITY;
 #define POSITIVE_INFINITY2  float2(INFINITY,INFINITY);
@@ -356,18 +380,23 @@ VM_INLINE float2data V_CALL float2::tofloat2data()
 VM_INLINE void float2::store(float *p) const
 {
 #if YOYO_MATH_SIMD
-    p[0] = x(); p[1] = y();
+    p[0] = x();
+    p[1] = y();
 #else
-    p[0] = m[0];p[1] = m[1];
+    p[0] = m[0];
+    p[1] = m[1];
 #endif
 }
+
 
 VM_INLINE float* float2::to_array()
 {
 #if YOYO_MATH_SIMD
-    float result[2] = { x(),y()}; return result;
+    float result[2] = { x(),y()};
+    return result;
 #else
-    float result[2] = { m[0],m[1]}; return result;
+    float result[2] = { m[0],m[1]};
+    return result;
 #endif
 }
 

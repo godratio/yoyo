@@ -1,16 +1,15 @@
-#pragma once
+#if !defined(YOYO_VECTOR_H)
 
-//TODO(Ray):Move memory from api to yoyoyoyo
 #include <stdint.h>
 #include <string.h>
 
 struct YoyoVector
 {
     void* base;
-	uint32_t total_size;
-	uint64_t unit_size;
-	uint32_t count;
-	uint32_t total_count;
+	memory_index total_size;
+	memory_index unit_size;
+	memory_index count;
+	memory_index total_count;
 	uint32_t at_index;
 	int32_t start_at;
     MemoryArena mem_arena;
@@ -26,7 +25,7 @@ struct YoyoVector
 #define YoyoInitVectorSize(start_size,size,pre_empt) YoyoInitVector_(start_size,size,pre_empt)
 //NOTE(Ray):Default alignment is 8 for 64 bit systems which is all we care about.
 //the alignemnt options is mainly for adding the ability to store simd datatypes.
-static YoyoVector YoyoInitVector_(uint32_t start_size, uint32_t unit_size, bool pre_empt = false,uint32_t alignment = 8)
+static YoyoVector YoyoInitVector_(memory_index start_size,memory_index unit_size, bool pre_empt = false,uint32_t alignment = 8)
 {
     //TIMED_BLOCK();
     Assert(start_size > 0);
@@ -35,7 +34,7 @@ static YoyoVector YoyoInitVector_(uint32_t start_size, uint32_t unit_size, bool 
     YoyoVector result;
     //uint32_t rem = unit_size + unit_size % 16;
     //unit_size += rem;
-	uint32_t start_alloc_size = start_size * unit_size;
+	memory_index start_alloc_size = start_size * unit_size;
     result.total_size = 0;
     result.unit_size = unit_size;
     result.total_count = start_size;
@@ -124,7 +123,7 @@ static void YoyoFreeVectorMem(YoyoVector *vector)
  * \param copy Should we do a byte for byte copy?  
  * \return returns an index into the array in the vector for the created element
  */
-static uint32_t YoyoPushBack_(YoyoVector* vector, void* element, bool copy = true,bool clear = false)
+static uint64_t YoyoPushBack_(YoyoVector* vector, void* element, bool copy = true,bool clear = false)
 {
     //TIMED_BLOCK();
     Assert(vector && element);
@@ -133,7 +132,7 @@ static uint32_t YoyoPushBack_(YoyoVector* vector, void* element, bool copy = tru
     
     partition_push_params mem_params = DefaultPartitionParams();
     mem_params.Flags = PartitionFlag_None;
-    mem_params.Alignment = 16;
+   // mem_params.Alignment = 0;
 //    memory_index prev_size = vector->mem_arena.used;
     
     //TODO(ray):have some protection here to make sure we are added in the right type.
@@ -141,8 +140,8 @@ static uint32_t YoyoPushBack_(YoyoVector* vector, void* element, bool copy = tru
     uint8_t *ptr = (uint8_t*)PushSize(&vector->mem_arena, (memory_index)vector->unit_size,mem_params);
     if (copy)
     {
-        uint32_t byte_count = vector->unit_size;
-        uint32_t index = 0;
+        memory_index byte_count = vector->unit_size;
+        memory_index index = 0;
         while (index < byte_count)
         {
             *ptr++ = *((uint8_t*)element + index);
@@ -154,13 +153,13 @@ static uint32_t YoyoPushBack_(YoyoVector* vector, void* element, bool copy = tru
         ptr = (uint8_t*)element;
     }
     
-    vector->total_size = vector->mem_arena.used;// - prev_size;
-//    vector->total_size += vector->unit_size;
-    uint32_t result_index = vector->count++;
+    vector->total_size = vector->mem_arena.used;
+
+    uint64_t result_index = vector->count++;
     return result_index;
 }
 
-static uint32_t YoyoStretchPushBack_(YoyoVector* vector, void* element, bool copy = true,bool clear = false)
+static uint64_t YoyoStretchPushBack_(YoyoVector* vector, void* element, bool copy = true,bool clear = false)
 {
     Assert(vector && element);
     Assert(vector->pushable);
@@ -171,14 +170,10 @@ static uint32_t YoyoStretchPushBack_(YoyoVector* vector, void* element, bool cop
     //Execute the resize of the  buffer 
     if(vector->mem_arena.size <= (vector->unit_size) * (vector->count + 1))
     {
-        uint32_t old_size = vector->mem_arena.size;
-		float resize_ratio = vector->resize_ratio;
-        //TODO(Ray):Check about min and max implementation in yoyomath
-        //TODO(Ray):Make sure we are on the propery byte boundary.
+        memory_index old_size = vector->mem_arena.size;
         float new_count = fmax(round(vector->count * vector->resize_ratio),1);
-		uint32_t new_size = vector->mem_arena.size + ((vector->unit_size) * new_count);
+		memory_index new_size = vector->mem_arena.size + ((vector->unit_size) * new_count);
         uint8_t* old_base_ptr = (uint8_t*)vector->mem_arena.base;
-        
 		vector->base = PlatformAllocateMemory(new_size);
 
         vector->mem_arena.base = vector->base;
@@ -216,7 +211,7 @@ static uint32_t YoyoStretchPushBack_(YoyoVector* vector, void* element, bool cop
 //#define YoyoIteraterPeekVector(type,vector) (type*)YoyoIterateVectorElement_(vector,*vector.at_index)
 //#define YoyoIteraterPeekNextVector(type,vector) (type*)YoyoIterateVectorElement_(vector,*vector.at_index + 1)
 //#define YoyoIteraterPeekOffsetVector(type,vector,offset) (type*)YoyoIterateVectorElement_(vector,*vector.at_index + offset)
-static void* YoyoGetVectorElement_(YoyoVector* vector, uint32_t index)
+static void* YoyoGetVectorElement_(YoyoVector* vector, uint64_t index)
 {
 	Assert(vector);
 	if (index > vector->count - 1 || vector->count == 0)return 0;
@@ -225,7 +220,7 @@ static void* YoyoGetVectorElement_(YoyoVector* vector, uint32_t index)
 }
 
 #define YoyoGetVectorElementAnyIndex(type,vector,index) (type*)YoyoGetVectorElementAnyIndex_(vector,index)
-static void* YoyoGetVectorElementAnyIndex_(YoyoVector* vector, uint32_t index)
+static void* YoyoGetVectorElementAnyIndex_(YoyoVector* vector, uint64_t index)
 {
     Assert(vector);
     //if (index < 0 || index >= vector->total_count - 1)return 0;
@@ -237,7 +232,7 @@ static void* YoyoGetVectorElementAnyIndex_(YoyoVector* vector, uint32_t index)
 //#define YoyoIteraterPeekVector(type,vector) (type*)YoyoIterateVectorElement_(vector,*vector.at_index)
 //#define YoyoIteraterPeekNextVector(type,vector) (type*)YoyoIterateVectorElement_(vector,*vector.at_index + 1)
 //#define YoyoIteraterPeekOffsetVector(type,vector,offset) (type*)YoyoIterateVectorElement_(vector,*vector.at_index + offset)
-static void** YoyoGetReferenceToElement_(YoyoVector* vector, uint32_t index)
+static void** YoyoGetReferenceToElement_(YoyoVector* vector, uint64_t index)
 {
 	Assert(vector);
 	if (index < 0 || index > vector->count - 1)return 0;
@@ -246,7 +241,7 @@ static void** YoyoGetReferenceToElement_(YoyoVector* vector, uint32_t index)
 	return (void**)Location;
 }
 
-static void* YoyoSetVectorElement(YoyoVector* vector, uint32_t element_index, void* element, bool copy = true)
+static void* YoyoSetVectorElement(YoyoVector* vector, uint64_t element_index, void* element, bool copy = true)
 {
 	//TIMED_BLOCK();
 	Assert(vector && element);
@@ -256,8 +251,8 @@ static void* YoyoSetVectorElement(YoyoVector* vector, uint32_t element_index, vo
 	uint8_t* ptr = (uint8_t*)location;
 	if (copy)
 	{
-		uint32_t byte_count = vector->unit_size;
-		uint32_t index = 0;
+		memory_index byte_count = vector->unit_size;
+		memory_index index = 0;
 		while (index < byte_count)
 		{
 			*ptr++ = *((uint8_t*)element + index);
@@ -328,7 +323,7 @@ static void* YoyoIterateVectorElement_(YoyoVector *vector, int start_at = -1, in
 //NOTE(ray):Incorporates bounds checking and satisfies the iterator promise of a return by zero
 //if you if you try to access our of bounds of the iterator index.
 #define YoyoGetVectorIteratorOffset(type,vector,offset) (type*)YoyoGetVectorIterator_(vector,*vector.at_index + offset)
-static void* YoyoGetVectorIterator_(YoyoVector* vector, uint32_t index)
+static void* YoyoGetVectorIterator_(YoyoVector* vector, uint64_t index)
 {
 	Assert(vector);
 	if (index < 0 || index >= vector->count)return 0;
@@ -345,3 +340,6 @@ static void YoyoResetVectorIterator(YoyoVector *vector)
 	vector->start_at = -1;
 }
 //END VECTOR ITERATION FUNCS
+
+#define YOYO_VECTOR_H
+#endif

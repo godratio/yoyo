@@ -21,10 +21,10 @@ struct YoyoHashTable
 {
 	YoyoVector keys;
 	YoyoVector values;
-    uint64_t table_size;
+    memory_index table_size;
 };
 
-static YoyoHashTable YoyoInitHashTable(uint32_t start_count)
+static YoyoHashTable YoyoInitHashTable(memory_index start_count)
 {
 	YoyoHashTable result;
 	result.keys = YoyoInitVector(start_count,YoyoHashKeyEntry,false);
