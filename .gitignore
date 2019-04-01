@@ -26,3 +26,5 @@ Yoyoyo\.vcxproj\.user
 \.#yoyo_vector_free_list\.h
 
 \.#yoyoyo_hashtable\.h
+
+\.#yoyoyo_ascii_vector\.h

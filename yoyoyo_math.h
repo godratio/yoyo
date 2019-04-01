@@ -11,7 +11,7 @@
 #include <stdint.h>
 
 #if OSX || IOS
-#include <math.h>
+#include <cmath>
 #elif WINDOWS
 #include <cmath>
 #endif
@@ -2553,7 +2553,7 @@ VM_INLINE bool2 V_CALL isfinite(float2 x);
 VM_INLINE bool3 V_CALL isfinite(float3 x);
 VM_INLINE bool4 V_CALL isfinite(float4 x);
 
-VM_INLINE bool  V_CALL isinf(float x);
+VM_INLINE bool  V_CALL isinf(float x) noexcept;
 VM_INLINE bool2 V_CALL isinf(float2 x);
 VM_INLINE bool3 V_CALL isinf(float3 x);
 VM_INLINE bool4 V_CALL isinf(float4 x);
@@ -2568,7 +2568,7 @@ VM_INLINE float2 V_CALL asfloat(uint2 x);
 VM_INLINE float3 V_CALL asfloat(uint3 x);
 VM_INLINE float4 V_CALL asfloat(uint4 x);
 
-VM_INLINE bool  V_CALL isnan(float x);
+VM_INLINE bool  V_CALL isnan(float x) noexcept;
 
 #if 0
 VM_INLINE bool2 V_CALL isnan(float2 x);
@@ -2827,7 +2827,7 @@ VM_INLINE bool2 V_CALL isfinite(float2 x) { return abso(x) < POSITIVE_INFINITY2;
 VM_INLINE bool3 V_CALL isfinite(float3 x) { return abso(x) < POSITIVE_INFINITY3; }
 VM_INLINE bool4 V_CALL isfinite(float4 x) { return abso(x) < POSITIVE_INFINITY4; }
 
-VM_INLINE bool  V_CALL isinf(float x)  { return abso(x) == POSITIVE_INFINITY; }
+//VM_INLINE bool  V_CALL isinf(float x) noexcept  { return abso(x) == POSITIVE_INFINITY; }
 VM_INLINE bool2 V_CALL isinf(float2 x) { return abso(x) == POSITIVE_INFINITY2; }
 VM_INLINE bool3 V_CALL isinf(float3 x) { return abso(x) == POSITIVE_INFINITY3; }
 VM_INLINE bool4 V_CALL isinf(float4 x) { return abso(x) == POSITIVE_INFINITY4; }
@@ -2842,10 +2842,10 @@ VM_INLINE float2 V_CALL asfloat(uint2 x) { return float2((float)x.x, (float)x.y)
 VM_INLINE float3 V_CALL asfloat(uint3 x) { return float3((float)x.x, (float)x.y, (float)x.z); }
 VM_INLINE float4 V_CALL asfloat(uint4 x) { return float4((float)x.x, (float)x.y, (float)x.z, (float)x.w); }
 
-VM_INLINE bool  V_CALL isnan(float x)  { return (asuint(x) & 0x7FFFFFFF) > 0x7F800000; }
+//VM_INLINE bool  V_CALL isnan(float x) noexcept  { return (asuint(x) & 0x7FFFFFFF) > 0x7F800000; }
 
-#if 0
-VM_INLINE bool2 V_CALL isnan(float2 x) { return (asuint(x) & 0x7FFFFFFF) > 0x7F800000; }
+#if 1
+//VM_INLINE bool2 V_CALL isnan(float2 x) { return (asuint(x) & 0x7FFFFFFF) > 0x7F800000; }
 #endif
 
 VM_INLINE bool3 V_CALL isnan(float3 x) { return (asuint(x) & 0x7FFFFFFF) > 0x7F800000; }
