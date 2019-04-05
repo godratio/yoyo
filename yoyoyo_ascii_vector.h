@@ -279,7 +279,7 @@ static void* YoyoPushEmptyVectorElement_(YoyoVector* vector)
 	return (void*)ptr;
 }
 
-#define YoyoPopAndPeekVectorElement(type,vector) (Type*)PopAndPeekVectorElement_(vector)
+#define YoyoPopAndPeekVectorElement(type,vector) (type*)YoyoPopAndPeekVectorElement_(vector)
 static void* YoyoPopAndPeekVectorElement_(YoyoVector* vector)
 {
 	Assert(vector);
