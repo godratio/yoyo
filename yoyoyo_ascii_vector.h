@@ -107,13 +107,13 @@ static void YoyoFreeVectorMem(YoyoVector *vector)
 #define YoyoPushBackPtr(vector, element) YoyoPushBack_(vector,(void*)element,true);
 #define YoyoPushBackVoidPtr(vector, element) YoyoPushBack_(vector,(void*)&(*(u8*)element),true);
 #define YoyoPushBackCopy(vector, element, copy) YoyoPushBack_(vector,(void*)&element,copy);
-#define YoyoPushBackPtrCopy(vector, element, copy) YoyoPushBack_(vector,(void*)&element,copy);
+#define YoyoPushBackPtrCopy(vector, element, copy) YoyoPushBack_(vector,(void*)element,copy);
 
 #define YoyoStretchPushBack(vector, element) YoyoStretchPushBack_(vector,(void*)&element,true);
 #define YoyoStretchPushBackPtr(vector, element) YoyoStretchPushBack_(vector,(void*)element,true);
 #define YoyoStretchPushBackVoidPtr(vector, element) YoyoStretchPushBack_(vector,(void*)&(*(u8*)element),true);
 #define YoyoStretchPushBackCopy(vector, element, copy) YoyoStretchPushBack_(vector,(void*)&element,copy);
-#define YoyoStretchPushBackPtrCopy(vector, element, copy) YoyoStretchPushBack_(vector,(void*)&element,copy);
+#define YoyoStretchPushBackPtrCopy(vector, element, copy) YoyoStretchPushBack_(vector,(void*)element,copy);
 
 //NOTE(ray):If you use SetVectorElement Pushes will no longer work properly.
 /**
@@ -207,7 +207,7 @@ static uint64_t YoyoStretchPushBack_(YoyoVector* vector, void* element, bool cop
 //NOTE(Ray):This is no good? Why get vector last instead of peek and why -1 and one noe sounds like a bug!!
 //#define YoyoGetVectorLast(type,vector)  (type*)YoyoGetVectorElement_(vector,vector.count - 1)
 //NOTE(Ray):Peek is prefferred at the moment.
-#define YoyoPeekVectorElement(type,vector) (type*)YoyoGetVectorElement_(vector,*vector.count-1)
+#define YoyoPeekVectorElement(type,vector) (type*)YoyoGetVectorElement_(vector,*vector.count - 1)
 //#define YoyoIteraterPeekVector(type,vector) (type*)YoyoIterateVectorElement_(vector,*vector.at_index)
 //#define YoyoIteraterPeekNextVector(type,vector) (type*)YoyoIterateVectorElement_(vector,*vector.at_index + 1)
 //#define YoyoIteraterPeekOffsetVector(type,vector,offset) (type*)YoyoIterateVectorElement_(vector,*vector.at_index + offset)
@@ -216,7 +216,7 @@ static void* YoyoGetVectorElement_(YoyoVector* vector, uint64_t index)
 	Assert(vector);
 	if (index > vector->count - 1 || vector->count == 0)return 0;
 	//TODO(Ray):May want to think about this. Need to give a hint to the client code.
-	return  (uint8_t*)vector->base + (index * vector->unit_size);;
+	return  (uint8_t*)vector->base + (index * vector->unit_size);
 }
 
 #define YoyoGetVectorElementAnyIndex(type,vector,index) (type*)YoyoGetVectorElementAnyIndex_(vector,index)
@@ -279,24 +279,24 @@ static void* YoyoPushEmptyVectorElement_(YoyoVector* vector)
 	return (void*)ptr;
 }
 
+static void YoyoPopVectorElement(YoyoVector* vector)
+{
+	Assert(vector);
+	if (vector->count - 1 < 0 || vector->mem_arena.size == 0)return;
+    vector->mem_arena.used -= vector->unit_size;
+	vector->total_size -= vector->unit_size;
+	vector->count--;
+}
+
 #define YoyoPopAndPeekVectorElement(type,vector) (type*)YoyoPopAndPeekVectorElement_(vector)
 static void* YoyoPopAndPeekVectorElement_(YoyoVector* vector)
 {
 	Assert(vector);
-	void* Result = YoyoGetVectorElement_(vector, vector->count);
-    vector->mem_arena.used -= vector->unit_size;
-	vector->total_size -= vector->unit_size;
-	vector->count--;
+	void* Result = YoyoGetVectorElement_(vector, vector->count - 1);
+	YoyoPopVectorElement(vector);
 	return Result;
 }
 
-static void YoyoPopVectorElement(YoyoVector* vector)
-{
-	Assert(vector);
-    vector->mem_arena.used -= vector->unit_size;
-	vector->total_size -= vector->unit_size;
-	vector->count--;
-}
 //END VECTOR GENERAL USAGE FUNCTIONS
 
 //BEGIN VECTOR ITERATION FUNCS
