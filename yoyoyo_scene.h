@@ -3,7 +3,6 @@
 #include "yoyoyo_math.h"
 #include "yoyoyo_ascii_vector.h"
 #include "yoyoyo_math_ext.h"
-#include "yoyoyo.h"
 
 struct ObjectTransformBuffer
 {
