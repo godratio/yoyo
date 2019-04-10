@@ -13,7 +13,7 @@ struct YoyoVector
 	uint32_t at_index;
 	int32_t start_at;
     MemoryArena mem_arena;
-    bool pushable;
+    bool pushable;//TODO(Ray):It could be ok to push and set on the same vector so we might remove this.
 	float resize_ratio;//0.1 10% 1 100% default is 50% or 1/2 resizing
 	bool allow_resize;
     uint32_t alignment_offset;
@@ -127,7 +127,7 @@ static uint64_t YoyoPushBack_(YoyoVector* vector, void* element, bool copy = tru
 {
     //TIMED_BLOCK();
     Assert(vector && element);
-    Assert(vector->pushable);
+//    Assert(vector->pushable);
 	Assert(vector->start_at == -1);//You must have forget to reset the vector or are trying to resize during iteration.
     
     partition_push_params mem_params = DefaultPartitionParams();
@@ -162,7 +162,7 @@ static uint64_t YoyoPushBack_(YoyoVector* vector, void* element, bool copy = tru
 static uint64_t YoyoStretchPushBack_(YoyoVector* vector, void* element, bool copy = true,bool clear = false)
 {
     Assert(vector && element);
-    Assert(vector->pushable);
+//    Assert(vector->pushable);
 	Assert(vector->start_at == -1);//You must have forget to reset the vector or are trying to resize during iteration.
 
     //memory_index offset = GetAlignmentOffset(&vector->mem_arena, 0);
@@ -245,7 +245,7 @@ static void* YoyoSetVectorElement(YoyoVector* vector, uint64_t element_index, vo
 {
 	//TIMED_BLOCK();
 	Assert(vector && element);
-	vector->pushable = false;
+//	vector->pushable = false;
 	//TODO(ray):have some protection here to make sure we are added in the right type.
 	void* location = (uint8_t*)vector->base + (element_index * vector->unit_size);
 	uint8_t* ptr = (uint8_t*)location;
@@ -288,6 +288,8 @@ static void YoyoPopVectorElement(YoyoVector* vector)
 	vector->count--;
 }
 
+//NOTE(Ray):TODO(Ray):This should not return a pointer as it could be overwritten right away...
+//caller is expected to use the result right away and not store the pointer past the possible use of the vector.
 #define YoyoPopAndPeekVectorElement(type,vector) (type*)YoyoPopAndPeekVectorElement_(vector)
 static void* YoyoPopAndPeekVectorElement_(YoyoVector* vector)
 {

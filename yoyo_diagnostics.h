@@ -35,6 +35,17 @@ namespace YoyoMemoryDiagnostics
 
 #define AllocEntry(size) YoyoMemoryDiagnostics::AllocEntry_(size,__FILE__,__LINE__);
     void AllocEntry_(memory_index size,char* file_name,uint32_t line_no);
+    
+#define DeallocEntry(size) YoyoMemoryDiagnostics::AllocEntry_(size,__FILE__,__LINE__);
+    void DeallocEntry_(memory_index size,char* file_name,uint32_t line_no);
+    //Buffers and textures only at the moment howeer that is not very comprehensive just quick and dirty for now
+#define GPUAllocEntry(size) YoyoMemoryDiagnostics::AllocEntry_(size,__FILE__,__LINE__);
+    void GPUAllocEntry_(memory_index size,char* file_name,uint32_t line_no);
+        
+#define GPUDeallocEntry(size) YoyoMemoryDiagnostics::AllocEntry_(size,__FILE__,__LINE__);
+    void GPUDeallocEntry_(memory_index size,char* file_name,uint32_t line_no);
+
+    void OuputReport();
 };
 
 #define YOYO_DIAGNOSTICS_H

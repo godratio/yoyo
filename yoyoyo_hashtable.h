@@ -17,10 +17,20 @@ struct YoyoHashValueEntry
 	struct YoyoHashKeyEntry hash_collisions[MAX_ALLOWED_COLLISIONS];
 };
 
+/*
+struct YoyoCollision
+{
+    YoyoHashKeyEntry key;
+    YoyoHashValueEntry value;
+    uint32_t index;
+};
+*/
+
 struct YoyoHashTable
 {
 	YoyoVector keys;
 	YoyoVector values;
+//    YoyoVector collisions;
     memory_index table_size;
 };
 
@@ -32,6 +42,7 @@ static YoyoHashTable YoyoInitHashTable(memory_index start_count)
 	result.values = YoyoInitVector(start_count,YoyoHashValueEntry,false);
 	result.values.allow_resize = false;
     result.table_size = start_count;
+//    result.collisions = YoyoInitVector(10,YoyoCollision,false);
 	return result;
 }
 
@@ -62,11 +73,13 @@ static uint64_t YoyoAddElementToHashTable(YoyoHashTable* h_table,void* key,uint6
     Assert(lu);
     if(lu->indexed == true)
 	{
-		//TODO(Ray):Handle collisions.//ignore for now.
-        //The expected rate for collision depends on your start count.
-        //The smaller the count the higher the collision rate.  Typically we would make as large as
-        //a start count as possible as we only store pointers to data and not actual copies in the
-        //key value pairs memory footprint is minimal.  
+//Max 10 collisions they are stored linearly
+ 		YoyoHashValueEntry* ve = YoyoGetVectorElementAnyIndex(YoyoHashValueEntry,&h_table->values, hash_index);
+//        YoyoCollision c = {};
+//        c.key = e;
+//        c.value = v;
+//        YoyoStretchPushBack(&h_table->collisions,c);
+//        Assert(lu->collision_count < 10);
 		Assert(false);
 	}
 	else
@@ -80,7 +93,7 @@ static uint64_t YoyoAddElementToHashTable(YoyoHashTable* h_table,void* key,uint6
     return hash_index;
 }
 
-#define YoyoGetElementByHash(Type,table,in,size) (Type*)YoyoGetElementByHash_(table,in,size)
+#define YoyoGetElementByHash(type,table,in,size) (type*)YoyoGetElementByHash_(table,in,size)
 static void* YoyoGetElementByHash_(YoyoHashTable* h_table,void* in,uint64_t size)
 {
 	void* result;
@@ -99,7 +112,7 @@ static void* YoyoGetElementByHash_(YoyoHashTable* h_table,void* in,uint64_t size
 	return result;
 }
 
-#define YoyoGetElementByIndex(Type,table,index) (Type*)YoyoGetElementByIndex_(table,index)
+#define YoyoGetElementByIndex(type,table,index) (type*)YoyoGetElementByIndex_(table,index)
 static void* YoyoGetElementByIndex_(YoyoHashTable* h_table,uint64_t index)
 {
 	void* result;
@@ -117,9 +130,29 @@ static void* YoyoGetElementByIndex_(YoyoHashTable* h_table,uint64_t index)
 	return result;
 }
 
+static void YoyoHashTableRemoveElementByIndex(YoyoHashTable* h_table,uint64_t index)
+{
+	void* result;
+	YoyoHashKeyEntry* e = YoyoGetVectorElementAnyIndex(YoyoHashKeyEntry,&h_table->keys,index);
+    e->indexed = false;
+	e->collision_count = 0;
+    YoyoHashValueEntry* ve = YoyoGetVectorElementAnyIndex(YoyoHashValueEntry,&h_table->values, index);
+    ve->value = 0;
+}
+
 static bool YoyoHashContains(YoyoHashTable* h_table,void* key,uint64_t size)
 {
 	uint64_t hash_index = YoyoHashFunction(h_table,key,size);
+    YoyoHashKeyEntry* e = YoyoGetVectorElementAnyIndex(YoyoHashKeyEntry,&h_table->keys,hash_index);
+    if(e->indexed)
+    {
+        return true;
+    }
+    return false;
+}
+
+static bool YoyoHashKeyContains(YoyoHashTable* h_table,uint64_t hash_index)
+{
     YoyoHashKeyEntry* e = YoyoGetVectorElementAnyIndex(YoyoHashKeyEntry,&h_table->keys,hash_index);
     if(e->indexed)
     {

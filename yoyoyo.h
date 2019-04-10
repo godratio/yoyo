@@ -16,6 +16,9 @@ typedef __darwin_size_t memory_index;
 typedef intptr_t memory_index;
 #endif
 
+
+#include "yoyo_threads.h"
+
 #include "yoyoyo_math.h"
 
 #include "yoyo_diagnostics.h"
@@ -38,13 +41,18 @@ typedef intptr_t memory_index;
 #include "yoyoyo_math_ext.h"
 #include "yoyoyo_scene.h"
 
+
+
+
 //NOTE(Ray):A very simple memory diagnostics tool to track allocations and deallocations in yoyo api and metalizer.
 #ifdef YOYOIMPL
 namespace YoyoMemoryDiagnostics
 {
+
+    bool log_output = true;
     bool yoyo_diag_log_to_console = true;
     bool log_own_allocations = false;
-    
+
     YoyoVector allocations_table;
     const char* this_file_name = __FILE__;
     memory_index frame_index = 0;
@@ -54,10 +62,16 @@ namespace YoyoMemoryDiagnostics
 
     YoyoSysMemInfo cpu_sys_mem_info;
     YoyoSysMemInfo gpu_sys_mem_info;
+
+    memory_index est_memory_usage;
     
     void Init()
     {
         allocations_table = YoyoInitVector(10,YoyoMemDiagAllocEntry,false);
+        cpu_mem_stats = {};
+        gpu_mem_stats = {};
+        cpu_sys_mem_info = {};
+        gpu_sys_mem_info = {};
     }
 
     bool IsOwnAllocation(char* file_name)
@@ -77,14 +91,63 @@ namespace YoyoMemoryDiagnostics
     {
         ++frame_index;        
     }
-    
+
+    //NOTE(Ray):All GPU allocated stats are just what we request from the OS but may not actually be used so may differ
+    //than reported by the os.  We are just tracking what we request for now.
     void AllocEntry_(memory_index size,char* file_name,uint32_t line_no)
     {
+        if(IsOwnAllocation(file_name))
+        {
+            cpu_mem_stats.total_allocs += 1;
+            cpu_mem_stats.total_mem_alloced += size;
+            est_memory_usage += size;            
+            PlatformOutput(yoyo_diag_log_to_console,"mem alloc: file name: %s : line no : %d \n",file_name,line_no);            
+        }
+    }
+    
+    void DeallocEntry_(memory_index size,char* file_name,uint32_t line_no)
+    {
+        if(IsOwnAllocation(file_name))
+        {
+            cpu_mem_stats.total_deallocs += 1;
+            cpu_mem_stats.total_mem_dealloced += size;
+            est_memory_usage -= size;
+            PlatformOutput(yoyo_diag_log_to_console,"file name: %s : line no : %d \n",file_name,line_no);            
+        }
+    }
 
+//Buffers and textures only at the moment howeer that is not very comprehensive
+    void GPUAllocEntry_(memory_index size,char* file_name,uint32_t line_no)
+    {
         if(IsOwnAllocation(file_name))
         {
             PlatformOutput(yoyo_diag_log_to_console,"file name: %s : line no : %d \n",file_name,line_no);            
-        }
+        }        
+    }
+
+    void GPUDeallocEntry_(memory_index size,char* file_name,uint32_t line_no)
+    {
+        if(IsOwnAllocation(file_name))
+        {
+            PlatformOutput(yoyo_diag_log_to_console,"file name: %s : line no : %d \n",file_name,line_no);            
+        }        
+    }
+
+    void OuputReport()
+    {
+        PlatformOutput(&log_output,"---YOYO_MEM_DIAG-------\n");
+
+        PlatformOutput(&log_output,"---CPUStats------------\n");
+        PlatformOutput(&log_output,"---total_allocs:%d------\n",cpu_mem_stats.total_allocs);
+        PlatformOutput(&log_output,"---total_mem_alloced:%d-\n",cpu_mem_stats.total_mem_alloced);
+        PlatformOutput(&log_output,"---total_deallocs:%d----\n",cpu_mem_stats.total_deallocs);        
+        PlatformOutput(&log_output,"---total_mem_dealloced:%d-\n",cpu_mem_stats.total_mem_dealloced);
+        PlatformOutput(&log_output,"---est_memory_usage:%d-\n",est_memory_usage);
+        PlatformOutput(&log_output,"---END_CPUStats--------\n");
+        
+        PlatformOutput(&log_output,"---GPUStats------------\n");
+        PlatformOutput(&log_output,"---ENDGPUStats---------\n");
+        PlatformOutput(&log_output,"---END_YOYO_MEM_DIAG---\n");
     }
 };
 #endif
