@@ -241,6 +241,7 @@ static void** YoyoGetReferenceToElement_(YoyoVector* vector, uint64_t index)
 	return (void**)Location;
 }
 
+#define YoyoSetVectorElementVoidPtr(vector,index,element) YoyoSetVectorElement(vector,index,(void*)&(*(u8*)element),true);
 static void* YoyoSetVectorElement(YoyoVector* vector, uint64_t element_index, void* element, bool copy = true)
 {
 	//TIMED_BLOCK();
@@ -265,7 +266,7 @@ static void* YoyoSetVectorElement(YoyoVector* vector, uint64_t element_index, vo
 	}
 
 	vector->total_size += vector->unit_size;
-	vector->count++;
+	//vector->count++;
 	return location;
 }
 
