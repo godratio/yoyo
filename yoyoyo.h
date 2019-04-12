@@ -16,7 +16,6 @@ typedef __darwin_size_t memory_index;
 typedef intptr_t memory_index;
 #endif
 
-
 #include "yoyo_threads.h"
 
 #include "yoyoyo_math.h"
@@ -40,9 +39,6 @@ typedef intptr_t memory_index;
 
 #include "yoyoyo_math_ext.h"
 #include "yoyoyo_scene.h"
-
-
-
 
 //NOTE(Ray):A very simple memory diagnostics tool to track allocations and deallocations in yoyo api and metalizer.
 #ifdef YOYOIMPL

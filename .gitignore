@@ -30,3 +30,5 @@ Yoyoyo\.vcxproj\.user
 \.#yoyoyo_ascii_vector\.h
 
 \.#yoyo_diagnostics\.h
+
+\.#yoyo_threads\.h
