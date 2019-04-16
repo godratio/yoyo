@@ -25,7 +25,7 @@ struct YoyoVector
 #define YoyoInitVectorSize(start_size,size,pre_empt) YoyoInitVector_(start_size,size,pre_empt)
 //NOTE(Ray):Default alignment is 8 for 64 bit systems which is all we care about.
 //the alignemnt options is mainly for adding the ability to store simd datatypes.
-static YoyoVector YoyoInitVector_(memory_index start_size,memory_index unit_size, bool pre_empt = false,uint32_t alignment = 8)
+static YoyoVector YoyoInitVector_(memory_index start_size,memory_index unit_size, bool pre_empt = false,uint32_t alignment = 4)
 {
     //TIMED_BLOCK();
     Assert(start_size > 0);
@@ -72,7 +72,7 @@ static YoyoVector YoyoInitVector_(memory_index start_size,memory_index unit_size
     //All 64 bit systems should be giving us addresses at 8 byte boundaries.
     //Furthermore the compilers all should be inserting padding to any structs so that we only are accessing memory on 8 byte
     //boundaries if for any reason this does not hold true we need to know right away.
-    Assert(offset == 0);
+    //Assert(offset == 0);
     return result;
 }
 
@@ -264,10 +264,26 @@ static void* YoyoSetVectorElement(YoyoVector* vector, uint64_t element_index, vo
 	{
 		ptr = (uint8_t*)element;
 	}
-
 	vector->total_size += vector->unit_size;
 	//vector->count++;
 	return location;
+}
+
+static void YoyoClearVectorElement(YoyoVector* v,uint64_t i)
+{
+	//TIMED_BLOCK();
+	Assert(v);
+	void* location = (uint8_t*)v->base + (i * v->unit_size);
+	uint8_t* ptr = (uint8_t*)location;
+	{
+		memory_index byte_count = v->unit_size;
+		memory_index index = 0;
+		while (index < byte_count)
+		{
+			*ptr++ = 0;
+			index++;
+		}
+	}
 }
 
 #define YoyoPushEmptyVectorElement(vector) YoyoPushEmptyVectorElement_(vector)
