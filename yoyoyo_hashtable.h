@@ -157,7 +157,6 @@ static uint64_t YoyoAddElementToHashTable(YoyoHashTable* h_table,void* key,uint6
         {
             YoyoHashCollisionEntry* head_entry = YoyoGetVectorElement(YoyoHashCollisionEntry,&h_table->collisions,lu->collision_head_index);
             YoyoHashCollisionEntry* at = head_entry;
-            YoyoHashCollisionEntry* prev_at = head_entry;
             int prev_at_index = -1;
             bool has_head = false;
             if(head_entry)has_head = true;
@@ -171,7 +170,6 @@ static uint64_t YoyoAddElementToHashTable(YoyoHashTable* h_table,void* key,uint6
                     //Value already exist will not add
                     return 0;
                 }
-                prev_at = at;
                 prev_at_index = at->index;
                 at = YoyoGetVectorElement(YoyoHashCollisionEntry,&h_table->collisions,at->next_index);
             }
@@ -199,11 +197,10 @@ static uint64_t YoyoAddElementToHashTable(YoyoHashTable* h_table,void* key,uint6
 
             YoyoHashCollisionEntry* new_coll_entry = YoyoGetVectorElement(YoyoHashCollisionEntry,&h_table->collisions,new_coll_index);
             new_coll_entry->index = new_coll_index;
-            //->next_index = new_coll_index;
         
             if(has_head)
             {
-                prev_at = YoyoGetVectorElement(YoyoHashCollisionEntry,&h_table->collisions,prev_at_index);
+                YoyoHashCollisionEntry* prev_at = YoyoGetVectorElement(YoyoHashCollisionEntry,&h_table->collisions,prev_at_index);
                 prev_at->next_index = new_coll_index;
             }
             else
@@ -242,7 +239,6 @@ static void* YoyoGetElementByHash_(YoyoHashTable* h_table,void* key,uint64_t siz
         {
             YoyoHashCollisionEntry* head_entry = YoyoGetVectorElement(YoyoHashCollisionEntry,&h_table->collisions,lu->collision_head_index);
             YoyoHashCollisionEntry* at = head_entry;
-            YoyoHashCollisionEntry* prev_at = head_entry;
             while(at)
             {
                 YoyoHashKeyEntry key_entry = at->key;
@@ -251,7 +247,6 @@ static void* YoyoGetElementByHash_(YoyoHashTable* h_table,void* key,uint64_t siz
                 {
                     result = at->value.value;
                 }
-                prev_at = at;
                 at = YoyoGetVectorElement(YoyoHashCollisionEntry,&h_table->collisions,at->next_index);
             }
         }
@@ -288,8 +283,8 @@ static void YoyoHashTableRemoveElement(YoyoHashTable* h_table,void* key)
             YoyoHashCollisionEntry* at = head_entry;
             YoyoHashCollisionEntry* prev_at = head_entry;
             YoyoHashCollisionEntry* history_stack[2] = {0,0};
-            int index = 0;
-            int last_history_index = 0;
+            uint64_t index = 0;
+            uint64_t last_history_index = 0;
             while(at)
             {
                 YoyoHashKeyEntry key_entry = at->key;
@@ -312,7 +307,7 @@ static void YoyoHashTableRemoveElement(YoyoHashTable* h_table,void* key)
             uint64_t free_index = prev_at->index;
             YoyoStretchPushBack(&h_table->collision_free_list,free_index);
             //we will want one back from where we were
-            int prev_prev_at_index =  (last_history_index - 1) % 2;
+            uint64_t prev_prev_at_index =  (last_history_index - 1) % 2;
             YoyoHashCollisionEntry* prev_prev_at = history_stack[prev_prev_at_index];
             if(prev_prev_at)
                 prev_prev_at->next_index = prev_at->next_index;
@@ -424,7 +419,6 @@ static bool YoyoHashContains(YoyoHashTable* h_table,void* key,uint64_t size)
     {
         YoyoHashCollisionEntry* head_entry = YoyoGetVectorElement(YoyoHashCollisionEntry,&h_table->collisions,lu->collision_head_index);
         YoyoHashCollisionEntry* at = head_entry;
-        YoyoHashCollisionEntry* prev_at = head_entry;
         while(at)
         {
             YoyoHashKeyEntry key_entry = at->key;
@@ -433,35 +427,8 @@ static bool YoyoHashContains(YoyoHashTable* h_table,void* key,uint64_t size)
             {
                 return true;
             }
-            prev_at = at;
             at = YoyoGetVectorElement(YoyoHashCollisionEntry,&h_table->collisions,at->next_index);
         }
-
-/*
-//check for head value than for all 
-        void* backing_key = YoyoGetVectorElement_(&h_table->key_backing_array,e->backing_index);
-        if(memcmp(key,backing_key,h_table->key_size))
-        {
-           // YoyoHashValueEntry* ve = YoyoGetVectorElementAnyIndex(YoyoHashValueEntry,&h_table->values, hash_index);
-           // result = ve->value;
-            return true;
-        }
-        else
-        {
-            memory_index start_index = e->collision_head_index;
-            for(int i = start_index;i < 10;++i)
-            {
-                YoyoHashCollisionEntry* ce = YoyoGetVectorElementAnyIndex(YoyoHashCollisionEntry,&h_table->collisions,i);
-                void* backing_key = YoyoGetVectorElement_(&h_table->key_backing_array,ce->index);
-                if(memcmp(key,backing_key,h_table->key_size))
-                {
-//Found same value in key this is the one.
-                   // result = ce->value.value;
-                    return true;
-                }
-            }
-        }
-*/
     }
     return false;
 }
