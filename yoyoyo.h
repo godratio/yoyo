@@ -60,6 +60,7 @@ namespace YoyoMemoryDiagnostics
     YoyoSysMemInfo gpu_sys_mem_info;
 
     memory_index est_memory_usage;
+    memory_index est_gpu_memory_usage;
     
     void Init()
     {
@@ -68,6 +69,8 @@ namespace YoyoMemoryDiagnostics
         gpu_mem_stats = {};
         cpu_sys_mem_info = {};
         gpu_sys_mem_info = {};
+        est_memory_usage = 0;
+        est_gpu_memory_usage = 0;
     }
 
     bool IsOwnAllocation(char* file_name)
@@ -108,7 +111,7 @@ namespace YoyoMemoryDiagnostics
             cpu_mem_stats.total_deallocs += 1;
             cpu_mem_stats.total_mem_dealloced += size;
             est_memory_usage -= size;
-            PlatformOutput(yoyo_diag_log_to_console,"file name: %s : line no : %d \n",file_name,line_no);            
+            PlatformOutput(yoyo_diag_log_to_console,"mem dealloc file name: %s : line no : %d \n",file_name,line_no);
         }
     }
 
@@ -117,7 +120,10 @@ namespace YoyoMemoryDiagnostics
     {
         if(IsOwnAllocation(file_name))
         {
-            PlatformOutput(yoyo_diag_log_to_console,"file name: %s : line no : %d \n",file_name,line_no);            
+            gpu_mem_stats.total_allocs += 1;
+            gpu_mem_stats.total_mem_alloced += size;
+            est_gpu_memory_usage += size;            
+            PlatformOutput(yoyo_diag_log_to_console,"gpu mem alloc: file name: %s : line no : %d \n",file_name,line_no);
         }        
     }
 
@@ -125,7 +131,10 @@ namespace YoyoMemoryDiagnostics
     {
         if(IsOwnAllocation(file_name))
         {
-            PlatformOutput(yoyo_diag_log_to_console,"file name: %s : line no : %d \n",file_name,line_no);            
+            gpu_mem_stats.total_deallocs += 1;
+            gpu_mem_stats.total_mem_dealloced += size;
+            est_gpu_memory_usage -= size;
+            PlatformOutput(yoyo_diag_log_to_console,"gpu mem dealloc: file name: %s : line no : %d \n",file_name,line_no);            
         }        
     }
 
@@ -134,14 +143,22 @@ namespace YoyoMemoryDiagnostics
         PlatformOutput(&log_output,"---YOYO_MEM_DIAG-------\n");
 
         PlatformOutput(&log_output,"---CPUStats------------\n");
+        
         PlatformOutput(&log_output,"---total_allocs:%d------\n",cpu_mem_stats.total_allocs);
-        PlatformOutput(&log_output,"---total_mem_alloced:%d-\n",cpu_mem_stats.total_mem_alloced);
+        PlatformOutput(&log_output,"---total_mem_alloced:%d-\n",cpu_mem_stats.total_mem_alloced / MegaBytes(1));
         PlatformOutput(&log_output,"---total_deallocs:%d----\n",cpu_mem_stats.total_deallocs);        
         PlatformOutput(&log_output,"---total_mem_dealloced:%d-\n",cpu_mem_stats.total_mem_dealloced);
         PlatformOutput(&log_output,"---est_memory_usage:%d-\n",est_memory_usage);
         PlatformOutput(&log_output,"---END_CPUStats--------\n");
         
         PlatformOutput(&log_output,"---GPUStats------------\n");
+        
+        PlatformOutput(&log_output,"---total_allocs:%d------\n",gpu_mem_stats.total_allocs);
+        PlatformOutput(&log_output,"---total_mem_alloced:%d-\n",gpu_mem_stats.total_mem_alloced / MegaBytes(1));
+        PlatformOutput(&log_output,"---total_deallocs:%d----\n",gpu_mem_stats.total_deallocs);        
+        PlatformOutput(&log_output,"---total_mem_dealloced:%d-\n",gpu_mem_stats.total_mem_dealloced);
+        PlatformOutput(&log_output,"---est_gpu_memory_usage:%d-\n",est_gpu_memory_usage);
+        
         PlatformOutput(&log_output,"---ENDGPUStats---------\n");
         PlatformOutput(&log_output,"---END_YOYO_MEM_DIAG---\n");
     }
