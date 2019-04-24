@@ -53,18 +53,18 @@ struct YoyoHashTable
     YoyoVector collisions;
     YoyoVector collision_free_list;
     
-    memory_index table_size;
-    memory_index collision_count;
+    uint64_t table_size;
+    uint64_t collision_count;
 
-    memory_index key_size;
-    memory_index key_value;
+    uint64_t key_size;
+    uint64_t key_value;
 };
 
 #define YoyoInitHashTableKeyType(start_count,key_type) YoyoInitHashTable(start_count,sizeof(key_type))
-static YoyoHashTable YoyoInitHashTable(memory_index start_count,memory_index key_size)
+static YoyoHashTable YoyoInitHashTable(uint64_t start_count,uint64_t key_size)
 {
 	YoyoHashTable result = {};
-    result.collision_free_list = YoyoInitVector(1, YoyoHashCollisionEntry, false);
+    result.collision_free_list = YoyoInitVector(1, uint64_t, false);
     result.key_backing_array = YoyoInitVectorSize(1,key_size,false);
     result.key_size = key_size;
     Assert(key_size == result.key_backing_array.unit_size);
@@ -191,11 +191,15 @@ static uint64_t YoyoAddElementToHashTable(YoyoHashTable* h_table,void* key,uint6
             }
             else
             {
-                new_coll_index = (uint64_t)YoyoPopAndPeekVectorElement(uint64_t, &h_table->collision_free_list);
+                Assert(h_table->collision_free_list.count > 0);
+                new_coll_index = *YoyoPopAndPeekVectorElement(uint64_t, &h_table->collision_free_list);
+                
+                Assert(new_coll_index >= 0 && new_coll_index <= h_table->table_size);
                 YoyoSetVectorElement(&h_table->collisions,new_coll_index,&ce);
             }
 
             YoyoHashCollisionEntry* new_coll_entry = YoyoGetVectorElement(YoyoHashCollisionEntry,&h_table->collisions,new_coll_index);
+            Assert(new_coll_index >= 0 && new_coll_index <= h_table->table_size);
             new_coll_entry->index = new_coll_index;
         
             if(has_head)
@@ -224,8 +228,11 @@ static void* YoyoGetElementByHash_(YoyoHashTable* h_table,void* key,uint64_t siz
 	YoyoHashKeyEntry* lu = YoyoGetVectorElementAnyIndex(YoyoHashKeyEntry,&h_table->keys,hash_index);
 	if(lu->collision_count == 0)
 	{
- 		YoyoHashValueEntry* ve = YoyoGetVectorElementAnyIndex(YoyoHashValueEntry,&h_table->values, hash_index);
-		result = ve->value;
+        if(!lu->tombstoned)
+        {
+            YoyoHashValueEntry* ve = YoyoGetVectorElementAnyIndex(YoyoHashValueEntry,&h_table->values, hash_index);
+            result = ve->value;
+        }
 	}
 	else
 	{
@@ -245,7 +252,8 @@ static void* YoyoGetElementByHash_(YoyoHashTable* h_table,void* key,uint64_t siz
                 void* backing_key = YoyoGetVectorElement_(&h_table->key_backing_array,key_entry.backing_index);
                 if(!memcmp(key,backing_key,h_table->key_size))
                 {
-                    result = at->value.value;
+                    if(!key_entry.tombstoned)
+                        result = at->value.value;
                 }
                 at = YoyoGetVectorElement(YoyoHashCollisionEntry,&h_table->collisions,at->next_index);
             }
@@ -271,11 +279,12 @@ static void YoyoHashTableRemoveElement(YoyoHashTable* h_table,void* key)
     }
     else
     {
+        uint64_t prev_index = 0;
         void* backing_key = YoyoGetVectorElement_(&h_table->key_backing_array,lu->backing_index);
         if(!memcmp(key,backing_key,h_table->key_size))
         {
             YoyoHashValueEntry* ve = YoyoGetVectorElementAnyIndex(YoyoHashValueEntry,&h_table->values, hash_index);
-            ve->value = 0;            
+            ve->value = 0;
         }
         else
         {
@@ -306,12 +315,15 @@ static void YoyoHashTableRemoveElement(YoyoHashTable* h_table,void* key)
 
             uint64_t free_index = prev_at->index;
             Assert(free_index >= 0 && free_index <= h_table->table_size);
-            YoyoStretchPushBack(&h_table->collision_free_list,free_index);
+            uint64_t index_result = YoyoStretchPushBack(&h_table->collision_free_list,free_index);
             //we will want one back from where we were
             uint64_t prev_prev_at_index =  (last_history_index - 1) % 2;
             YoyoHashCollisionEntry* prev_prev_at = history_stack[prev_prev_at_index];
             if(prev_prev_at)
+            {
+                Assert(prev_at->next_index >= 0 && prev_at->next_index <= h_table->table_size);
                 prev_prev_at->next_index = prev_at->next_index;
+            }
         }
     }
 }
@@ -322,7 +334,10 @@ static bool YoyoHashContains(YoyoHashTable* h_table,void* key,uint64_t size)
     YoyoHashKeyEntry* lu = YoyoGetVectorElementAnyIndex(YoyoHashKeyEntry,&h_table->keys,hash_index);
     if(lu->indexed && lu->collision_count == 0)
     {
-        return true;
+        if(lu->tombstoned)
+            return false;
+        else
+            return true;
     }
     else if(lu->indexed)//collision
     {
@@ -334,130 +349,16 @@ static bool YoyoHashContains(YoyoHashTable* h_table,void* key,uint64_t size)
             void* backing_key = YoyoGetVectorElement_(&h_table->key_backing_array,key_entry.backing_index);
             if(!memcmp(key,(void*)backing_key,h_table->key_size))
             {
-                return true;
+                if(key_entry.tombstoned)
+                    return false;
+                else
+                    return true;
             }
             at = YoyoGetVectorElement(YoyoHashCollisionEntry,&h_table->collisions,at->next_index);
         }
     }
     return false;
 }
-#if 0
-#define YoyoGetElementByIndex(type,table,index) (type*)YoyoGetElementByIndex_(table,index)
-static void* YoyoGetElementByIndex_(YoyoHashTable* h_table,uint64_t index)
-{
-    uint64_t hash_index = (index);
-	void* result;
-	YoyoHashKeyEntry* e = YoyoGetVectorElementAnyIndex(YoyoHashKeyEntry,&h_table->keys,hash_index);
-	if(e->collision_count == 0)
-	{
- 		YoyoHashValueEntry* ve = YoyoGetVectorElementAnyIndex(YoyoHashValueEntry,&h_table->values, index);
-		result = ve->value;
-	}
-	else
-	{
-        YoyoHashCollisionEntry* at = e->collision_head;
-        YoyoHashCollisionEntry* tail = e->collision_head;
-        while(at)
-        {
-            YoyoHashKeyEntry key_entry = at->key;
-            void* backing_key = YoyoGetVectorElement_(&h_table->key_backing_array,key_entry.backing_index);            
-            if(!memcmp(key,backing_key,h_table->key_size))
-            {
-                //Key match found
-                result = at->value.value;
-            }
-            at = at->n;
-        }        
-        /*
-        //NOTE(ray):Since we dont have a key to check against here we need to store the collision
-        //index into the hash_index returned to the client.
-        //extract collision index
-        uint64_t collision_index = YoyoHashExtractCollisionIndex(index);
-        Assert(collision_index < e->collision_count);
-        YoyoHashCollisionEntry* ce = YoyoGetVectorElementAnyIndex(YoyoHashCollisionEntry,&h_table->collisions,collision_index);
-        result = ce->value.value;
-        */
-	}
-	return result;
-}
-#endif
-
-#if 0
-//FOr removal we keep the collision count but zero out the backing key as it is intended to be no longer stored in the hash.
-//This allows us to remove elements without doing any patching lists.
-static void YoyoHashTableRemoveElementByIndex(YoyoHashTable* h_table,uint64_t index)
-{
-    //Assert(false);
-    uint64_t hash_index = YoyoHashExtractHashIndex(index);
-	YoyoHashKeyEntry* e = YoyoGetVectorElementAnyIndex(YoyoHashKeyEntry,&h_table->keys,index);
-    if(e->collision_count == 0)
-    {
-        e->indexed = false;
-//NOTE(Ray):Keep collision count
-//        e->collision_count = 0;
-        YoyoHashValueEntry* ve = YoyoGetVectorElementAnyIndex(YoyoHashValueEntry,&h_table->values, index);
-        ve->value = 0;
-//        YoyoClearVectorElement(&h_table->key_backing_array,e->backing_index);
-    }
-    else
-    {
-        YoyoHashCollisionEntry* prev_at = e->collision_head;
-        YoyoHashCollisionEntry* at = e->collision_head;
-        YoyoHashCollisionEntry* tail = e->collision_head;
-        while(at)
-        {
-            YoyoHashKeyEntry key_entry = at->key;
-            void* backing_key = YoyoGetVectorElement_(&h_table->key_backing_array,key_entry.backing_index);            
-            if(!memcmp(key,backing_key,h_table->key_size))
-            {
-//remove this.
-                break;
-            }
-            prev_at = at;
-            at = at->n;
-        }
-        uint64_t free_index = at->index;
-        YoyoStretchPushBack(&h_table->collision_free_list,free_index);
-        prev_at->n = at->n;
-/*
-        uint64_t collision_index = YoyoHashExtractCollisionIndex(index);
-        Assert(collision_index < e->collision_count);
-        YoyoHashCollisionEntry* ce = YoyoGetVectorElementAnyIndex(YoyoHashCollisionEntry,&h_table->collisions,collision_index);
-        //NOTE(ray):At this point the backing can be resused.
-        ce->key.indexed = false;
-//        ce->key.collision_count = 0;
-        ce->value.value = 0;
-*/
-    }
-}
-#endif
-
-/*
-static bool YoyoHashKeyContains(YoyoHashTable* h_table,uint64_t hash_index)
-{
-    YoyoHashKeyEntry* e = YoyoGetVectorElementAnyIndex(YoyoHashKeyEntry,&h_table->keys,hash_index);
-    if(e->indexed)
-    {
-        return true;
-    }
-    else if(e->indexed)//collision
-    {
-        YoyoHashCollisionEntry* at = lu->collision_head;
-        YoyoHashCollisionEntry* tail = lu->collision_head;
-        while(at)
-        {
-            YoyoHashKeyEntry key_entry = at->key;
-            void* backing_key = YoyoGetVectorElement_(&h_table->key_backing_array,key_entry.backing_index);            
-            if(memcmp(key,backing_key,h_table->key_size))
-            {
-                return true;
-            }
-            at = at->n;
-        }        
-    }
-    return false;
-}
-*/
 
 #define YOYOYO_HASHTABLE_H
 #endif

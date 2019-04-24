@@ -299,18 +299,23 @@ static void* YoyoPushEmptyVectorElement_(YoyoVector* vector)
 static void YoyoPopVectorElement(YoyoVector* vector)
 {
 	Assert(vector);
-	if (vector->count - 1 < 0 || vector->mem_arena.size == 0)return;
+    Assert(vector->count != 0);
+    //Assert((((int)vector->count) - 1) > 0);
+    Assert(vector->mem_arena.size > 0);
+    Assert((vector->mem_arena.used - vector->unit_size) >= 0) ;
+    
     vector->mem_arena.used -= vector->unit_size;
 	vector->total_size -= vector->unit_size;
 	vector->count--;
 }
-
+;
 //NOTE(Ray):TODO(Ray):This should not return a pointer as it could be overwritten right away...
 //caller is expected to use the result right away and not store the pointer past the possible use of the vector.
 #define YoyoPopAndPeekVectorElement(type,vector) (type*)YoyoPopAndPeekVectorElement_(vector)
 static void* YoyoPopAndPeekVectorElement_(YoyoVector* vector)
 {
 	Assert(vector);
+    Assert(vector->count > 0);
 	void* Result = YoyoGetVectorElement_(vector, vector->count - 1);
 	YoyoPopVectorElement(vector);
 	return Result;
