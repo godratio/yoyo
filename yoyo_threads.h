@@ -3,6 +3,7 @@
 #if OSX
 #include <x86intrin.h>
 #elif WINDOWS
+
 #include <intrin.h>
 #elif IOS
 #include <arm_neon.h>
@@ -50,7 +51,9 @@ memory_index YoyoGetThreadID()
     mach_port_t threadport = pthread_mach_thread_np(pthread_self());
      return (memory_index)threadport;
 #elif WINDOWS
-     //NOTE(Ray):Use our two instruction trick.
+     //TODO(Ray):NOTE(Ray):Use our two instruction trick or replace with a more effecient method.
+     HANDLE self_thread = GetCurrentThread();
+     return GetThreadId(self_thread);
 #endif
 }
 

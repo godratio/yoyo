@@ -3,8 +3,10 @@
 #define YOYODIAG
 
 #if WINDOWS
+#include <windows.h>
 #define Assert(Expression) if(!(Expression)){*(int *)0 = 0;};
 #else
+
 #define Assert(Expression) if(!(Expression)){__builtin_trap();};
 #endif
 
@@ -73,7 +75,7 @@ namespace YoyoMemoryDiagnostics
         est_gpu_memory_usage = 0;
     }
 
-    bool IsOwnAllocation(char* file_name)
+    bool IsOwnAllocation(const char* file_name)
     {
         if(strcmp(this_file_name,file_name))
         {
@@ -127,7 +129,7 @@ namespace YoyoMemoryDiagnostics
         }        
     }
 
-    void GPUDeallocEntry_(memory_index size,char* file_name,uint32_t line_no)
+    void GPUDeallocEntry_(memory_index size,const char* file_name,uint32_t line_no)
     {
         if(IsOwnAllocation(file_name))
         {

@@ -55,7 +55,7 @@ namespace YoyoMemoryDiagnostics
     void GPUAllocEntry_(memory_index size,char* file_name,uint32_t line_no);
         
 #define GPUDeallocEntry(size) YoyoMemoryDiagnostics::GPUDeallocEntry_(size,__FILE__,__LINE__);
-    void GPUDeallocEntry_(memory_index size,char* file_name,uint32_t line_no);
+    void GPUDeallocEntry_(memory_index size,const char* file_name,uint32_t line_no);
 
 //TODO(Ray):Track vectors and their allocations
 //TODO(Ray):Send collected frame data via tcp to remote machine for logging.
