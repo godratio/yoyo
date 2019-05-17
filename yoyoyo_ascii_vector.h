@@ -164,7 +164,7 @@ static uint64_t YoyoStretchPushBack_(YoyoVector* vector, void* element, bool cop
     Assert(vector && element);
 //    Assert(vector->pushable);
 	Assert(vector->start_at == -1);//You must have forget to reset the vector or are trying to resize during iteration.
-
+    
     //memory_index offset = GetAlignmentOffset(&vector->mem_arena, 0);
     //offset = 0;
     //Execute the resize of the  buffer 
@@ -175,12 +175,12 @@ static uint64_t YoyoStretchPushBack_(YoyoVector* vector, void* element, bool cop
 		memory_index new_size = vector->mem_arena.size + ((vector->unit_size) * new_count);
         uint8_t* old_base_ptr = (uint8_t*)vector->mem_arena.base;
 		vector->base = PlatformAllocateMemory(new_size);
-
+        
         vector->mem_arena.base = vector->base;
         vector->mem_arena.size = new_size;
         
 		memcpy(vector->base, (void*)old_base_ptr, vector->total_size);
-
+        
 		PlatformDeAllocateMemory(old_base_ptr, old_size);
         
         memory_index alignment = 8;

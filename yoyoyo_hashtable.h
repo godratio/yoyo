@@ -98,25 +98,6 @@ static uint64_t YoyoHashFunction(YoyoHashTable* h_table,void* buffer,uint64_t si
     return result % h_table->table_size;
 }
 
-/*
-static uint64_t YoyoHashExtractHashIndex(uint64_t hash_index)
-{
-    //just mask out the collision index which is high 4 bits
-    return (hash_index) & (0x0FFFFFFF);
-}
-
-static uint64_t YoyoHashExtractCollisionIndex(uint64_t hash_index)
-{
-    //shift bit 60 right to 0 and mask out all but bottom 4 bits
-    return (hash_index >> 60) & (0x0000000F);
-}
-
-static uint64_t YoyoHashPackCollisionIndex(uint64_t collision_index, uint64_t hash_index)
-{
-    return (collision_index << 60) & hash_index;
-}
- */
-
 static YoyoHashAddElementResult YoyoAddElementToHashTable(YoyoHashTable* h_table,void* key,uint64_t key_size,void* element)
 {
     YoyoHashAddElementResult result = {};
@@ -153,6 +134,7 @@ static YoyoHashAddElementResult YoyoAddElementToHashTable(YoyoHashTable* h_table
         Assert(key_size == h_table->key_backing_array.unit_size);
         uint64_t index = YoyoStretchPushBackVoidPtr(&h_table->key_backing_array,key);
         lu->backing_index = index;
+        Assert(index < h_table->key_backing_array.count);
 	}
 	else
 	{
@@ -202,29 +184,37 @@ static YoyoHashAddElementResult YoyoAddElementToHashTable(YoyoHashTable* h_table
             if(h_table->collision_free_list.count == 0)
             {
                 new_coll_index = YoyoStretchPushBack(&h_table->collisions,ce);
+                if(has_head)
+                {
+                    YoyoHashCollisionEntry* prev_at = YoyoGetVectorElement(YoyoHashCollisionEntry,&h_table->collisions,prev_at_index);
+                    //prev_at->next_index = new_coll_index;
+                    Assert(prev_at->index != new_coll_index);
+                }
             }
             else
             {
                 Assert(h_table->collision_free_list.count > 0);
-                new_coll_index = *YoyoPopAndPeekVectorElement(uint64_t, &h_table->collision_free_list);
-                
+                new_coll_index = *YoyoPeekVectorElement(uint64_t, &h_table->collision_free_list);
                 Assert(new_coll_index >= 0 && new_coll_index <= h_table->table_size);
                 YoyoSetVectorElement(&h_table->collisions,new_coll_index,&ce);
+                YoyoPopVectorElement(&h_table->collision_free_list);
             }
 
             YoyoHashCollisionEntry* new_coll_entry = YoyoGetVectorElement(YoyoHashCollisionEntry,&h_table->collisions,new_coll_index);
             Assert(new_coll_index >= 0 && new_coll_index <= h_table->table_size);
             new_coll_entry->index = new_coll_index;
         
-            if(has_head)
+            if(has_head && prev_at_index != 0)
             {
                 YoyoHashCollisionEntry* prev_at = YoyoGetVectorElement(YoyoHashCollisionEntry,&h_table->collisions,prev_at_index);
                 prev_at->next_index = new_coll_index;
+                Assert(prev_at->next_index != prev_at->index);
             }
             else
             {
                 lu->collision_head_index = new_coll_index;
             }
+            
             ++lu->collision_count;            
         }
 	}
@@ -321,6 +311,10 @@ static void YoyoHashTableRemoveElement(YoyoHashTable* h_table,void* key)
             }
             uint64_t free_index = prev_at->index;
             Assert(free_index >= 0 && free_index <= h_table->table_size);
+            if(free_index == 0)
+            {
+                int a = 0;
+            }
             uint64_t index_result = YoyoStretchPushBack(&h_table->collision_free_list,free_index);
             //we will want one back from where we were
             uint64_t prev_prev_at_index =  (last_history_index - 1) % 2;
@@ -347,6 +341,7 @@ static bool YoyoHashContains(YoyoHashTable* h_table,void* key,uint64_t size)
         else
         {
             void* backing_key = YoyoGetVectorElement_(&h_table->key_backing_array,lu->backing_index);
+            //Assert(backing_key);
             if(!memcmp(key,(void*)backing_key,h_table->key_size))
             {
                 return true;
